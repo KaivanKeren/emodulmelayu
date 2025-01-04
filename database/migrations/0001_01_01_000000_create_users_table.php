@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->enum('role', ['admin', 'guru', 'siswa'])->default('siswa');
+            $table->enum('school', ['smk 1 riau', 'smk 2 riau', 'smk 3 riau']);
             $table->string('password');
+            $table->enum('status', ['pending', 'accepted'])->default('pending');
             $table->rememberToken();
             $table->timestamps();
         });
