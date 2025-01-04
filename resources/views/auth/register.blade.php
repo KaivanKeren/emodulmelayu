@@ -16,10 +16,16 @@
         <input type="text" name="name" id="name">
         <label for="email">Email</label>
         <input type="email" name="email" id="email">
+        <label for="school">Asal Sekolah:</label>
+        <select name="school" id="school">
+            <option value="smk 1 riau">SMK 1 RIAU</option>
+            <option value="smk 2 riau">SMK 2 RIAU</option>
+            <option value="smk 3 riau">SMK 3 RIAU</option>
+        </select>
+        <label for="nisn_nip">NISN/NIP</label>
+        <input type="number" name="nisn_nip" id="nisn_nip">
         <label for="password">Password</label>
         <input type="password" name="password" id="password">
-        <label for="password">NISN/NIP</label>
-        <input type="number" name="nisn_nip" id="nisn_nip">
         <label for="password_confirmation">Confirm Password</label>
         <input type="password" name="password_confirmation" id="password_confirmation">
         <button type="submit">Register</button>

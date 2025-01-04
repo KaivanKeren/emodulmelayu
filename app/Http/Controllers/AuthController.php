@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    // Web methods
     public function login()
     {
         return view('auth.login');
@@ -38,6 +42,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'school' => 'required',
             'nisn_nip' => [
                 'required',
                 'string',
@@ -60,6 +65,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'nisn_nip' => $request->nisn_nip,
+            'school' => $request->school,
             'password' => bcrypt($request->password),
             'role' => $role,
         ]);
@@ -73,5 +79,67 @@ class AuthController extends Controller
         auth()->logout();
 
         return redirect()->route('login');
+    }
+
+    // API methods
+    public function apiLogin(Request $request): JsonResponse
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('auth-token')->plainTextToken;
+            
+            return response()->json([
+                'status' => 'success',
+                'token' => $token,
+                'user' => $user
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid credentials'
+        ], 401);
+    }
+
+    public function apiRegister(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'school' => 'required',
+            'nisn_nip' => 'required|string|unique:users',
+            'password' => 'required|min:8'
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'school' => $validated['school'],
+            'nisn_nip' => $validated['nisn_nip'],
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'token' => $token,
+            'user' => $user
+        ], 201);
+    }
+
+    public function apiLogout()
+    {
+        auth()->user()->tokens()->delete();
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Successfully logged out'
+        ], 200);
     }
 }
