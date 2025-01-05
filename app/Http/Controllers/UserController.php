@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Assessment;
+use App\Models\Discussion;
+use App\Models\Material;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -10,6 +13,17 @@ class UserController extends Controller
     public function index()
     {
         return view('users.index');
+    }
+
+    public function dashboard()
+    {
+        $users = User::all();
+        $total_users = User::count();
+
+        $materials = Material::count();
+        $assessments = Assessment::count();
+        $discussions = Discussion::count();
+        return view('dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
     }
 
     public function create()

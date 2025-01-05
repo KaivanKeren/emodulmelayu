@@ -21,6 +21,9 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required',
             'password' => 'required',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -29,7 +32,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', 'Invalid credentials');
+        return back()->with('error', 'Kredensial tidak valid.');
     }
 
     public function register()
@@ -50,11 +53,22 @@ class AuthController extends Controller
                 function ($attribute, $value, $fail) {
                     $length = strlen($value);
                     if ($length !== 10 && $length !== 18) {
-                        $fail('The NISN/NIP must be either 10 digits (for students) or 18 digits (for teachers).');
+                        $fail('NISN/NIP harus 10 digit (untuk siswa) atau 18 digit (untuk guru).');
                     }
                 },
             ],
             'password' => 'required|min:6|confirmed',
+        ], [
+            'name.required' => 'Nama wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar.',
+            'school.required' => 'Sekolah wajib diisi.',
+            'nisn_nip.required' => 'NISN/NIP wajib diisi.',
+            'nisn_nip.unique' => 'NISN/NIP sudah terdaftar.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
         // Determine role based on NISN/NIP length
@@ -71,7 +85,7 @@ class AuthController extends Controller
         ]);
 
         return redirect()->route('login')
-            ->with('success', 'User created successfully.');
+            ->with('success', 'User berhasil dibuat.');
     }
 
     public function logout()
@@ -87,12 +101,16 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required'
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Email tidak valid.',
+            'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             $token = $user->createToken('auth-token')->plainTextToken;
-            
+
             return response()->json([
                 'status' => 'success',
                 'token' => $token,
@@ -102,7 +120,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 'error',
-            'message' => 'Invalid credentials'
+            'message' => 'Kredensial tidak valid.'
         ], 401);
     }
 
@@ -114,6 +132,16 @@ class AuthController extends Controller
             'school' => 'required',
             'nisn_nip' => 'required|string|unique:users',
             'password' => 'required|min:8'
+        ], [
+            'name.required' => 'Nama wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar.',
+            'school.required' => 'Sekolah wajib diisi.',
+            'nisn_nip.required' => 'NISN/NIP wajib diisi.',
+            'nisn_nip.unique' => 'NISN/NIP sudah terdaftar.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
         ]);
 
         $user = User::create([
@@ -136,7 +164,7 @@ class AuthController extends Controller
     public function apiLogout()
     {
         auth()->user()->tokens()->delete();
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Successfully logged out'

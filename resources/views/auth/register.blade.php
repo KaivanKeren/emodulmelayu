@@ -12,10 +12,8 @@
     <div class="min-h-screen flex flex-col items-center justify-center px-4 py-8">
         <!-- Main Container -->
         <div class="w-full max-w-4xl space-y-6 bg-white p-8 rounded-2xl shadow-lg">
-            <!-- Logo/Image Container -->
-            <div class="flex items-center space-x-8">
-                <!-- Right side - Text -->
-                <div class="flex-1">
+            <div class="flex space-x-8">
+                <div class="mx-auto">
                     <h2 class="text-2xl font-bold text-gray-900 mb-1">
                         Registrasi E-Modul
                     </h2>
