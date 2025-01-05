@@ -7,6 +7,10 @@
     <title>E-Modul Budaya Melayu Riau - Login</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        window.onload = () => lucide.createIcons();
+    </script>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen flex flex-col items-center justify-center px-4">
@@ -70,9 +74,7 @@
                 <div class="rounded-md">
                     <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 @error('email') border-red-500 @enderror">
                         <span class="text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                            </svg>
+                            <i data-lucide="user" class="w-5 h-5"></i>
                         </span>
                         <input id="email" name="email" type="email" required 
                             class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
@@ -88,9 +90,7 @@
                 <div class="rounded-md">
                     <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 @error('password') border-red-500 @enderror">
                         <span class="text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                            </svg>
+                            <i data-lucide="key" class="w-5 h-5"></i>
                         </span>
                         <input id="password" name="password" type="password" required 
                             class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
