@@ -12,7 +12,8 @@ class UserController extends Controller
 {
     public function index()
     {
-        return view('users.index');
+        $users = User::all();
+        return view('admin.users.index', compact('users'));
     }
 
     public function dashboard()
@@ -23,7 +24,7 @@ class UserController extends Controller
         $materials = Material::count();
         $assessments = Assessment::count();
         $discussions = Discussion::count();
-        return view('dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
+        return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
     }
 
     public function create()
