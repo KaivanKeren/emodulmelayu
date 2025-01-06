@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboarController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,7 +16,9 @@ Route::get('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/register', [AuthController::class, 'postRegister'])->name('postRegister');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
+    Route::get('/admin/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
+    Route::get('/siswa/dashboard', [DashboarController::class, 'studentDashboard'])->name('studentDashboard');
+    Route::get('/guru/dashboard', [DashboarController::class, 'teacherDashboard'])->name('teacherDashboard');
     Route::get('/admin/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

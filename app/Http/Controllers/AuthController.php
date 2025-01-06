@@ -32,7 +32,17 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if ($user && auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
-            return redirect()->route('dashboard');
+            // Redirect based on user role
+            switch (auth()->user()->role) {
+                case 'siswa':
+                    return redirect()->route('studentDashboard');
+                case 'guru':
+                    return redirect()->route('teacherDashboard');
+                case 'admin':
+                    return redirect()->route('adminDashboard');
+                default:
+                    return redirect()->route('dashboard');
+            }
         }
 
         return back()->with('error', 'Kredensial tidak valid.');

@@ -16,17 +16,6 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    public function dashboard()
-    {
-        $users = User::all();
-        $total_users = User::count();
-
-        $materials = Material::count();
-        $assessments = Assessment::count();
-        $discussions = Discussion::count();
-        return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
-    }
-
     public function create()
     {
         return view('users.create');
@@ -123,7 +112,7 @@ class UserController extends Controller
         $request->validate($validation);
 
         $data = $request->only(['name', 'email', 'nisn_nip', 'role', 'school', 'status']);
-        
+
         // Only update password if provided
         if ($request->filled('password')) {
             $data['password'] = bcrypt($request->password);
