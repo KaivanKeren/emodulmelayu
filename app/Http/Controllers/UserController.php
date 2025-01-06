@@ -80,4 +80,64 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('success', 'User deleted successfully');
     }
+
+    public function apiIndex()
+    {
+        $users = User::paginate(10);
+        return response()->json($users);
+    }
+
+    public function apiShow(User $user)
+    {
+        return response()->json($user);
+    }
+
+    public function apiStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email',
+            'nisn_nip' => 'required',
+            'role' => 'required',
+            'school' => 'required',
+            'password' => 'required|min:6',
+        ]);
+
+        $user = User::create($request->all());
+
+        return response()->json(['success' => 'User created successfully.', 'user' => $user], 201);
+    }
+
+    public function apiUpdate(Request $request, User $user)
+    {
+        $validation = [
+            'name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'nisn_nip' => 'sometimes',
+            'role' => 'sometimes',
+            'school' => 'sometimes',
+            'status' => 'sometimes',
+            'password' => 'sometimes|min:6',
+        ];
+
+        $request->validate($validation);
+
+        $data = $request->only(['name', 'email', 'nisn_nip', 'role', 'school', 'status']);
+        
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $data['password'] = bcrypt($request->password);
+        }
+
+        $user->update($data);
+
+        return response()->json(['success' => 'User updated successfully.', 'user' => $user]);
+    }
+
+    public function apiDestroy(User $user)
+    {
+        $user->delete();
+
+        return response()->json(['success' => 'User deleted successfully.']);
+    }
 }
