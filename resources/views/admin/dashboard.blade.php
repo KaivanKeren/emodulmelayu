@@ -73,7 +73,7 @@
                 </tr>
             </thead>
             <tbody class="text-sm">
-                @foreach ($users as $user)
+                @foreach ($users->take(3) as $user)
                     <tr class="border-t">
                         <td class="py-4">{{ $user->name }}</td>
                         <td>{{ $user->role }}</td>
@@ -81,10 +81,10 @@
                         <td>
                             <span
                                 class="px-2 py-1 text-xs font-medium 
-                        @if ($user->status === 'active') text-green-700 bg-green-100
-                        @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
-                        @else text-red-700 bg-red-100 @endif 
-                        rounded-full">
+                            @if ($user->status === 'active') text-green-700 bg-green-100
+                            @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
+                            @else text-red-700 bg-red-100 @endif 
+                            rounded-full">
                                 {{ $user->status }}
                             </span>
                         </td>
@@ -92,11 +92,25 @@
                         <td>
                             <button class="text-gray-400 hover:text-gray-500">
                                 <i data-lucide="more-vertical" class="w-5 h-5"></i>
-
                             </button>
                         </td>
                     </tr>
                 @endforeach
+
+                @if ($users->count() > 3)
+                    <tr class="border-t">
+                        <td colspan="6" class="py-4 text-center">
+                            <a href="{{ route('users.index') }}"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800">
+                                View All Users
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     </div>

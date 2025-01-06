@@ -3,42 +3,58 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <table class="w-full">
-        <thead>
-            <tr class="text-left text-gray-500 text-sm">
-                <th class="pb-4">Nama</th>
-                <th class="pb-4">Role</th>
-                <th class="pb-4">Sekolah</th>
-                <th class="pb-4">Status</th>
-                <th class="pb-4">Tanggal Daftar</th>
-                <th class="pb-4"></th>
-            </tr>
-        </thead>
-        <tbody class="text-sm">
-            @foreach ($users as $user)
-                <tr class="border-t">
-                    <td class="py-4">{{ $user->name }}</td>
-                    <td>{{ $user->role }}</td>
-                    <td>{{ $user->school }}</td>
-                    <td>
-                        <span
-                            class="px-2 py-1 text-xs font-medium 
-        @if ($user->status === 'active') text-green-700 bg-green-100
-        @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
-        @else text-red-700 bg-red-100 @endif 
-        rounded-full">
-                            {{ $user->status }}
-                        </span>
-                    </td>
-                    <td>{{ $user->created_at->format('d M Y') }}</td>
-                    <td>
-                        <button class="text-gray-400 hover:text-gray-500">
-                            <i data-lucide="more-vertical" class="w-5 h-5"></i>
-
-                        </button>
-                    </td>
+    <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold">Manajemen Pengguna</h2>
+            <div class="flex space-x-3">
+                <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Filter
+                </button>
+                <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+                    Tambah User
+                </button>
+            </div>
+        </div>
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-gray-500 text-sm">
+                    <th class="pb-4">Nama</th>
+                    <th class="pb-4">Role</th>
+                    <th class="pb-4">Sekolah</th>
+                    <th class="pb-4">Status</th>
+                    <th class="pb-4">Tanggal Daftar</th>
+                    <th class="pb-4"></th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody class="text-sm">
+                @foreach ($users as $user)
+                    <tr class="border-t">
+                        <td class="py-4">{{ $user->name }}</td>
+                        <td>{{ $user->role }}</td>
+                        <td>{{ $user->school }}</td>
+                        <td>
+                            <span class="px-2 py-1 text-xs font-medium 
+                                @if ($user->status === 'active') text-green-700 bg-green-100
+                                @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
+                                @else text-red-700 bg-red-100 @endif 
+                                rounded-full">
+                                {{ $user->status }}
+                            </span>
+                        </td>
+                        <td>{{ $user->created_at->format('d M Y') }}</td>
+                        <td>
+                            <button class="text-gray-400 hover:text-gray-500">
+                                <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="mt-6">
+            {{ $users->links() }}
+        </div>
+    </div>
 @endsection
