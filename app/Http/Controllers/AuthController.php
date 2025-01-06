@@ -128,15 +128,17 @@ class AuthController extends Controller
             $token = $user->createToken('auth-token');
 
             return response()->json([
-                'status' => 'success',
+                'code' => 200,
                 'message' => 'Login berhasil.',
-                'token' => $token->plainTextToken,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'school' => $user->school,
-                    'role' => $user->role,
+                'data' => [
+                    'token' => $token->plainTextToken,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'school' => $user->school,
+                        'role' => $user->role,
+                    ],
                 ],
             ]);
         } catch (ValidationException $e) {
@@ -205,8 +207,9 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'success',
-                'user' => $user,
+                'code' => 201,
+                'message' => 'Registrasi berhasil.',
+                'data' => $user,
             ], 201)->header('Accept', 'application/json');
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -242,8 +245,9 @@ class AuthController extends Controller
             $user->tokens()->delete();
 
             return response()->json([
-                'status' => 'success',
+                'code' => 200,
                 'message' => 'Berhasil logout.',
+                'data' => new \stdClass(),
             ], 200);
         } catch (\Throwable $e) {
             Log::error('Logout error', [
