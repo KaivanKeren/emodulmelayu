@@ -16,9 +16,10 @@
     <div class="min-h-screen flex">
         <!-- Sidebar -->
         @include('components.sidebar')
-
+        
         <!-- Main Content -->
         <main class="flex-1 p-8">
+            @include('components.topbar')
             @yield('content')
         </main>
     </div>

@@ -1,8 +1,8 @@
-<aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
+<aside class="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
     <div class="p-6">
         <h1 class="text-xl font-bold text-gray-900">Admin Panel</h1>
     </div>
-    <nav class="space-y-1 px-3">
+    <nav class="space-y-1 px-3 flex-grow">
         <a href="{{ route('dashboard') }}"
             class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
             {{ Request::is('dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
@@ -45,4 +45,14 @@
             Kalender
         </a>
     </nav>
+    <div class="p-3">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" 
+                class="flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                Logout
+            </button>
+        </form>
+    </div>
 </aside>
