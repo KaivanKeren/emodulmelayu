@@ -10,7 +10,7 @@
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                <a href="{{ route('users.create') }}">
+                <a href="#">
                     <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
                         Tambah Assessment
                     </button>
@@ -42,14 +42,61 @@
                             </span>
                         </td>
                         <td>{{ $assessment->created_at->format('d M Y') }}</td>
-                        <td>
-                            <button class="text-gray-400 hover:text-gray-500">
+                        <td class="relative">
+                            <button onclick="toggleDropdown({{ $assessment->id }})" class="text-gray-400 hover:text-gray-500">
                                 <i data-lucide="more-vertical" class="w-5 h-5"></i>
                             </button>
+                            <!-- Dropdown Menu -->
+                            <div id="dropdown-{{ $assessment->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                                <div class="py-1">
+                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                                        Lihat Detail
+                                    </a>
+                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
+                                        Buat Pertanyaan
+                                    </a>
+                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                                        Edit Assessment
+                                    </a>
+                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                                        Hapus
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
+    </div>
 
-    @endsection
+    <!-- JavaScript for dropdown functionality -->
+    <script>
+        function toggleDropdown(assessmentId) {
+            // Close all other dropdowns
+            document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {
+                if (dropdown.id !== `dropdown-${assessmentId}`) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Toggle current dropdown
+            const dropdown = document.getElementById(`dropdown-${assessmentId}`);
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdowns = document.querySelectorAll('[id^="dropdown-"]');
+            dropdowns.forEach(dropdown => {
+                if (!event.target.closest('td')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+@endsection
