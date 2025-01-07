@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/accept/{id}', [UserController::class, 'accept'])->name('users.accept');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
 

@@ -23,16 +23,17 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-            'nisn_nip' => 'required',
-            'role' => 'required',
-            'school' => 'required',
-            'status' => 'required',
-            'password' => 'required',
-        ]
-    );
+        $request->validate(
+            [
+                'name' => 'required',
+                'email' => 'required',
+                'nisn_nip' => 'required',
+                'role' => 'required',
+                'school' => 'required',
+                'status' => 'required',
+                'password' => 'required',
+            ]
+        );
 
         User::create($request->all());
 
@@ -62,6 +63,20 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully');
     }
+
+    public function accept($id)
+    {
+        $user = User::findOrFail($id);
+        if ($user->status === 'pending') {
+            $user->status = 'accepted';
+            $user->save();
+
+            return redirect()->route('users.index')->with('success', 'Pengguna berhasil diterima.');
+        }
+
+        return redirect()->route('users.index')->with('error', 'Aksi tidak valid.');
+    }
+
 
     public function destroy(User $user)
     {
