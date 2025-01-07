@@ -11,14 +11,31 @@
     <script>
         window.onload = () => lucide.createIcons();
     </script>
+    <style>
+        .bg-auth-pattern {
+            background-image: url('{{ asset('bg-auth.jpg') }}');
+            background-repeat: repeat;
+            background-size: 300px;
+            opacity: 0.2;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
-    <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <!-- Background Pattern -->
+    <div class="bg-auth-pattern"></div>
+    
+    <div class="min-h-screen flex flex-col items-center justify-center px-4 relative z-10">
         <!-- Main Container -->
         <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
             <!-- Logo/Image Container -->
             <div class="flex flex-col items-center">
-                <!-- Replace with your actual image path -->
                 <h2 class="text-2xl font-bold text-gray-900 text-center mb-2">
                     Selamat datang di E-Modul
                 </h2>
