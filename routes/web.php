@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboarController;
 use App\Http\Controllers\UserController;
@@ -20,5 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/siswa/dashboard', [DashboarController::class, 'studentDashboard'])->name('studentDashboard');
     Route::get('/guru/dashboard', [DashboarController::class, 'teacherDashboard'])->name('teacherDashboard');
     Route::get('/admin/users', [UserController::class, 'index'])->name('users.index');
+    
+    Route::resource('assessments', AssessmentController::class);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+

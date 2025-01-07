@@ -73,12 +73,20 @@ class UserController extends Controller
     public function apiIndex()
     {
         $users = User::paginate(10);
-        return response()->json($users);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Show all users successfully',
+            'data' => $users
+        ]);
     }
 
     public function apiShow(User $user)
     {
-        return response()->json($user);
+        return response()->json([
+            'code' => 200,
+            'message' => 'User details retrieved successfully',
+            'data' => $user
+        ]);
     }
 
     public function apiStore(Request $request)
@@ -94,7 +102,11 @@ class UserController extends Controller
 
         $user = User::create($request->all());
 
-        return response()->json(['success' => 'User created successfully.', 'user' => $user], 201);
+        return response()->json([
+            'code' => 201,
+            'message' => 'User created successfully.',
+            'data' => $user
+        ], 201);
     }
 
     public function apiUpdate(Request $request, User $user)
@@ -120,13 +132,20 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return response()->json(['success' => 'User updated successfully.', 'user' => $user]);
+        return response()->json([
+            'code' => 200,
+            'message' => 'User updated successfully.',
+            'data' => $user
+        ]);
     }
 
     public function apiDestroy(User $user)
     {
         $user->delete();
 
-        return response()->json(['success' => 'User deleted successfully.']);
+        return response()->json([
+            'code' => 200,
+            'message' => 'User deleted successfully.'
+        ]);
     }
 }
