@@ -90,9 +90,29 @@
                         </td>
                         <td>{{ $user->created_at->format('d M Y') }}</td>
                         <td>
-                            <button class="text-gray-400 hover:text-gray-500">
+                            <button onclick="toggleDropdown({{ $user->id }})" class="text-gray-400 hover:text-gray-500">
                                 <i data-lucide="more-vertical" class="w-5 h-5"></i>
                             </button>
+                            <div id="dropdown-{{ $user->id }}"
+                                class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                                <div class="py-1">
+                                    <a href="#"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
+                                        Terima
+                                    </a>
+                                    <a href="#"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                                        Edit Pengguna
+                                    </a>
+                                    <a href="#"
+                                        class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                                        Hapus
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
@@ -114,4 +134,29 @@
             </tbody>
         </table>
     </div>
+
+    <script>
+        function toggleDropdown(userId) {
+            // Close all other dropdowns
+            document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {
+                if (dropdown.id !== `dropdown-${userId}`) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Toggle current dropdown
+            const dropdown = document.getElementById(`dropdown-${userId}`);
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdowns = document.querySelectorAll('[id^="dropdown-"]');
+            dropdowns.forEach(dropdown => {
+                if (!event.target.closest('td')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 @endsection
