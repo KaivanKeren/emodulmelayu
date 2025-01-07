@@ -14,7 +14,7 @@
     </script>
     <style>
         .bg-auth-pattern {
-            background-image: url('{{ asset('bg-auth.jpg') }}');
+            background-image: url('/bg-auth.jpg');
             background-repeat: repeat;
             background-size: 300px;
             opacity: 0.2;
