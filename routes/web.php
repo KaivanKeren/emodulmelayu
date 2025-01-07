@@ -17,12 +17,18 @@ Route::get('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/register', [AuthController::class, 'postRegister'])->name('postRegister');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/admin/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
     Route::get('/siswa/dashboard', [DashboarController::class, 'studentDashboard'])->name('studentDashboard');
     Route::get('/guru/dashboard', [DashboarController::class, 'teacherDashboard'])->name('teacherDashboard');
-    Route::get('/admin/users', [UserController::class, 'index'])->name('users.index');
+
+    Route::prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+
+        Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
+    });
     
-    Route::resource('assessments', AssessmentController::class);
+    // Route::resource('assessments', AssessmentController::class);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
-

@@ -12,7 +12,7 @@ class AssessmentController extends Controller
     public function index()
     {
         $assessments = Assessment::latest()->paginate(10);
-        return view('assessments.index', compact('assessments'));
+        return view('admin.assessments.index', compact('assessments'));
     }
 
     public function create()
