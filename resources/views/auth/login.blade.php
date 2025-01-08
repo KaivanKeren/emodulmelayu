@@ -136,14 +136,6 @@
                         Masuk
                     </button>
                 </div>
-
-                <!-- Register Link -->
-                <div class="flex items-center justify-center text-sm">
-                    <span class="text-gray-500">Belum mempunyai akun?</span>
-                    <a href="{{ route('register') }}" class="ml-2 font-medium text-orange-500 hover:text-orange-600">
-                        Registrasi
-                    </a>
-                </div>
             </form>
         </div>
     </div>

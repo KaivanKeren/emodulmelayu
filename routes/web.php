@@ -17,9 +17,6 @@ Route::get('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/register', [AuthController::class, 'postRegister'])->name('postRegister');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/siswa/dashboard', [DashboarController::class, 'studentDashboard'])->name('studentDashboard');
-    Route::get('/guru/dashboard', [DashboarController::class, 'teacherDashboard'])->name('teacherDashboard');
-
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -30,6 +27,5 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
     });
     
-    // Route::resource('assessments', AssessmentController::class);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

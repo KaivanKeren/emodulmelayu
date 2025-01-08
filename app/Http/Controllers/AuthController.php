@@ -58,59 +58,6 @@ class AuthController extends Controller
         return back()->with('error', 'Kredensial tidak valid.');
     }
 
-    public function register()
-    {
-        return view('auth.register');
-    }
-
-    public function postRegister(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'school' => 'required',
-            'nisn_nip' => [
-                'required',
-                'string',
-                'unique:users',
-                function ($attribute, $value, $fail) {
-                    $length = strlen($value);
-                    if ($length !== 10 && $length !== 18) {
-                        $fail('NISN/NIP harus 10 digit (untuk siswa) atau 18 digit (untuk guru).');
-                    }
-                },
-            ],
-            'password' => 'required|min:6|confirmed',
-        ], [
-            'name.required' => 'Nama wajib diisi.',
-            'email.required' => 'Email wajib diisi.',
-            'email.email' => 'Email tidak valid.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'school.required' => 'Sekolah wajib diisi.',
-            'nisn_nip.required' => 'NISN/NIP wajib diisi.',
-            'nisn_nip.unique' => 'NISN/NIP sudah terdaftar.',
-            'password.required' => 'Kata sandi wajib diisi.',
-            'password.min' => 'Kata sandi minimal 6 karakter.',
-            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
-        ]);
-
-        // Determine role based on NISN/NIP length
-        $role = strlen($request->nisn_nip) === 10 ? 'siswa' : 'guru';
-
-        // Create user with role
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'nisn_nip' => $request->nisn_nip,
-            'school' => $request->school,
-            'password' => bcrypt($request->password),
-            'role' => $role,
-        ]);
-
-        return redirect()->route('login')
-            ->with('success', 'User berhasil dibuat.');
-    }
-
     public function logout()
     {
         auth()->logout();
