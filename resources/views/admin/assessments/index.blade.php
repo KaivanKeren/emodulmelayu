@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Dashboard')
+@section('title', 'Assessment')
 
 @section('content')
     <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
