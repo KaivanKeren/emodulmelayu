@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AssessmentResource;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -91,10 +92,12 @@ class AssessmentController extends Controller
 
     public function apiShow(Assessment $assessment)
     {
+        $assessment->load(['questions.options']);
+        
         return response()->json([
             'code' => 200,
             'message' => 'Assessment detail retrieved successfully',
-            'data' => $assessment
+            'data' => new AssessmentResource($assessment)
         ]);
     }
 

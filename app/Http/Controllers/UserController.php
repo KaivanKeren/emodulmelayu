@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Assessment;
-use App\Models\Discussion;
-use App\Models\Material;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -86,6 +83,7 @@ class UserController extends Controller
             ->with('success', 'User deleted successfully');
     }
 
+    // API Method
     public function apiIndex()
     {
         $users = User::paginate(10);

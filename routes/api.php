@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,12 @@ Route::middleware('api')->group(function () {
             Route::get('/{assessment}', [AssessmentController::class, 'apiShow']);
             Route::put('/{assessment}', [AssessmentController::class, 'apiUpdate']);
             Route::delete('/{assessment}', [AssessmentController::class, 'apiDestroy']);
+
+            Route::get('{assessment}/questions/', [QuestionController::class, 'apiIndex']);
+            Route::post('{assessment}/questions/', [QuestionController::class, 'apiStore']);
+            Route::get('{assessment}/questions/{question}', [QuestionController::class, 'apiShow']);
+            Route::put('{assessment}/questions/{question}', [QuestionController::class, 'apiUpdate']);
+            Route::delete('{assessment}/questions/{question}', [QuestionController::class, 'apiDestroy']);
         });
     });
 });
