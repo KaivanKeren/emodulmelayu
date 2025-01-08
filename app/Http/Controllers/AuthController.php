@@ -21,6 +21,7 @@ class AuthController extends Controller
 
     public function postLogin(Request $request)
     {
+        // Validasi input
         $request->validate([
             'email' => 'required',
             'password' => 'required',
@@ -29,22 +30,31 @@ class AuthController extends Controller
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
+        // Ambil user berdasarkan email
         $user = User::where('email', $request->email)->first();
 
-        if ($user && auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
-            // Redirect based on user role
-            switch (auth()->user()->role) {
-                case 'siswa':
-                    return redirect()->route('studentDashboard');
-                case 'guru':
-                    return redirect()->route('teacherDashboard');
-                case 'admin':
-                    return redirect()->route('adminDashboard');
-                default:
-                    return redirect()->route('dashboard');
+        // Validasi kredensial dan status pengguna
+        if ($user) {
+            if ($user->status === 'pending') {
+                return back()->with('error', 'Akun Anda belum disetujui. Silakan hubungi administrator.');
+            }
+
+            if (auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
+                // Redirect berdasarkan role pengguna
+                switch (auth()->user()->role) {
+                    case 'siswa':
+                        return redirect()->route('studentDashboard');
+                    case 'guru':
+                        return redirect()->route('teacherDashboard');
+                    case 'admin':
+                        return redirect()->route('adminDashboard');
+                    default:
+                        return redirect()->route('dashboard');
+                }
             }
         }
 
+        // Jika kredensial tidak valid
         return back()->with('error', 'Kredensial tidak valid.');
     }
 
@@ -133,8 +143,20 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Ambil data user dan buat token
+            // Ambil data user
             $user = Auth::user();
+
+            // Validasi status pengguna
+            if ($user->status === 'pending') {
+                Auth::logout(); // Logout user yang statusnya pending
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'error',
+                    'message' => 'Akun Anda belum disetujui. Silakan hubungi administrator.',
+                ], 403);
+            }
+
+            // Buat token
             $token = $user->createToken('auth-token');
 
             return response()->json([
