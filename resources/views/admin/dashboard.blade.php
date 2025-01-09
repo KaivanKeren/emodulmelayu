@@ -54,9 +54,9 @@
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+                {{-- <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
                     Tambah User
-                </button>
+                </button> --}}
             </div>
         </div>
 

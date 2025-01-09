@@ -10,11 +10,11 @@
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                <a href="{{ route('users.create') }}">
+                {{-- <a href="{{ route('users.create') }}">
                     <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
                         Tambah User
                     </button>
-                </a>
+                </a> --}}
             </div>
         </div>
         <table class="w-full">
