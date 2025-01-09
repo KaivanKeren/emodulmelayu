@@ -16,35 +16,51 @@ class QuestionController extends Controller
         return view('questions.index', compact('questions'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('questions.create');
+        // Get assessment from the query parameter
+        $assessment = Assessment::findOrFail($request->query('assessment'));
+        return view('admin.questions.create', compact('assessment'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:255',
+            'question_text' => 'required|string|max:255',
+            'question_type' => 'required|in:single_choice,multiple_choice',
             'assessment_id' => 'required|exists:assessments,id',
             'options' => 'required|array|min:2',
-            'options.*.content' => 'required|string|max:255',
-            'options.*.is_correct' => 'required|boolean'
+            'correct_answer' => $request->input('question_type') === 'single_choice'
+                ? 'required|numeric'
+                : 'required|array|min:1'
         ]);
 
+        // Create question
         $question = Question::create([
-            'content' => $validated['content'],
+            'content' => $validated['question_text'],
+            'type' => $validated['question_type'],
             'assessment_id' => $validated['assessment_id']
         ]);
 
-        foreach ($validated['options'] as $optionData) {
+        // Handle options and correct answers
+        foreach ($validated['options'] as $index => $optionContent) {
+            $isCorrect = false;
+
+            if ($validated['question_type'] === 'single_choice') {
+                $isCorrect = $index == $validated['correct_answer'];
+            } else {
+                $isCorrect = isset($validated['correct_answer'][$index]);
+            }
+
             $question->options()->create([
-                'content' => $optionData['content'],
-                'is_correct' => $optionData['is_correct']
+                'content' => $optionContent,
+                'is_correct' => $isCorrect
             ]);
         }
 
-        return redirect()->route('questions.index')
-            ->with('success', 'Question created successfully.');
+        return redirect()
+            ->route('assessments.show', $validated['assessment_id'])
+            ->with('success', 'Pertanyaan berhasil ditambahkan');
     }
 
     public function show(Question $question)

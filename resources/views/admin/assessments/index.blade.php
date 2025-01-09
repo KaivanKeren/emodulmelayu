@@ -10,7 +10,7 @@
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                <a href="#">
+                <a href="{{ route('assessments.create') }}">
                     <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
                         Tambah Assessment
                     </button>
@@ -43,25 +43,31 @@
                         </td>
                         <td>{{ $assessment->created_at->format('d M Y') }}</td>
                         <td class="relative">
-                            <button onclick="toggleDropdown({{ $assessment->id }})" class="text-gray-400 hover:text-gray-500">
+                            <button onclick="toggleDropdown({{ $assessment->id }})"
+                                class="text-gray-400 hover:text-gray-500">
                                 <i data-lucide="more-vertical" class="w-5 h-5"></i>
                             </button>
                             <!-- Dropdown Menu -->
-                            <div id="dropdown-{{ $assessment->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                            <div id="dropdown-{{ $assessment->id }}"
+                                class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                                 <div class="py-1">
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <a href="{{ route('assessments.show', ['assessment' => $assessment->id]) }}"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                                         Lihat Detail
                                     </a>
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <a href="{{ route('questions.create', ['assessment' => $assessment->id]) }}"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
                                         Buat Pertanyaan
                                     </a>
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <a href="#"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
                                         Edit Assessment
                                     </a>
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                    <a href="#"
+                                        class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                                         <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
                                         Hapus
                                     </a>
@@ -83,7 +89,7 @@
                     dropdown.classList.add('hidden');
                 }
             });
-            
+
             // Toggle current dropdown
             const dropdown = document.getElementById(`dropdown-${assessmentId}`);
             dropdown.classList.toggle('hidden');

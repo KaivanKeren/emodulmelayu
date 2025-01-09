@@ -18,7 +18,7 @@ class AssessmentController extends Controller
 
     public function create()
     {
-        return view('assessments.create');
+        return view('admin.assessments.create');
     }
 
     public function store(Request $request)
@@ -90,14 +90,12 @@ class AssessmentController extends Controller
         ], 201);
     }
 
-    public function apiShow(Assessment $assessment)
+    public function show(Assessment $assessment)
     {
         $assessment->load(['questions.options']);
-        
-        return response()->json([
-            'code' => 200,
-            'message' => 'Assessment detail retrieved successfully',
-            'data' => new AssessmentResource($assessment)
+
+        return view('admin.assessments.show', [
+            'assessment' => $assessment
         ]);
     }
 

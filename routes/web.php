@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboarController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,13 +20,27 @@ Route::post('/register', [AuthController::class, 'postRegister'])->name('postReg
 Route::middleware('auth')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/accept/{id}', [UserController::class, 'accept'])->name('users.accept');
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
-        Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
+
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserController::class, 'index'])->name('users.index');
+            Route::get('/accept/{id}', [UserController::class, 'accept'])->name('users.accept');
+            // Route::get('/create', [UserController::class, 'create'])->name('users.create');
+            // Route::post('/', [UserController::class, 'store'])->name('users.store');
+        });
+
+        Route::prefix('assessments')->group(function () {
+            Route::get('/', [AssessmentController::class, 'index'])->name('assessments.index');
+            Route::get('/create', [AssessmentController::class, 'create'])->name('assessments.create');
+            Route::get('/edit/{assessment}', [AssessmentController::class, 'edit'])->name('assessments.edit');
+            Route::post('/', [AssessmentController::class, 'store'])->name('assessments.store');
+            Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
+            Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+            Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
+            Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
+        });
+        
     });
-    
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
