@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboarController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
         });
         
+        Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

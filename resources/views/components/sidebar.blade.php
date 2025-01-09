@@ -56,7 +56,7 @@
             Diskusi
         </a>
 
-        <a href="#"
+        <a href="{{ route('calendar.index') }}"
             class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
             {{ Request::is('admin/calendar*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
             <i data-lucide="calendar" class="w-5 h-5 mr-3"></i>
