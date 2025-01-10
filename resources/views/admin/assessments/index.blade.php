@@ -61,16 +61,23 @@
                                         <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
                                         Buat Pertanyaan
                                     </a>
-                                    <a href="#"
+                                    <a href="{{ route('assessments.edit', ['assessment' => $assessment->id]) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
                                         Edit Assessment
                                     </a>
-                                    <a href="#"
-                                        class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
-                                        Hapus
-                                    </a>
+                                    <form action="{{ route('assessments.destroy', ['assessment' => $assessment->id]) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus assessment ini?');"
+                                        class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                            <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </td>

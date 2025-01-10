@@ -38,7 +38,7 @@ class AssessmentController extends Controller
 
     public function edit(Assessment $assessment)
     {
-        return view('assessments.edit', compact('assessment'));
+        return view('admin.assessments.edit', compact('assessment'));
     }
 
     public function update(Request $request, Assessment $assessment)

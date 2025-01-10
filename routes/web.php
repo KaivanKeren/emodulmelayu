@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/edit/{assessment}', [AssessmentController::class, 'edit'])->name('assessments.edit');
             Route::post('/', [AssessmentController::class, 'store'])->name('assessments.store');
             Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
+            Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
             Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
