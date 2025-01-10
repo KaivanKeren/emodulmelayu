@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\QuestionController;
@@ -37,12 +38,21 @@ Route::middleware('api')->group(function () {
             Route::get('/{assessment}', [AssessmentController::class, 'apiShow']);
             Route::put('/{assessment}', [AssessmentController::class, 'apiUpdate']);
             Route::delete('/{assessment}', [AssessmentController::class, 'apiDestroy']);
+            
+            Route::get('{assessment}/results', [AssessmentController::class, 'apiGetAllResults']);
 
             Route::get('{assessment}/questions/', [QuestionController::class, 'apiIndex']);
             Route::post('{assessment}/questions/', [QuestionController::class, 'apiStore']);
             Route::get('{assessment}/questions/{question}', [QuestionController::class, 'apiShow']);
             Route::put('{assessment}/questions/{question}', [QuestionController::class, 'apiUpdate']);
             Route::delete('{assessment}/questions/{question}', [QuestionController::class, 'apiDestroy']);
+
+            Route::post('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiStore']);
+            Route::get('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiIndex']);
+            Route::get('{assessment}/questions/{question}/answers/{answer}', [AnswerController::class, 'apiShow']);
+            Route::put('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiUpdate']);
+            Route::delete('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiDestroy']);
+            Route::get('{assessment}/questions/{question}/results', [AnswerController::class, 'apiGetResults']);
         });
     });
 });
