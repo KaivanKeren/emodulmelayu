@@ -27,8 +27,9 @@ Route::middleware('auth')->group(function () {
         Route::prefix('users')->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('users.index');
             Route::get('/accept/{id}', [UserController::class, 'accept'])->name('users.accept');
-            // Route::get('/create', [UserController::class, 'create'])->name('users.create');
-            // Route::post('/', [UserController::class, 'store'])->name('users.store');
+            Route::get('/{user}', [UserController::class, 'edit'])->name('users.edit');
+            Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         });
 
         Route::prefix('assessments')->group(function () {

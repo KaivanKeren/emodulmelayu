@@ -59,16 +59,23 @@
                                             Terima
                                         </a>
                                     @endif
-                                    <a href="#"
+                                    <a href="{{ route('users.edit', $user->id) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
                                         Edit Pengguna
                                     </a>
-                                    <a href="#"
-                                        class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
-                                        Hapus
-                                    </a>
+                                    <form action="{{ route('users.destroy', ['user' => $user->id]) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?');"
+                                        class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                            <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </td>

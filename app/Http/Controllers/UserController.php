@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -40,26 +41,44 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        return view('admin.users.edit', compact('user'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-            'nisn_nip' => 'required',
-            'role' => 'required',
-            'school' => 'required',
-            'status' => 'required',
-            'password' => 'required',
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'nisn_nip' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $length = strlen($value);
+                    if ($length !== 10 && $length !== 18) {
+                        $fail('NISN/NIP harus 10 digit (untuk siswa) atau 18 digit (untuk guru).');
+                    }
+                },
+            ],
+            'role' => 'required|in:admin,guru,siswa',
+            'school' => 'required|string|max:255',
+            'status' => 'required|boolean',
+            'password' => 'nullable|min:6', // Password optional, but must have a minimum length if provided
         ]);
 
-        $user->update($request->all());
+        // Exclude password from $validatedData if not provided
+        if (empty($validatedData['password'])) {
+            unset($validatedData['password']);
+        } else {
+            $validatedData['password'] = bcrypt($validatedData['password']);
+        }
 
-        return redirect()->route('admin.users.index')
+        // Update the user with validated data
+        $user->update($validatedData);
+
+        return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
     }
+
 
     public function accept($id)
     {
@@ -79,7 +98,7 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('users.index')
             ->with('success', 'User deleted successfully');
     }
 
