@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -9,44 +10,61 @@ class CalendarController extends Controller
 {
     public function index(Request $request)
     {
-        $tahun = $request->get('tahun', now()->year);
-        $bulan = $request->get('bulan', now()->month);
+        $tanggalSaatIni = Carbon::now();
 
-        $tanggalSaatIni = Carbon::createFromDate($tahun, $bulan, 1);
-        $hariDalamBulan = $tanggalSaatIni->daysInMonth;
-        $awalBulan = $tanggalSaatIni->startOfMonth()->dayOfWeek;
-        $akhirBulan = $tanggalSaatIni->endOfMonth()->dayOfWeek;
+        if ($request->has(['tahun', 'bulan'])) {
+            $tanggalSaatIni = Carbon::createFromDate($request->tahun, $request->bulan, 1);
+        }
 
-        $kalender = [];
+        $kalender = $this->generateKalender($tanggalSaatIni);
+
+        // Fetch events for the entire month
+        $events = Event::whereYear('date', $tanggalSaatIni->year)
+            ->whereMonth('date', $tanggalSaatIni->month)
+            ->orderBy('date')
+            ->get()
+            ->groupBy(function ($event) {
+                return $event->date->format('Y-m-d');
+            });
+
+        return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events'));
+    }
+
+    private function generateKalender($tanggal)
+    {
+        $tahun = $tanggal->year;
+        $bulan = $tanggal->month;
+
+        $hariPertama = Carbon::createFromDate($tahun, $bulan, 1);
+        $jumlahHari = $hariPertama->daysInMonth;
+
+        $mingguArray = [];
         $minggu = [];
 
-        // Isi hari kosong di awal
-        for ($i = 0; $i < $awalBulan; $i++) {
+        // Fill in empty days before the first day of the month
+        for ($i = 0; $i < $hariPertama->dayOfWeek; $i++) {
             $minggu[] = null;
         }
 
-        // Isi hari dalam bulan
-        for ($hari = 1; $hari <= $hariDalamBulan; $hari++) {
+        // Fill in the days of the month
+        for ($hari = 1; $hari <= $jumlahHari; $hari++) {
             $minggu[] = $hari;
 
-            if (count($minggu) === 7) {
-                $kalender[] = $minggu;
+            if (count($minggu) == 7) {
+                $mingguArray[] = $minggu;
                 $minggu = [];
             }
         }
 
-        // Isi hari kosong di akhir
-        for ($i = count($minggu); $i < 7; $i++) {
+        // Fill in empty days after the last day of the month
+        while (count($minggu) < 7 && !empty($minggu)) {
             $minggu[] = null;
         }
 
-        $kalender[] = $minggu;
+        if (!empty($minggu)) {
+            $mingguArray[] = $minggu;
+        }
 
-        return view('admin.calendar.index', [
-            'kalender' => $kalender,
-            'tahun' => $tahun,
-            'bulan' => $bulan,
-            'tanggalSaatIni' => $tanggalSaatIni,
-        ]);
+        return $mingguArray;
     }
 }
