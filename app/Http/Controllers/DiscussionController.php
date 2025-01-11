@@ -6,5 +6,8 @@ use Illuminate\Http\Request;
 
 class DiscussionController extends Controller
 {
-    
+    public function index()
+    {
+        return view('admin.discussion.index');
+    }
 }

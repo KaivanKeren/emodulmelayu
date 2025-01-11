@@ -4,7 +4,9 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboarController;
+use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +44,14 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
             Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
+        });
+
+        Route::prefix('materials')->group(function () {
+            Route::get('/', [MaterialController::class, 'index'])->name('materials.index');
+        });
+
+        Route::prefix('discussions')->group(function () {
+            Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
         });
         
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
