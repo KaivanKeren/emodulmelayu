@@ -30,6 +30,44 @@ class CalendarController extends Controller
         return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events'));
     }
 
+    public function apiIndex(Request $request)
+    {
+        $tanggalSaatIni = Carbon::now();
+
+        // Jika request memiliki parameter 'tahun' dan 'bulan', gunakan tanggal tersebut
+        if ($request->has(['tahun', 'bulan'])) {
+            $tanggalSaatIni = Carbon::createFromDate($request->tahun, $request->bulan, 1);
+        }
+
+        // Generate kalender untuk bulan yang dipilih
+        $kalender = $this->generateKalender($tanggalSaatIni);
+
+        // Ambil event berdasarkan tahun dan bulan yang dipilih
+        $events = Event::whereYear('date', $tanggalSaatIni->year)
+            ->whereMonth('date', $tanggalSaatIni->month)
+            ->orderBy('date')
+            ->get()
+            ->groupBy(function ($event) {
+                return $event->date->format('Y-m-d');
+            });
+
+        // Format response JSON
+        return response()->json([
+            'tanggalSaatIni' => $tanggalSaatIni->toDateString(),
+            'kalender' => $kalender,
+            'events' => $events->map(function ($group) {
+                return $group->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'description' => $event->description,
+                        'date' => $event->date->toDateString(),
+                    ];
+                });
+            }),
+        ]);
+    }
+
     private function generateKalender($tanggal)
     {
         $tahun = $tanggal->year;

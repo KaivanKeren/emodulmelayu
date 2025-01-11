@@ -3,6 +3,8 @@
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -38,7 +40,7 @@ Route::middleware('api')->group(function () {
             Route::get('/{assessment}', [AssessmentController::class, 'apiShow']);
             Route::put('/{assessment}', [AssessmentController::class, 'apiUpdate']);
             Route::delete('/{assessment}', [AssessmentController::class, 'apiDestroy']);
-            
+
             Route::get('{assessment}/results', [AssessmentController::class, 'apiGetAllResults']);
 
             Route::get('{assessment}/questions/', [QuestionController::class, 'apiIndex']);
@@ -54,5 +56,11 @@ Route::middleware('api')->group(function () {
             Route::delete('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiDestroy']);
             Route::get('{assessment}/questions/{question}/results', [AnswerController::class, 'apiGetResults']);
         });
+
+        Route::get('/calendar', [CalendarController::class, 'apiIndex']);
+        Route::post('/events', [EventController::class, 'store']);
+        Route::get('/events/{id}', [EventController::class, 'show']);
+        Route::put('/events/{id}', [EventController::class, 'update']);
+        Route::delete('/events/{id}', [EventController::class, 'destroy']);
     });
 });

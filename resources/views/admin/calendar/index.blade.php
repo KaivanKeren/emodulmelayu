@@ -86,11 +86,11 @@
                                     onclick="openEventModal('{{ $tanggalSaatIni->year }}-{{ str_pad($tanggalSaatIni->month, 2, '0', STR_PAD_LEFT) }}-{{ str_pad($hari, 2, '0', STR_PAD_LEFT) }}')"
                                     class="w-full h-full flex flex-col hover:bg-orange-300/20 rounded-lg p-2 transition-colors duration-200
                                     {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
-                                        ? 'bg-orange-600/30'
+                                        ? 'bg-orange-300/30'
                                         : '' }}">
                                     <span
                                         class="text-sm font-medium {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
-                                            ? 'text-orange-700'
+                                            ? 'text-orange-800 bg-orange-300 p-1 rounded-full'
                                             : 'text-gray-800' }}">
                                         {{ $hari }}
                                     </span>
@@ -109,7 +109,7 @@
                                             @foreach ($events[$dateKey] as $event)
                                                 <div class="group relative">
                                                     <div onclick="openEventModal('{{ $dateKey }}', { id: {{ $event->id }}, title: '{{ addslashes($event->title) }}', content: '{{ addslashes($event->content) }}' })"
-                                                        class="px-2 py-1 text-xs bg-orange-200 text-orange-900 rounded-md truncate hover:bg-orange-400 cursor-pointer">
+                                                        class="px-2 py-1 text-xs bg-orange-200 text-orange-900 rounded-md truncate hover:bg-orange-300 cursor-pointer">
                                                         {{ $event->title }}
                                                     </div>
                                                 </div>

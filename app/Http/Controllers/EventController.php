@@ -21,8 +21,8 @@ class EventController extends Controller
             $event = Event::create($validated);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Event berhasil ditambahkan',
+                'code' => 201,
+                'message' => 'Event added successfully',
                 'data' => $event
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -65,8 +65,8 @@ class EventController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'success',
-                'message' => 'Event berhasil diperbarui',
+                'code' => 200,
+                'message' => 'Event updated successfully',
                 'data' => $event
             ]);
         } catch (\Exception $e) {
@@ -84,8 +84,8 @@ class EventController extends Controller
             $event->delete();
 
             return response()->json([
-                'status' => 'success',
-                'message' => 'Event berhasil dihapus'
+                'code' => 200,
+                'message' => 'Event deleted successfully'
             ]);
 
         } catch (\Exception $e) {
@@ -102,14 +102,15 @@ class EventController extends Controller
             $event = Event::findOrFail($id);
             
             return response()->json([
-                'status' => 'success',
+                'code' => 200,
+                'message' => 'Event retrieved successfully',
                 'data' => $event
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Event tidak ditemukan'
+                'message' => 'Event not found'
             ], 404);
         }
     }
