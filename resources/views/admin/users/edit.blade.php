@@ -93,19 +93,17 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="building" class="w-5 h-5"></i>
                                     </span>
-                                    <select name="school" id="school"
+                                    <select name="school_id" id="school"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                         <option value="">Pilih Sekolah</option>
-                                        <option value="smk 1 riau"
-                                            {{ old('school', $user->school) == 'smk 1 riau' ? 'selected' : '' }}>SMK 1 Riau
-                                        </option>
-                                        <option value="smk 2 riau"
-                                            {{ old('school', $user->school) == 'smk 2 riau' ? 'selected' : '' }}>SMK 2 Riau
-                                        </option>
-                                        <option value="smk 3 riau"
-                                            {{ old('school', $user->school) == 'smk 3 riau' ? 'selected' : '' }}>SMK 3 Riau
-                                        </option>
+                                        @foreach ($schools as $school)
+                                            <option value="{{ $school->id }}"
+                                                {{ old('school_id', $user->school_id) == $school->id ? 'selected' : '' }}>
+                                                {{ $school->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
+
                                 </div>
                                 @error('school')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

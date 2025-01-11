@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('nisn_nip')->unique();
             $table->enum('role', ['admin', 'guru', 'siswa']);
-            $table->enum('school', ['smk 1 riau', 'smk 2 riau', 'smk 3 riau']);
+            $table->foreignId('school_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
             $table->string('password');
             $table->enum('status', ['pending', 'accepted'])->default('pending');
             $table->rememberToken();

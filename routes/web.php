@@ -8,6 +8,7 @@ use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,15 @@ Route::middleware('auth')->group(function () {
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
         });
+
+    Route::prefix('schools')->group(function () {
+        Route::get('/', [SchoolController::class, 'index'])->name('schools.index');
+        Route::get('/create', [SchoolController::class, 'create'])->name('schools.create');
+        Route::post('/', [SchoolController::class, 'store'])->name('schools.store');
+        Route::get('/{school}', [SchoolController::class, 'edit'])->name('schools.edit');
+        Route::put('/{school}', [SchoolController::class, 'update'])->name('schools.update');
+        Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('schools.destroy');
+    });
         
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/events', [EventController::class, 'store'])->name('events.store');

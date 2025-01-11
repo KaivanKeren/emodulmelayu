@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::paginate(10);
+        $users = User::with('school')->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
@@ -41,16 +42,17 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $schools = School::all();
+        return view('admin.users.edit', compact('user', 'schools'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
             'nisn_nip' => [
-                'required',
+                'sometimes',
                 'string',
                 function ($attribute, $value, $fail) {
                     $length = strlen($value);
@@ -59,26 +61,25 @@ class UserController extends Controller
                     }
                 },
             ],
-            'role' => 'required|in:admin,guru,siswa',
-            'school' => 'required|string|max:255',
-            'status' => 'required|boolean',
-            'password' => 'nullable|min:6', // Password optional, but must have a minimum length if provided
+            'role' => 'sometimes|in:admin,guru,siswa',
+            'school_id' => 'sometimes|exists:schools,id', // Pastikan ID sekolah valid
+            'status' => 'sometimes|boolean',
+            'password' => 'nullable|min:6', // Password opsional
         ]);
 
-        // Exclude password from $validatedData if not provided
+        // Handle password
         if (empty($validatedData['password'])) {
             unset($validatedData['password']);
         } else {
             $validatedData['password'] = bcrypt($validatedData['password']);
         }
 
-        // Update the user with validated data
+        // Update user
         $user->update($validatedData);
 
         return redirect()->route('users.index')
-            ->with('success', 'User updated successfully');
+            ->with('success', 'User updated successfully.');
     }
-
 
     public function accept($id)
     {
@@ -129,7 +130,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'nisn_nip' => 'required',
             'role' => 'required',
-            'school' => 'required',
+            'school_id' => 'required',
             'password' => 'required|min:6',
         ]);
 
@@ -149,7 +150,7 @@ class UserController extends Controller
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'nisn_nip' => 'sometimes',
             'role' => 'sometimes',
-            'school' => 'sometimes',
+            'school_id' => 'sometimes',
             'status' => 'sometimes',
             'password' => 'sometimes|min:6',
         ];

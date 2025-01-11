@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\School;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -148,7 +149,7 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'school' => 'required',
+                'school_id' => 'required|exists:schools,id',
                 'nisn_nip' => [
                     'required',
                     'string',
@@ -166,7 +167,8 @@ class AuthController extends Controller
                 'email.required' => 'Email wajib diisi.',
                 'email.email' => 'Email tidak valid.',
                 'email.unique' => 'Email sudah terdaftar.',
-                'school.required' => 'Sekolah wajib diisi.',
+                'school_id.required' => 'ID sekolah wajib diisi.',
+                'school_id.exists' => 'Sekolah tidak ditemukan.',
                 'nisn_nip.required' => 'NISN/NIP wajib diisi.',
                 'nisn_nip.unique' => 'NISN/NIP sudah terdaftar.',
                 'password.required' => 'Kata sandi wajib diisi.',
@@ -176,19 +178,26 @@ class AuthController extends Controller
             // Determine role based on NISN/NIP length
             $role = strlen($validated['nisn_nip']) === 10 ? 'siswa' : 'guru';
 
+            // Create user
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'school' => $validated['school'],
+                'school_id' => $validated['school_id'],
                 'nisn_nip' => $validated['nisn_nip'],
                 'password' => Hash::make($validated['password']),
                 'role' => $role,
             ]);
 
+            // Retrieve school name
+            $schoolName = School::find($validated['school_id'])->name;
+
             return response()->json([
                 'code' => 201,
                 'message' => 'Registrasi berhasil.',
-                'data' => $user,
+                'data' => [
+                    'user' => $user,
+                    'school_name' => $schoolName,
+                ],
             ], 201)->header('Accept', 'application/json');
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);

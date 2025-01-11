@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'User')
+@section('title', 'Sekolah')
 
 @section('content')
     <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
@@ -10,63 +10,49 @@
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                {{-- <a href="{{ route('users.create') }}">
+                <a href="{{ route('schools.create') }}">
                     <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
-                        Tambah User
+                        Tambah Sekolah
                     </button>
-                </a> --}}
+                </a>
             </div>
         </div>
         <table class="w-full">
             <thead>
                 <tr class="text-left text-gray-500 text-sm">
-                    <th class="pb-4">Nama</th>
-                    <th class="pb-4">Role</th>
-                    <th class="pb-4">Sekolah</th>
-                    <th class="pb-4">Status</th>
-                    <th class="pb-4">Tanggal Daftar</th>
+                    <th class="pb-4">Nama Sekolah</th>
+                    <th class="pb-4">Alamat</th>
+                    <th class="pb-4">Tanggal Dibuat</th>
                     <th class="pb-4"></th>
                 </tr>
             </thead>
             <tbody class="text-sm">
-                @foreach ($users as $user)
+                @foreach ($schools as $school)
                     <tr class="border-t">
-                        <td class="py-4">{{ $user->name }}</td>
-                        <td>{{ $user->role }}</td>
-                        <td>{{ $user->school->name }}</td>
+                        <td class="py-4">{{ $school->name }}</td>
+                        <td>{{ $school->address }}</td>
+                        <td>{{ $school->created_at->format('d M Y') }}</td>
                         <td>
-                            <span
-                                class="px-2 py-1 text-xs font-medium 
-                                @if ($user->status === 'active') text-green-700 bg-green-100
-                                @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
-                                @else text-red-700 bg-red-100 @endif 
-                                rounded-full">
-                                {{ $user->status }}
-                            </span>
-                        </td>
-                        <td>{{ $user->created_at->format('d M Y') }}</td>
-                        <td>
-                            <button onclick="toggleDropdown({{ $user->id }})" class="text-gray-400 hover:text-gray-500">
+                            <button onclick="toggleDropdown({{ $school->id }})" class="text-gray-400 hover:text-gray-500">
                                 <i data-lucide="more-vertical" class="w-5 h-5"></i>
                             </button>
-                            <div id="dropdown-{{ $user->id }}"
+                            <div id="dropdown-{{ $school->id }}"
                                 class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                                 <div class="py-1">
-                                    @if ($user->status === 'pending')
-                                        <a href="{{ route('users.accept', $user->id) }}"
+                                    @if ($school->status === 'pending')
+                                        <a href="{{ route('users.accept', $school->id) }}"
                                             class="flex items-center px-4 py-2 text-sm text-green-600 hover:bg-gray-100">
                                             <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
                                             Terima
                                         </a>
                                     @endif
-                                    <a href="{{ route('users.edit', $user->id) }}"
+                                    <a href="{{ route('schools.edit', $school->id) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
-                                        Edit Pengguna
+                                        Edit Sekolah
                                     </a>
-                                    <form action="{{ route('users.destroy', ['user' => $user->id]) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?');"
+                                    <form action="{{ route('schools.destroy', ['school' => $school->id]) }}" method="POST"
+                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus sekolah ini?');"
                                         class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -86,7 +72,7 @@
 
         <!-- Pagination -->
         <div class="mt-6">
-            {{ $users->links() }}
+            {{ $schools->links() }}
         </div>
     </div>
 

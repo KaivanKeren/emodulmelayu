@@ -22,7 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'role',
-        'school',
+        'school_id',
         'nisn_nip',
         'status',
         'password',
@@ -49,5 +49,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function school()
+    {
+        return $this->belongsTo(School::class);
     }
 }

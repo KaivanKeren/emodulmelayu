@@ -76,7 +76,7 @@
                     <tr class="border-t">
                         <td class="py-4">{{ $user->name }}</td>
                         <td>{{ $user->role }}</td>
-                        <td>{{ $user->school }}</td>
+                        <td>{{ $user->school->name }}</td>
                         <td>
                             <span
                                 class="px-2 py-1 text-xs font-medium 
