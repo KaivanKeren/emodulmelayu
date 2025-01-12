@@ -5,7 +5,7 @@
 @section('content')
     <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-lg font-semibold">Manajemen Pengguna</h2>
+            <h2 class="text-lg font-semibold">Manajemen Sekolah</h2>
             <div class="flex space-x-3">
                 <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
