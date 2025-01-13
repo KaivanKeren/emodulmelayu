@@ -4,6 +4,7 @@ use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
@@ -64,6 +65,14 @@ Route::middleware('api')->group(function () {
             Route::get('/{school}', [SchoolController::class, 'showApi']);
             Route::put('/{school}', [SchoolController::class, 'updateApi']);
             Route::delete('/{school}', [SchoolController::class, 'destroyApi']);
+        });
+
+        Route::prefix('discussions')->group(function () {
+            Route::get('/', [DiscussionController::class, 'apiIndex']);
+            Route::post('/', [DiscussionController::class, 'apiStore']);
+            Route::get('/{discussion}', [DiscussionController::class, 'apiShow']);
+            Route::put('/{discussion}', [DiscussionController::class, 'apiUpdate']);
+            Route::delete('/{discussion}', [DiscussionController::class, 'apiDestroy']);
         });
 
         Route::get('/calendar', [CalendarController::class, 'apiIndex']);

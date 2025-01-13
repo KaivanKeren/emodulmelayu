@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboarController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
@@ -53,17 +54,25 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
+            Route::get('/create', [DiscussionController::class, 'create'])->name('discussions.create');
+            Route::post('/', [DiscussionController::class, 'store'])->name('discussions.store');
+            Route::get('/{discussion}', [DiscussionController::class, 'show'])->name('discussions.show');
+            Route::get('/edit/{discussion}', [DiscussionController::class, 'edit'])->name('discussions.edit');
+            Route::put('/{discussion}', [DiscussionController::class, 'update'])->name('discussions.update');
+            Route::delete('/{discussion}', [DiscussionController::class, 'destroy'])->name('discussions.destroy');
+
+            Route::post('/{discussion}/messages', [MessageController::class, 'store'])->name('discussions.messages.store');
         });
 
-    Route::prefix('schools')->group(function () {
-        Route::get('/', [SchoolController::class, 'index'])->name('schools.index');
-        Route::get('/create', [SchoolController::class, 'create'])->name('schools.create');
-        Route::post('/', [SchoolController::class, 'store'])->name('schools.store');
-        Route::get('/{school}', [SchoolController::class, 'edit'])->name('schools.edit');
-        Route::put('/{school}', [SchoolController::class, 'update'])->name('schools.update');
-        Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('schools.destroy');
-    });
-        
+        Route::prefix('schools')->group(function () {
+            Route::get('/', [SchoolController::class, 'index'])->name('schools.index');
+            Route::get('/create', [SchoolController::class, 'create'])->name('schools.create');
+            Route::post('/', [SchoolController::class, 'store'])->name('schools.store');
+            Route::get('/{school}', [SchoolController::class, 'edit'])->name('schools.edit');
+            Route::put('/{school}', [SchoolController::class, 'update'])->name('schools.update');
+            Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('schools.destroy');
+        });
+
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/events', [EventController::class, 'store'])->name('events.store');
         Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
