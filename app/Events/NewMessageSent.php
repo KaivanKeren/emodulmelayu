@@ -32,6 +32,7 @@ class NewMessageSent implements ShouldBroadcast
         return 'new-message';
     }
 
+    // NewMessageSent Event
     public function broadcastWith()
     {
         return [
@@ -40,7 +41,6 @@ class NewMessageSent implements ShouldBroadcast
                 'content' => $this->message->content,
                 'user_id' => $this->message->user_id,
                 'user' => [
-                    'id' => $this->message->user->id,
                     'name' => $this->message->user->name,
                 ],
                 'created_at' => $this->message->created_at,

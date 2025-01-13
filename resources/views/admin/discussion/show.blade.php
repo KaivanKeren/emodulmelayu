@@ -120,142 +120,202 @@
     </div>
 @endsection
 
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script>
+    const discussionId = {{ $discussion->id }};
+    const userId = {{ auth()->id() ?? 'null' }};
 
-@push('scripts')
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-    <script>
-        const discussionId = {{ $discussion->id }};
-        const userId = {{ auth()->id() ?? 'null' }};
+    // Initialize Pusher
+    const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
+        cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+        encrypted: true,
+        useTLS: true
+    });
 
-        // Initialize Pusher with debug
-        const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
-            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
-            encrypted: true,
-            logToConsole: true,
-            useTLS: true
-        });
+    // Subscribe to the channel
+    const channel = pusher.subscribe('discussion.' + discussionId);
 
-        // Subscribe to the channel
-        const channel = pusher.subscribe('discussion.' + discussionId);
+    // Handle new messages
+    channel.bind('new-message', function(data) {
+        console.log('Received message:', data);
+        if (data.message.user_id !== userId) {
+            addMessage(data.message);
+        }
+    });
 
-        // Debug connection
-        pusher.connection.bind('connected', function() {
-            console.log('Connected to Pusher');
-        });
+    function addMessage(message) {
+        console.log('Adding message:', message);
 
-        pusher.connection.bind('error', function(err) {
-            console.log('Pusher connection error:', err);
-        });
+        // Tentukan container yang tepat berdasarkan parent_id
+        const messageContainer = message.parent_id ?
+            document.querySelector(`#replies-${message.parent_id}`) :
+            document.querySelector('#messages-container');
 
-        // Bind to event
-        channel.bind('new-message', function(data) {
-            console.log('Received message:', data);
-            if (data.message.user_id !== userId) {
-                addMessage(data.message);
+        if (!messageContainer) {
+            console.error('Message container not found');
+            return;
+        }
+
+        // Clone template
+        const template = document.querySelector('#message-template').content.cloneNode(true);
+        const messageDiv = template.querySelector('.message');
+
+        // Set unique ID untuk message baru
+        messageDiv.id = `message-${message.id}`;
+
+        // Update konten message
+        template.querySelector('.user-name').textContent = message.user.name;
+        template.querySelector('.message-time').textContent = new Date(message.created_at).toLocaleString();
+        template.querySelector('.message-content').textContent = message.content;
+
+        // Tambahkan container untuk replies jika belum ada
+        const repliesContainer = template.querySelector('.replies-container');
+        repliesContainer.id = `replies-${message.id}`;
+
+        // Update tombol actions jika message milik user yang sedang login
+        if (message.user_id === userId) {
+            const actions = template.querySelector('.message-actions');
+            if (actions) {
+                actions.classList.remove('hidden');
+
+                // Update onclick handlers dengan message ID yang benar
+                const replyButton = actions.querySelector('button:first-child');
+                const deleteButton = actions.querySelector('button:last-child');
+
+                replyButton.setAttribute('onclick', `showReplyForm(${message.id})`);
+                deleteButton.setAttribute('onclick', `deleteMessage(${message.id})`);
             }
-        });
+        }
 
-        function addMessage(message) {
-            console.log('Adding message:', message);
-            const messageContainer = message.parent_id ?
-                document.querySelector(`#replies-${message.parent_id}`) :
-                document.querySelector('#messages-container');
+        // Tambahkan form reply
+        const replyFormContainer = document.createElement('div');
+        replyFormContainer.id = `reply-form-${message.id}`;
+        replyFormContainer.className = 'mt-4 hidden';
+        replyFormContainer.innerHTML = `
+        <form onsubmit="sendMessage(this); return false;" 
+              action="{{ route('discussions.messages.store', $discussion) }}" 
+              method="POST" 
+              class="space-y-4">
+            @csrf
+            <input type="hidden" name="parent_id" value="${message.id}">
+            <textarea name="content"
+                class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                placeholder="Tulis balasan..." 
+                rows="2" 
+                required></textarea>
+            <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Balas
+            </button>
+        </form>
+    `;
+        messageDiv.appendChild(replyFormContainer);
 
-            if (!messageContainer) {
-                console.error('Message container not found');
-                return;
-            }
-
-            const template = document.querySelector('#message-template').content.cloneNode(true);
-
-            // Update template
-            const messageDiv = template.querySelector('.message');
-            messageDiv.id = `message-${message.id}`;
-
-            template.querySelector('.user-name').textContent = message.user.name;
-            template.querySelector('.message-time').textContent = new Date(message.created_at).toLocaleString();
-            template.querySelector('.message-content').textContent = message.content;
-
-            if (message.user_id === userId) {
-                const actions = template.querySelector('.message-actions');
-                if (actions) {
-                    actions.style.display = 'flex';
-                }
-            }
-
+        // Tambahkan message baru ke container
+        if (message.parent_id) {
             messageContainer.appendChild(template);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
+        } else {
+            messageContainer.insertBefore(template, messageContainer.firstChild);
         }
 
-        function sendMessage(form) {
-            event.preventDefault(); // Tambahkan ini untuk mencegah form submit default
+        // Scroll ke message baru
+        messageDiv.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
 
-            const content = form.querySelector('textarea[name="content"]').value;
-            const parentId = form.querySelector('input[name="parent_id"]')?.value;
+    function sendMessage(form) {
+        event.preventDefault();
 
-            fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        content,
-                        parent_id: parentId,
-                        _token: '{{ csrf_token() }}' // Tambahkan CSRF token
-                    })
-                })
-                .then(response => response.json())
-                .then(message => {
-                    addMessage(message);
-                    form.reset();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal mengirim pesan. Silakan coba lagi.');
-                });
+        const content = form.querySelector('textarea[name="content"]').value.trim();
+        if (!content) return;
 
-            return false;
-        }
+        const parentId = form.querySelector('input[name="parent_id"]')?.value;
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('_token', '{{ csrf_token() }}');
+        if (parentId) formData.append('parent_id', parentId);
 
+        fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(message => {
+                // Tambahkan pesan langsung ke UI
+                addMessage(message);
 
-        function showReplyForm(messageId) {
-            const replyForm = document.querySelector(`#reply-form-${messageId}`);
+                // Reset form dan sembunyikan form reply jika ini adalah balasan
+                form.reset();
+                if (parentId) {
+                    const replyForm = document.querySelector(`#reply-form-${parentId}`);
+                    if (replyForm) replyForm.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal mengirim pesan. Silakan coba lagi.');
+            });
+
+        return false;
+    }
+
+    function showReplyForm(messageId) {
+        const replyForm = document.querySelector(`#reply-form-${messageId}`);
+        if (replyForm) {
             replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
         }
+    }
 
-        function deleteMessage(messageId) {
-            if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
-                fetch(`/messages/${messageId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                }).then(() => {
-                    document.querySelector(`#message-${messageId}`).remove();
-                });
-            }
-        }
-    </script>
+    function deleteMessage(messageId) {
+        if (!confirm('Apakah Anda yakin ingin menghapus pesan ini?')) return;
 
-    <template id="message-template">
-        <div class="message bg-white p-4 rounded-lg shadow mb-4">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="user-name font-semibold"></span>
-                    <span class="message-time text-sm text-gray-500 ml-2"></span>
-                </div>
-                <div class="message-actions hidden space-x-2">
-                    <button onclick="showReplyForm(messageId)" class="text-sm text-blue-600 hover:text-blue-800">
-                        Reply
-                    </button>
-                    <button onclick="deleteMessage(messageId)" class="text-sm text-red-600 hover:text-red-800">
-                        Delete
-                    </button>
-                </div>
+        fetch(`/admin/discussions/${discussionId}/messages/${messageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                const messageElement = document.querySelector(`#message-${messageId}`);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menghapus pesan. Silakan coba lagi.');
+            });
+    }
+</script>
+
+<template id="message-template">
+    <div class="message bg-white p-4 rounded-lg shadow mb-4">
+        <div class="flex justify-between items-start">
+            <div>
+                <span class="user-name font-semibold"></span>
+                <span class="message-time text-sm text-gray-500 ml-2"></span>
             </div>
-            <p class="message-content mt-2 text-gray-700"></p>
-            <div class="replies-container mt-4 pl-4 border-l-2 border-gray-200"></div>
+            <div class="message-actions hidden space-x-2">
+                <button onclick="showReplyForm(messageId)" class="text-sm text-blue-600 hover:text-blue-800">
+                    Reply
+                </button>
+                <button onclick="deleteMessage(messageId)" class="text-sm text-red-600 hover:text-red-800">
+                    Delete
+                </button>
+            </div>
         </div>
-    </template>
-@endpush
+        <p class="message-content mt-2 text-gray-700"></p>
+        <div class="replies-container mt-4 pl-4 border-l-2 border-gray-200"></div>
+    </div>
+</template>

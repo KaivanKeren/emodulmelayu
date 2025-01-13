@@ -23,18 +23,15 @@ class MessageController extends Controller
             'parent_id' => $request->parent_id
         ]);
 
-        // Load relationships
+        // Load relations
         $message->load('user');
 
-        // Broadcast event
-        try {
-            broadcast(new NewMessageSent($message))->toOthers();
-        } catch (\Exception $e) {
-            Log::error('Broadcasting error: ' . $e->getMessage());
-        }
+        // Broadcast
+        broadcast(new NewMessageSent($message))->toOthers();
 
         return response()->json($message);
     }
+
     public function destroy(Message $message)
     {
         $this->authorize('delete', $message);

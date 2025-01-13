@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{discussion}', [DiscussionController::class, 'destroy'])->name('discussions.destroy');
 
             Route::post('/{discussion}/messages', [MessageController::class, 'store'])->name('discussions.messages.store');
+            Route::delete('/{discussion}/messages/{message}', [MessageController::class, 'destroy'])->name('discussions.messages.destroy');
         });
 
         Route::prefix('schools')->group(function () {
