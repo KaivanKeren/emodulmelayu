@@ -10,11 +10,12 @@
         const userId = {{ auth()->id() ?? 'null' }};
 
         // Initialize Pusher with debug
-        const pusher = new Pusher('8cc5f2281658855ce0bb', {
-            cluster: 'f8f74e41b62cdbc273b7',
+        const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
+            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
             encrypted: true,
             logToConsole: true // Debugging aktif
         });
+
 
         // Subscribe to the channel
         const channel = pusher.subscribe('discussion.' + discussionId);
