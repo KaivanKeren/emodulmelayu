@@ -23,14 +23,15 @@
 
                         <!-- Question Text -->
                         <div class="rounded-md">
-                            <label for="question_text" class="block text-sm font-medium text-gray-700 mb-2">Pertanyaan</label>
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                            <label for="question_text"
+                                class="block text-sm font-medium text-gray-700 mb-2">Pertanyaan</label>
+                            <div
+                                class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                 <span class="text-gray-400">
                                     <i data-lucide="help-circle" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="question_text" id="question_text" 
-                                    placeholder="Masukkan pertanyaan"
-                                    value="{{ old('question_text') }}"
+                                <input type="text" name="question_text" id="question_text"
+                                    placeholder="Masukkan pertanyaan" value="{{ old('question_text') }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
                             @error('question_text')
@@ -40,15 +41,17 @@
 
                         <!-- Question Type -->
                         <div class="rounded-md">
-                            <label for="question_type" class="block text-sm font-medium text-gray-700 mb-2">Tipe Pertanyaan</label>
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                            <label for="question_type" class="block text-sm font-medium text-gray-700 mb-2">Tipe
+                                Pertanyaan</label>
+                            <div
+                                class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                 <span class="text-gray-400">
                                     <i data-lucide="list" class="w-5 h-5"></i>
                                 </span>
                                 <select name="question_type" id="question_type"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                                    <option value="single_choice">Pilihan Tunggal</option>
-                                    <option value="multiple_choice">Pilihan Ganda</option>
+                                    <option value="single_choice">Pilihan Ganda</option>
+                                    <option value="multiple_choice">Pilihan Ganda Kompleks</option>
                                 </select>
                             </div>
                             @error('question_type')
@@ -72,11 +75,12 @@
                                 <div class="option-group">
                                     <div class="flex items-center gap-3">
                                         <div class="flex-1">
-                                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                            <div
+                                                class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                                 <span class="text-gray-400">
                                                     <i data-lucide="circle" class="w-5 h-5"></i>
                                                 </span>
-                                                <input type="text" name="options[]" 
+                                                <input type="text" name="options[]"
                                                     placeholder="Masukkan pilihan jawaban"
                                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                             </div>
@@ -112,36 +116,36 @@
     </div>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const optionsContainer = document.getElementById('options_container');
-            const addOptionButton = document.getElementById('add_option');
-            const questionType = document.getElementById('question_type');
-            let optionCount = 1;
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const optionsContainer = document.getElementById('options_container');
+                const addOptionButton = document.getElementById('add_option');
+                const questionType = document.getElementById('question_type');
+                let optionCount = 1;
 
-            // Function to update input types based on question type
-            function updateAnswerInputs() {
-                const inputType = questionType.value === 'single_choice' ? 'radio' : 'checkbox';
-                const inputs = document.querySelectorAll('.answer-input input');
-                inputs.forEach(input => {
-                    input.type = inputType;
-                    if (inputType === 'checkbox') {
-                        input.name = `correct_answer[${input.value}]`;
-                    } else {
-                        input.name = 'correct_answer';
-                    }
-                });
-            }
+                // Function to update input types based on question type
+                function updateAnswerInputs() {
+                    const inputType = questionType.value === 'single_choice' ? 'radio' : 'checkbox';
+                    const inputs = document.querySelectorAll('.answer-input input');
+                    inputs.forEach(input => {
+                        input.type = inputType;
+                        if (inputType === 'checkbox') {
+                            input.name = `correct_answer[${input.value}]`;
+                        } else {
+                            input.name = 'correct_answer';
+                        }
+                    });
+                }
 
-            // Initial update
-            updateAnswerInputs();
+                // Initial update
+                updateAnswerInputs();
 
-            // Update on question type change
-            questionType.addEventListener('change', updateAnswerInputs);
+                // Update on question type change
+                questionType.addEventListener('change', updateAnswerInputs);
 
-            addOptionButton.addEventListener('click', function() {
-                const inputType = questionType.value === 'single_choice' ? 'radio' : 'checkbox';
-                const newOption = `
+                addOptionButton.addEventListener('click', function() {
+                    const inputType = questionType.value === 'single_choice' ? 'radio' : 'checkbox';
+                    const newOption = `
                     <div class="option-group">
                         <div class="flex items-center gap-3">
                             <div class="flex-1">
@@ -167,15 +171,15 @@
                         </div>
                     </div>
                 `;
-                optionsContainer.insertAdjacentHTML('beforeend', newOption);
-                optionCount++;
-                lucide.createIcons();
+                    optionsContainer.insertAdjacentHTML('beforeend', newOption);
+                    optionCount++;
+                    lucide.createIcons();
+                });
             });
-        });
 
-        function removeOption(button) {
-            button.closest('.option-group').remove();
-        }
-    </script>
+            function removeOption(button) {
+                button.closest('.option-group').remove();
+            }
+        </script>
     @endpush
 @endsection
