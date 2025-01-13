@@ -11,6 +11,7 @@ window.Echo = new Echo({
     key: '8cc5f2281658855ce0bb',
     cluster: 'ap1',
     encrypted: true,
+    useTLS: true
 });
 
 /**
@@ -18,5 +19,3 @@ window.Echo = new Echo({
  * for events that are broadcast by Laravel. Echo and event broadcasting
  * allow your team to quickly build robust real-time web applications.
  */
-
-import './echo';

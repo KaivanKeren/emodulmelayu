@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
@@ -73,6 +74,8 @@ Route::middleware('api')->group(function () {
             Route::get('/{discussion}', [DiscussionController::class, 'apiShow']);
             Route::put('/{discussion}', [DiscussionController::class, 'apiUpdate']);
             Route::delete('/{discussion}', [DiscussionController::class, 'apiDestroy']);
+
+            Route::post('/{discussion}/messages', [MessageController::class, 'store']);
         });
 
         Route::get('/calendar', [CalendarController::class, 'apiIndex']);
