@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('materials')->group(function () {
             Route::get('/', [MaterialController::class, 'index'])->name('materials.index');
+            Route::get('/create', [MaterialController::class, 'create'])->name('materials.create');
         });
 
         Route::prefix('discussions')->group(function () {
