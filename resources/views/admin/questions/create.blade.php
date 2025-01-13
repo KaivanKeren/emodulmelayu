@@ -115,7 +115,6 @@
         </div>
     </div>
 
-    @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const optionsContainer = document.getElementById('options_container');
@@ -181,5 +180,4 @@
                 button.closest('.option-group').remove();
             }
         </script>
-    @endpush
 @endsection
