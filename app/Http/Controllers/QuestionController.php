@@ -70,45 +70,61 @@ class QuestionController extends Controller
 
     public function edit(Question $question)
     {
-        return view('questions.edit', compact('question'));
+        $question->load('assessment');
+        return view('admin.questions.edit', compact('question'));
     }
 
     public function update(Request $request, Question $question)
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:255',
+            'question_text' => 'required|string|max:255',
             'assessment_id' => 'required|exists:assessments,id',
+            'question_type' => 'required|in:single_choice,multiple_choice',
             'options' => 'required|array|min:2',
-            'options.*.content' => 'required|string|max:255',
-            'options.*.is_correct' => 'required|boolean'
+            'options.*' => 'required|string|max:255',
         ]);
 
+        // Update question
         $question->update([
-            'content' => $validated['content'],
-            'assessment_id' => $validated['assessment_id']
+            'content' => $validated['question_text'],
+            'assessment_id' => $validated['assessment_id'],
+            'question_type' => $validated['question_type']
         ]);
 
-        // Delete existing options and create new ones
+        // Get correct answers
+        $correctAnswers = [];
+        if ($validated['question_type'] === 'single_choice') {
+            $correctAnswers = [(int) $request->input('correct_answer')];
+        } else {
+            // For multiple choice, get all checked options
+            $correctAnswers = array_keys(array_filter($request->input('correct_answer', [])));
+        }
+
+        // Delete existing options
         $question->options()->delete();
 
-        foreach ($validated['options'] as $optionData) {
+        // Create new options with correct answers
+        foreach ($validated['options'] as $index => $optionContent) {
             $question->options()->create([
-                'content' => $optionData['content'],
-                'is_correct' => $optionData['is_correct']
+                'content' => $optionContent,
+                'is_correct' => in_array($index, $correctAnswers)
             ]);
         }
 
-        return redirect()->route('questions.index')
-            ->with('success', 'Question updated successfully.');
+        return redirect()->route('assessments.show', $question->assessment_id)
+            ->with('success', 'Pertanyaan berhasil diperbarui.');
     }
 
     public function destroy(Question $question)
     {
-        $question->delete();
-        // Options will be automatically deleted due to onDelete('cascade')
+        // Store assessment_id before deleting the question
+        $assessmentId = $question->assessment_id;
 
-        return redirect()->route('questions.index')
-            ->with('success', 'Question deleted successfully.');
+        // Delete the question (options will be deleted via cascade)
+        $question->delete();
+
+        return redirect()->route('assessments.show', $assessmentId)
+            ->with('success', 'Pertanyaan berhasil dihapus.');
     }
 
     // API Method

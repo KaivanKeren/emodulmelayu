@@ -56,30 +56,50 @@
                         <div>
                             @forelse ($assessment->questions as $question)
                                 <div class="bg-gray-50 rounded-lg p-6 mb-4">
-                                    <div class="flex justify-between items-center">
-                                        <h4 class="text-lg font-medium text-gray-900 mb-4">{{ $question->content }}</h4>
-                                        <span class="text-sm text-gray-500">*
-                                            @if ($question->question_type === 'multiple_choice')
-                                                Jawaban lebih dari satu.
-                                            @elseif ($question->question_type === 'single_choice')
-                                                Pilih salah satu.
-                                            @endif
-                                        </span>
-                                    </div>
-                                    <div class="ml-4 space-y-2">
-                                        @foreach ($question->options as $option)
-                                            <div class="flex items-center">
-                                                <i data-lucide="circle" class="w-4 h-4 text-gray-400 mr-2"></i>
-                                                <span>{{ $option->content }}</span>
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex justify-between items-center">
+                                                <h4 class="text-lg font-medium text-gray-900 mb-4">{{ $question->content }}
+                                                </h4>
+                                                <span class="text-sm text-gray-500">*
+                                                    @if ($question->question_type === 'multiple_choice')
+                                                        Jawaban lebih dari satu.
+                                                    @elseif ($question->question_type === 'single_choice')
+                                                        Pilih salah satu.
+                                                    @endif
+                                                </span>
                                             </div>
-                                        @endforeach
+                                            <div class="ml-4 space-y-2">
+                                                @foreach ($question->options as $option)
+                                                    <div class="flex items-center">
+                                                        <i data-lucide="circle" class="w-4 h-4 text-gray-400 mr-2"></i>
+                                                        <span>{{ $option->content }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <div class="ml-4 flex space-x-2">
+                                            <a href="{{ route('questions.edit', $question) }}"
+                                                class="px-3 py-1.5 rounded-full text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                            </a>
+                                            <form action="{{ route('questions.destroy', $question) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    onclick="return confirm('Are you sure you want to delete this question?')"
+                                                    class="px-3 py-1.5 rounded-full text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             @empty
                                 <p class="text-gray-500 text-center py-4">Tidak ada pertanyaan untuk assessment ini.</p>
                             @endforelse
                         </div>
-
 
                         <!-- Action Buttons -->
                         <div class="flex justify-end space-x-3">
