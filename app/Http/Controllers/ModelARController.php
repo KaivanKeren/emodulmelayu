@@ -4,62 +4,59 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ModelAR;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ModelARController extends Controller
 {
-    public function index()
+    public function apiIndex()
     {
-        return view('modelar.index');
+        $models = ModelAR::latest()->get();
+        return response()->json(['data' => $models], 200);
     }
 
-    public function create()
+    public function apiStore(Request $request)
     {
-        return view('modelar.create');
+        try {
+            // Validasi input
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'asset' => 'required|mimes:glb|max:20480',
+            ]);
+
+            // Penyimpanan file
+            $file = $request->file('asset');
+            $path = $file->store('models/glb', 'public');
+
+            // Simpan data ke database
+            ModelAR::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'asset' => $path,
+            ]);
+
+            return redirect()->route('models.index')->with('success', 'Model created successfully');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->back()->with('error', 'Database error: ' . $e->getMessage())->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage())->withInput();
+        }
     }
 
-    public function store(Request $request)
+
+    public function apiShow(ModelAR $model)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
-            'asset' => 'required'
-        ]);
-
-        ModelAR::create($validatedData);
-
-        return redirect()->route('modelar.index')->with('success', 'ModelAR created successfully.');
+        return response()->json(['data' => $model], 200);
     }
 
-    public function show($id)
+    public function apiDestroy(ModelAR $model)
     {
-        $modelAR = ModelAR::findOrFail($id);
-        return view('modelar.show', compact('modelAR'));
-    }
-
-    public function edit($id)
-    {
-        $modelAR = ModelAR::findOrFail($id);
-        return view('modelar.edit', compact('modelAR'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $validatedData = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
-            'asset' => 'required'
-        ]);
-
-        ModelAR::whereId($id)->update($validatedData);
-
-        return redirect()->route('modelar.index')->with('success', 'ModelAR updated successfully.');
-    }
-
-    public function destroy($id)
-    {
-        $modelAR = ModelAR::findOrFail($id);
-        $modelAR->delete();
-
-        return redirect()->route('modelar.index')->with('success', 'ModelAR deleted successfully.');
+        Storage::disk('public')->delete($model->asset);
+        $model->delete();
+        return response()->json(['message' => 'Model deleted successfully'], 200);
     }
 }

@@ -6,7 +6,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ModelARController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
@@ -66,6 +68,22 @@ Route::middleware('api')->group(function () {
             Route::get('/{school}', [SchoolController::class, 'showApi']);
             Route::put('/{school}', [SchoolController::class, 'updateApi']);
             Route::delete('/{school}', [SchoolController::class, 'destroyApi']);
+        });
+
+        Route::prefix('materials')->group(function () {
+            Route::get('/', [MaterialController::class, 'apiIndex']);
+            Route::post('/', [MaterialController::class, 'apiStore']);
+            Route::get('/{material}', [MaterialController::class, 'apiShow']);
+            // Route::put('/{material}', [MaterialController::class, 'apiUpdate']);
+            Route::delete('/{material}', [MaterialController::class, 'apiDestroy']);
+        });
+
+        Route::prefix('models')->group(function () {
+            Route::get('/', [ModelARController::class, 'apiIndex']);
+            Route::post('/', [ModelARController::class, 'apiStore']);
+            Route::get('/{model}', [ModelARController::class, 'apiShow']);
+            // Route::put('/{model}', [ModelARController::class, 'apiUpdate']);
+            Route::delete('/{model}', [ModelARController::class, 'apiDestroy']);
         });
 
         Route::prefix('discussions')->group(function () {

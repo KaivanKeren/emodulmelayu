@@ -10,7 +10,7 @@ class Material extends Model
 
     public function model()
     {
-        return $this->belongsTo(Model::class);
+        return $this->belongsTo(ModelAR::class);
     }
 
     public function user()

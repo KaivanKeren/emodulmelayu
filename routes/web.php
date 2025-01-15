@@ -56,6 +56,11 @@ Route::middleware('auth')->group(function () {
         Route::prefix('materials')->group(function () {
             Route::get('/', [MaterialController::class, 'index'])->name('materials.index');
             Route::get('/create', [MaterialController::class, 'create'])->name('materials.create');
+            Route::post('/', [MaterialController::class, 'store'])->name('materials.store');
+            Route::get('/{material}', [MaterialController::class, 'show'])->name('materials.show');
+            Route::get('/edit/{material}', [MaterialController::class, 'edit'])->name('materials.edit');
+            Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
+            Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
         });
 
         Route::prefix('discussions')->group(function () {

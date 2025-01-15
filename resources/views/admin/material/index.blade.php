@@ -53,7 +53,7 @@
                                     <a href="{{ route('materials.edit', ['material' => $material->id]) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
-                                        Edit material
+                                        Edit Materi
                                     </a>
                                     <form action="{{ route('materials.destroy', ['material' => $material->id]) }}"
                                         method="POST"

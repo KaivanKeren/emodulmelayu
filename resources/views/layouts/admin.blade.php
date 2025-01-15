@@ -8,6 +8,7 @@
     <title>@yield('title', 'Admin Panel')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+
     <script>
         window.onload = () => lucide.createIcons();
     </script>
