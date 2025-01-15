@@ -34,8 +34,8 @@
                         <td>
                             <span
                                 class="px-2 py-1 text-xs font-medium 
-                            @if ($assessment->status === 'terbuka') text-green-700 bg-green-100
-                            @elseif ($assessment->status === 'belum terbuka') text-yellow-700 bg-yellow-100
+                            @if ($assessment->status === 'Terbuka') text-green-700 bg-green-100
+                            @elseif ($assessment->status === 'Belum Terbuka') text-yellow-700 bg-yellow-100
                             @else text-red-700 bg-red-100 @endif 
                             rounded-full">
                                 {{ $assessment->status }}

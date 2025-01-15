@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('role', ['admin', 'guru', 'siswa']);
             $table->foreignId('school_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
             $table->string('password');
-            $table->enum('status', ['pending', 'accepted'])->default('pending');
+            $table->enum('status', ['Pending', 'Accepted'])->default('Pending');
             $table->rememberToken();
             $table->timestamps();
         });

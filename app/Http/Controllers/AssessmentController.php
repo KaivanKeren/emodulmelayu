@@ -33,7 +33,7 @@ class AssessmentController extends Controller
             $validated = $request->validate([
                 'title' => 'required|max:255',
                 'category' => 'required|max:255',
-                'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai',
+                'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
                 'questions' => 'required|array|min:1',
                 'questions.*.content' => 'required|string|max:255',
                 'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
@@ -65,8 +65,8 @@ class AssessmentController extends Controller
                 'token_expires_at' => null
             ];
 
-            // Generate token only if status is 'terbuka'
-            if ($validated['status'] === 'terbuka') {
+            // Generate token only if status is 'Terbuka'
+            if ($validated['status'] === 'Terbuka') {
                 $tokenData = [
                     'token' => Str::random(6),
                     'token_expires_at' => now()->addMinutes(30)
@@ -140,8 +140,8 @@ class AssessmentController extends Controller
 
     public function regenerateToken(Assessment $assessment)
     {
-        if ($assessment->status !== 'terbuka') {
-            return back()->with('error', 'Token hanya dapat di-generate untuk assessment yang terbuka.');
+        if ($assessment->status !== 'Terbuka') {
+            return back()->with('error', 'Token hanya dapat di-generate untuk assessment yang Terbuka.');
         }
 
         $assessment->update([
@@ -163,17 +163,17 @@ class AssessmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'category' => 'required|max:255',
-            'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai'
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
         ]);
 
-        // Jika status berubah menjadi terbuka, generate token
-        if ($validated['status'] === 'terbuka' && $assessment->status !== 'terbuka') {
+        // Jika status berubah menjadi Terbuka, generate token
+        if ($validated['status'] === 'Terbuka' && $assessment->status !== 'Terbuka') {
             $validated['token'] = Str::random(6);
             $validated['token_expires_at'] = now()->addMinutes(30);
         }
 
-        // Jika status berubah dari terbuka ke status lain, hapus token
-        if ($validated['status'] !== 'terbuka' && $assessment->status === 'terbuka') {
+        // Jika status berubah dari Terbuka ke status lain, hapus token
+        if ($validated['status'] !== 'Terbuka' && $assessment->status === 'Terbuka') {
             $validated['token'] = null;
             $validated['token_expires_at'] = null;
         }
@@ -206,7 +206,7 @@ class AssessmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'category' => 'required|max:255',
-            'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai'
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
         ]);
 
         $validated['token'] = Str::random(6);
@@ -243,7 +243,7 @@ class AssessmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'category' => 'required|max:255',
-            'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai'
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
         ]);
 
         $assessment->update($validated);

@@ -39,7 +39,7 @@
                             <div id="dropdown-{{ $school->id }}"
                                 class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                                 <div class="py-1">
-                                    @if ($school->status === 'pending')
+                                    @if ($school->status === 'Pending')
                                         <a href="{{ route('users.accept', $school->id) }}"
                                             class="flex items-center px-4 py-2 text-sm text-green-600 hover:bg-gray-100">
                                             <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>

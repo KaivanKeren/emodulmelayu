@@ -38,7 +38,7 @@
                             <span
                                 class="px-2 py-1 text-xs font-medium 
                                 @if ($user->status === 'active') text-green-700 bg-green-100
-                                @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
+                                @elseif ($user->status === 'Pending') text-yellow-700 bg-yellow-100
                                 @else text-red-700 bg-red-100 @endif 
                                 rounded-full">
                                 {{ $user->status }}
@@ -52,7 +52,7 @@
                             <div id="dropdown-{{ $user->id }}"
                                 class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                                 <div class="py-1">
-                                    @if ($user->status === 'pending')
+                                    @if ($user->status === 'Pending')
                                         <a href="{{ route('users.accept', $user->id) }}"
                                             class="flex items-center px-4 py-2 text-sm text-green-600 hover:bg-gray-100">
                                             <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>

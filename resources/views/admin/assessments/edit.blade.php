@@ -55,17 +55,17 @@
                                 </span>
                                 <select name="status" id="status"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                                    <option value="belum terbuka"
-                                        {{ old('status', $assessment->status) == 'belum terbuka' ? 'selected' : '' }}>
+                                    <option value="Belum Terbuka"
+                                        {{ old('status', $assessment->status) == 'Belum Terbuka' ? 'selected' : '' }}>
                                         Belum Terbuka</option>
-                                    <option value="terbuka"
-                                        {{ old('status', $assessment->status) == 'terbuka' ? 'selected' : '' }}>Terbuka
+                                    <option value="Terbuka"
+                                        {{ old('status', $assessment->status) == 'Terbuka' ? 'selected' : '' }}>Terbuka
                                     </option>
-                                    <option value="terjawab"
-                                        {{ old('status', $assessment->status) == 'terjawab' ? 'selected' : '' }}>Terjawab
+                                    <option value="Terjawab"
+                                        {{ old('status', $assessment->status) == 'Terjawab' ? 'selected' : '' }}>Terjawab
                                     </option>
-                                    <option value="selesai"
-                                        {{ old('status', $assessment->status) == 'selesai' ? 'selected' : '' }}>Selesai
+                                    <option value="Selesai"
+                                        {{ old('status', $assessment->status) == 'Selesai' ? 'selected' : '' }}>Selesai
                                     </option>
                                 </select>
                             </div>

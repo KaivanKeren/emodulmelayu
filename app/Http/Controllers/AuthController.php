@@ -36,18 +36,18 @@ class AuthController extends Controller
 
         // Validasi kredensial dan status pengguna
         if ($user) {
-            if ($user->status === 'pending') {
+            if ($user->status === 'Pending') {
                 return back()->with('error', 'Akun Anda belum disetujui. Silakan hubungi administrator.');
             }
 
             if (auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
                 // Redirect berdasarkan role pengguna
                 switch (auth()->user()->role) {
-                    case 'siswa':
+                    case 'Siswa':
                         return redirect()->route('studentDashboard');
-                    case 'guru':
+                    case 'Guru':
                         return redirect()->route('teacherDashboard');
-                    case 'admin':
+                    case 'Admin':
                         return redirect()->route('adminDashboard');
                     default:
                         return redirect()->route('dashboard');
@@ -95,8 +95,8 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // Validasi status pengguna
-            if ($user->status === 'pending') {
-                Auth::logout(); // Logout user yang statusnya pending
+            if ($user->status === 'Pending') {
+                Auth::logout(); // Logout user yang statusnya Pending
                 return response()->json([
                     'code' => 403,
                     'status' => 'error',

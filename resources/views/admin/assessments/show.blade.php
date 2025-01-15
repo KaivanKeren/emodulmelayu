@@ -32,15 +32,15 @@
                                     <h3 class="text-sm font-medium text-gray-500">Status</h3>
                                     <span
                                         class="mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                        @if ($assessment->status === 'selesai') bg-green-100 text-green-800
-                                        @elseif($assessment->status === 'terjawab') bg-blue-100 text-blue-800
-                                        @elseif($assessment->status === 'terbuka') bg-yellow-100 text-yellow-800
+                                        @if ($assessment->status === 'Selesai') bg-green-100 text-green-800
+                                        @elseif($assessment->status === 'Terjawab') bg-blue-100 text-blue-800
+                                        @elseif($assessment->status === 'Terbuka') bg-yellow-100 text-yellow-800
                                         @else bg-gray-100 text-gray-800 @endif">
                                         {{ ucfirst($assessment->status) }}
                                     </span>
                                 </div>
 
-                                @if ($assessment->status === 'terbuka')
+                                @if ($assessment->status === 'Terbuka')
                                     <div class="col-span-2">
                                         <h3 class="text-sm font-medium text-gray-500">Token</h3>
                                         <div class="mt-2 flex items-center space-x-4">

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('category');
-            $table->enum('status', ['belum terbuka', 'terbuka', 'terjawab', 'selesai'])->default('belum terbuka');
+            $table->enum('status', ['Belum Terbuka', 'Terbuka', 'Terjawab', 'Selesai'])->default('Belum Terbuka');
             $table->string('token');
             $table->timestamps();
         });

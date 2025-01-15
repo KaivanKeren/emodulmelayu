@@ -81,7 +81,7 @@
                             <span
                                 class="px-2 py-1 text-xs font-medium 
                             @if ($user->status === 'active') text-green-700 bg-green-100
-                            @elseif ($user->status === 'pending') text-yellow-700 bg-yellow-100
+                            @elseif ($user->status === 'Pending') text-yellow-700 bg-yellow-100
                             @else text-red-700 bg-red-100 @endif 
                             rounded-full">
                                 {{ $user->status }}

@@ -84,8 +84,8 @@ class UserController extends Controller
     public function accept($id)
     {
         $user = User::findOrFail($id);
-        if ($user->status === 'pending') {
-            $user->status = 'accepted';
+        if ($user->status === 'Pending') {
+            $user->status = 'Accepted';
             $user->save();
 
             return redirect()->route('users.index')->with('success', 'Pengguna berhasil diterima.');
