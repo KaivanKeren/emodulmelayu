@@ -39,6 +39,37 @@
                                         {{ ucfirst($assessment->status) }}
                                     </span>
                                 </div>
+
+                                @if ($assessment->status === 'terbuka')
+                                    <div class="col-span-2">
+                                        <h3 class="text-sm font-medium text-gray-500">Token</h3>
+                                        <div class="mt-2 flex items-center space-x-4">
+                                            @if ($assessment->token && $assessment->token_expires_at && now()->lt($assessment->token_expires_at))
+                                                <div class="flex items-center space-x-2">
+                                                    <span
+                                                        class="text-lg font-mono bg-gray-100 px-4 py-2 rounded-lg">{{ $assessment->token }}</span>
+                                                    <span class="text-sm text-gray-500">
+                                                        Berlaku hingga: {{ $assessment->token_expires_at->format('H:i') }}
+                                                        ({{ $assessment->token_expires_at->diffForHumans() }})
+                                                    </span>
+                                                </div>
+                                            @else
+                                                <span class="text-sm text-gray-500">Token tidak tersedia atau sudah
+                                                    kedaluwarsa</span>
+                                            @endif
+
+                                            <form action="{{ route('assessments.regenerate-token', $assessment) }}"
+                                                method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="px-4 py-2 rounded-full text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                                    <i data-lucide="refresh-cw" class="w-4 h-4 inline-block mr-1"></i>
+                                                    Generate Token Baru
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 

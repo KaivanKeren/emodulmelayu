@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\QuestionResource;
 use App\Models\Assessment;
+use App\Models\Option;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -25,42 +26,54 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
+        // Validasi data yang diterima dari form
         $validated = $request->validate([
-            'question_text' => 'required|string|max:255',
-            'question_type' => 'required|in:single_choice,multiple_choice',
-            'assessment_id' => 'required|exists:assessments,id',
-            'options' => 'required|array|min:2',
-            'correct_answer' => $request->input('question_type') === 'single_choice'
-                ? 'required|numeric'
-                : 'required|array|min:1'
+            'questions' => 'required|array|min:1',
+            'questions.*.question_text' => 'required|string|max:255',
+            'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.correct_answer' => function ($attribute, $value, $fail) use ($request) {
+                $questionType = $request->input('questions')[count($request->input('questions')) - 1]['question_type'];
+                if ($questionType == 'single_choice' && !is_numeric($value)) {
+                    $fail('The correct answer must be a number for single choice questions.');
+                } elseif ($questionType == 'multiple_choice' && !is_array($value)) {
+                    $fail('The correct answers must be an array for multiple choice questions.');
+                }
+            },
         ]);
 
-        // Create question
-        $question = Question::create([
-            'content' => $validated['question_text'],
-            'type' => $validated['question_type'],
-            'assessment_id' => $validated['assessment_id']
-        ]);
-
-        // Handle options and correct answers
-        foreach ($validated['options'] as $index => $optionContent) {
-            $isCorrect = false;
-
-            if ($validated['question_type'] === 'single_choice') {
-                $isCorrect = $index == $validated['correct_answer'];
-            } else {
-                $isCorrect = isset($validated['correct_answer'][$index]);
-            }
-
-            $question->options()->create([
-                'content' => $optionContent,
-                'is_correct' => $isCorrect
+        // Loop untuk setiap pertanyaan yang dikirimkan
+        foreach ($validated['questions'] as $questionData) {
+            // Membuat pertanyaan
+            $question = Question::create([
+                'content' => $questionData['question_text'],
+                'type' => $questionData['question_type'],
+                'assessment_id' => $request->assessment_id, // Pastikan assessment_id dikirim dari form
             ]);
+
+            // Mengatur pilihan jawaban dan jawaban yang benar
+            foreach ($questionData['options'] as $index => $optionContent) {
+                $isCorrect = false;
+
+                // Cek apakah ini pertanyaan pilihan tunggal atau ganda
+                if ($questionData['question_type'] === 'single_choice') {
+                    $isCorrect = $index == $questionData['correct_answer'];
+                } else {
+                    // Untuk pilihan ganda, cek apakah pilihan ini benar (bisa lebih dari satu jawaban benar)
+                    $isCorrect = in_array($index, (array) $questionData['correct_answer']);
+                }
+
+                // Simpan pilihan jawaban untuk pertanyaan ini
+                Option::create([
+                    'question_id' => $question->id,
+                    'content' => $optionContent,
+                    'is_correct' => $isCorrect,
+                ]);
+            }
         }
 
-        return redirect()
-            ->route('assessments.show', $validated['assessment_id'])
-            ->with('success', 'Pertanyaan berhasil ditambahkan');
+        return redirect()->route('assessments.show', $request->assessment_id)
+            ->with('success', 'Pertanyaan berhasil ditambahkan.');
     }
 
     public function show(Question $question)

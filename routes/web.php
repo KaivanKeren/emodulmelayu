@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
             Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+            Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])
+                ->name('assessments.regenerate-token');
             Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
             Route::get('/questions/{question}', [QuestionController::class, 'edit'])->name('questions.edit');

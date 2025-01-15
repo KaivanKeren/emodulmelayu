@@ -8,8 +8,10 @@ use App\Models\Answer;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AssessmentController extends Controller
 {
@@ -27,18 +29,129 @@ class AssessmentController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|max:255',
-            'category' => 'required|max:255',
-            'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai'
+        try {
+            $validated = $request->validate([
+                'title' => 'required|max:255',
+                'category' => 'required|max:255',
+                'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai',
+                'questions' => 'required|array|min:1',
+                'questions.*.content' => 'required|string|max:255',
+                'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
+                'questions.*.options' => 'required|array|min:1',
+                'questions.*.options.*' => 'required|string|max:255',
+                'questions.*.correct_answer' => 'required_if:questions.*.question_type,single_choice',
+                'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice'
+            ], [
+                'title.required' => 'Judul assessment wajib diisi',
+                'title.max' => 'Judul tidak boleh lebih dari 255 karakter',
+                'category.required' => 'Kategori assessment wajib diisi',
+                'status.required' => 'Status assessment wajib diisi',
+                'status.in' => 'Status yang dipilih tidak valid',
+                'questions.required' => 'Assessment harus memiliki minimal satu pertanyaan',
+                'questions.*.content.required' => 'Teks pertanyaan wajib diisi',
+                'questions.*.question_type.required' => 'Tipe pertanyaan wajib dipilih',
+                'questions.*.question_type.in' => 'Tipe pertanyaan tidak valid',
+                'questions.*.options.required' => 'Setiap pertanyaan harus memiliki pilihan jawaban',
+                'questions.*.options.min' => 'Setiap pertanyaan harus memiliki minimal satu pilihan jawaban',
+                'questions.*.options.*.required' => 'Teks pilihan jawaban wajib diisi',
+                'questions.*.correct_answer.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda',
+                'questions.*.correct_answer.*.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda kompleks'
+            ]);
+
+            DB::beginTransaction();
+
+            $tokenData = [
+                'token' => null,
+                'token_expires_at' => null
+            ];
+
+            // Generate token only if status is 'terbuka'
+            if ($validated['status'] === 'terbuka') {
+                $tokenData = [
+                    'token' => Str::random(6),
+                    'token_expires_at' => now()->addMinutes(30)
+                ];
+            }
+
+            $assessment = Assessment::create([
+                'title' => $validated['title'],
+                'category' => $validated['category'],
+                'status' => $validated['status'],
+                'token' => $tokenData['token'],
+                'token_expires_at' => $tokenData['token_expires_at']
+            ]);
+
+            foreach ($validated['questions'] as $questionData) {
+                $question = $assessment->questions()->create([
+                    'content' => $questionData['content'],
+                    'question_type' => $questionData['question_type']
+                ]);
+
+                foreach ($questionData['options'] as $index => $optionText) {
+                    $isCorrect = $questionData['question_type'] === 'single_choice'
+                        ? (int)$questionData['correct_answer'] === $index
+                        : (isset($questionData['correct_answer']) && is_array($questionData['correct_answer']) && in_array($index, $questionData['correct_answer']));
+
+                    $question->options()->create([
+                        'content' => $optionText,
+                        'is_correct' => $isCorrect
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            Log::info('Assessment created successfully', [
+                'assessment_id' => $assessment->id,
+                'title' => $assessment->title,
+                'created_by' => auth()->id(),
+                'has_token' => !is_null($tokenData['token']),
+                'token_expires_at' => $tokenData['token_expires_at']
+            ]);
+
+            return redirect()->route('assessments.index')
+                ->with('success', 'Assessment berhasil dibuat.');
+        } catch (ValidationException $e) {
+            Log::warning('Assessment validation failed', [
+                'errors' => $e->errors(),
+                'user_id' => auth()->id(),
+                'request_data' => $request->except(['_token'])
+            ]);
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Mohon periksa kembali data yang dimasukkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to create assessment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'request_data' => $request->except(['_token'])
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function regenerateToken(Assessment $assessment)
+    {
+        if ($assessment->status !== 'terbuka') {
+            return back()->with('error', 'Token hanya dapat di-generate untuk assessment yang terbuka.');
+        }
+
+        $assessment->update([
+            'token' => Str::random(6),
+            'token_expires_at' => now()->addMinutes(30)
         ]);
 
-        $validated['token'] = Str::random(6);
-        Assessment::create($validated);
-
-        return redirect()->route('assessments.index')
-            ->with('success', 'Assessment created successfully.');
+        return back()->with('success', 'Token berhasil di-generate ulang.');
     }
+
 
     public function edit(Assessment $assessment)
     {
@@ -53,10 +166,22 @@ class AssessmentController extends Controller
             'status' => 'required|in:belum terbuka,terbuka,terjawab,selesai'
         ]);
 
+        // Jika status berubah menjadi terbuka, generate token
+        if ($validated['status'] === 'terbuka' && $assessment->status !== 'terbuka') {
+            $validated['token'] = Str::random(6);
+            $validated['token_expires_at'] = now()->addMinutes(30);
+        }
+
+        // Jika status berubah dari terbuka ke status lain, hapus token
+        if ($validated['status'] !== 'terbuka' && $assessment->status === 'terbuka') {
+            $validated['token'] = null;
+            $validated['token_expires_at'] = null;
+        }
+
         $assessment->update($validated);
 
         return redirect()->route('assessments.index')
-            ->with('success', 'Assessment updated successfully');
+            ->with('success', 'Assessment berhasil diperbarui');
     }
 
     public function destroy(Assessment $assessment)
