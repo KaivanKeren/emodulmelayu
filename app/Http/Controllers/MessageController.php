@@ -5,31 +5,86 @@ namespace App\Http\Controllers;
 use App\Events\NewMessageSent;
 use App\Models\Discussion;
 use App\Models\Message;
+use Helpers\MessageFormatter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Usamamuneerchaudhary\Commentify\Http\Livewire\Comment;
 
 class MessageController extends Controller
 {
-    public function store(Request $request, Discussion $discussion)
+    public function index()
     {
-        $validated = $request->validate([
-            'content' => 'required|string',
-            'parent_id' => 'nullable|exists:messages,id'
-        ]);
+        try {
+            $messages = Message::rootMessages()
+                ->with(['user', 'replies.user', 'replies.replies.user'])
+                ->get();
 
-        $message = $discussion->messages()->create([
-            'content' => $validated['content'],
-            'user_id' => auth()->id(),
-            'parent_id' => $request->parent_id
-        ]);
+            return response()->json([
+                'code' => 200,
+                'message' => 'success',
+                'data' => MessageFormatter::format($messages)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'error',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 
-        // Load relations
-        $message->load('user');
+    public function store(Request $request, $discussion)
+    {
+        try {
+            $validated = $request->validate([
+                'message' => 'required|string',
+                'reply' => 'nullable|exists:messages,id'
+            ]);
 
-        // Broadcast
-        broadcast(new NewMessageSent($message))->toOthers();
+            $message = Message::create([
+                'content' => $validated['message'],
+                'user_id' => auth()->id(),
+                'discussion_id' => $discussion,
+                'parent_id' => $validated['reply'] ?? null
+            ]);
 
-        return response()->json($message);
+            $message->load(['user', 'replies.user', 'replies.replies.user']);
+
+            broadcast(new NewMessageSent($message))->toOthers();
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'success',
+                'data' => MessageFormatter::format(collect([$message]))
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'error',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $message = Message::with(['user', 'replies.user', 'replies.replies.user'])
+                ->findOrFail($id);
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'success',
+                'data' => MessageFormatter::format(collect([$message]))
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'error',
+                'data' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Message $message)

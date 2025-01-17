@@ -93,6 +93,7 @@ Route::middleware('api')->group(function () {
             Route::put('/{discussion}', [DiscussionController::class, 'apiUpdate']);
             Route::delete('/{discussion}', [DiscussionController::class, 'apiDestroy']);
 
+            Route::get('/{discussion}/messages', [MessageController::class, 'index']);
             Route::post('/{discussion}/messages', [MessageController::class, 'store']);
         });
 

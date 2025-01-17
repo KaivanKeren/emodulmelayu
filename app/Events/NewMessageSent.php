@@ -3,12 +3,14 @@
 namespace App\Events;
 
 use App\Models\Message;
+use Helpers\MessageFormatter;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class NewMessageSent implements ShouldBroadcast
 {
@@ -19,7 +21,7 @@ class NewMessageSent implements ShouldBroadcast
     public function __construct(Message $message)
     {
         $this->message = $message;
-        $this->message->load('user'); // Eager load user
+        Log::info('Event triggered for message ID: ' . $message->id);  // Debug log
     }
 
     public function broadcastOn()
@@ -27,25 +29,14 @@ class NewMessageSent implements ShouldBroadcast
         return new Channel('discussion.' . $this->message->discussion_id);
     }
 
-    public function broadcastAs()
-    {
-        return 'new-message';
-    }
-
-    // NewMessageSent Event
     public function broadcastWith()
     {
+        $this->message->load(['user', 'replies.user', 'replies.replies.user']);
+
         return [
-            'message' => [
-                'id' => $this->message->id,
-                'content' => $this->message->content,
-                'user_id' => $this->message->user_id,
-                'user' => [
-                    'name' => $this->message->user->name,
-                ],
-                'created_at' => $this->message->created_at,
-                'parent_id' => $this->message->parent_id
-            ]
+            'code' => 200,
+            'message' => 'success',
+            'data' => MessageFormatter::format(collect([$this->message]))
         ];
     }
 }

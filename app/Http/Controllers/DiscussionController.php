@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Discussion;
+use App\Models\Message;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class DiscussionController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function index()
     {
         $discussions = Discussion::with('user')
@@ -41,7 +42,12 @@ class DiscussionController extends Controller
 
     public function show(Discussion $discussion)
     {
-        return view('admin.discussion.show', compact('discussion'));
+        $messages = Message::rootMessages()
+            ->with(['user', 'replies.user', 'replies.replies.user'])
+            ->where('discussion_id', $discussion->id)
+            ->get();
+
+        return view('admin.discussion.show', compact('discussion', 'messages'));
     }
 
 
