@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Usamamuneerchaudhary\Commentify\Traits\Commentable;
+// use Usamamuneerchaudhary\Commentify\Traits\Commentable;
 
 class Discussion extends Model
 {
-    use Commentable;
+    // use Commentable;
 
     protected $fillable = ['title', 'user_id', 'content'];
 
