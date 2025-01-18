@@ -3,7 +3,7 @@
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
-use App\Http\Controllers\DashboarController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
@@ -25,7 +25,8 @@ Route::post('/register', [AuthController::class, 'postRegister'])->name('postReg
 
 Route::middleware('auth')->group(function () {
     Route::prefix('admin')->group(function () {
-        Route::get('/dashboard', [DashboarController::class, 'adminDashboard'])->name('adminDashboard');
+        Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('adminDashboard');
+        Route::get('/search', [DashboardController::class, 'search'])->name('search');
 
 
         Route::prefix('users')->group(function () {

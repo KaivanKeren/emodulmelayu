@@ -4,6 +4,7 @@ use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
@@ -30,6 +31,8 @@ Route::middleware('api')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/user/logout', [AuthController::class, 'apiLogout'])->name('apiLogout')->middleware('auth:sanctum');
+        Route::get('/search', [DashboardController::class, 'search']);
+
 
         Route::prefix('users')->group(function () {
             Route::get('/', [UserController::class, 'apiIndex'])->name('apiIndex');

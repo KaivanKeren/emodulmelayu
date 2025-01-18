@@ -23,6 +23,7 @@
         <main class="flex-1 p-8">
             @include('components.topbar')
             @yield('content')
+            @stack('scripts')
         </main>
     </div>
 </body>
