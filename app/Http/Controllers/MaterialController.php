@@ -6,6 +6,7 @@ use App\Models\Material;
 use App\Models\ModelAR;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -19,8 +20,7 @@ class MaterialController extends Controller
 
     public function create()
     {
-        $models = ModelAR::all();
-        return view('admin.material.create', compact('models'));
+        return view('admin.material.create');
     }
 
     public function store(Request $request)
@@ -28,19 +28,31 @@ class MaterialController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'asset' => 'required|mimes:pdf|max:50000',
-            'model_id' => 'required|exists:model_a_r_s,id'
+            'assets.*' => 'required|file|mimes:pdf,mp4,mov,avi|max:102400', // 100MB max file 
         ]);
 
-        $file = $request->file('asset');
-        $path = $file->store('materials/pdf', 'public');
+        $paths = [];
+
+        if ($request->hasFile('assets')) {
+            foreach ($request->file('assets') as $file) {
+                // Get file extension
+                $extension = $file->getClientOriginalExtension();
+
+                // Determine storage directory based on file type
+                $directory = in_array($extension, ['mp4', 'mov', 'avi'])
+                    ? 'materials/videos'
+                    : 'materials/pdf';
+
+                // Store file and get path
+                $paths[] = $file->store($directory, 'public');
+            }
+        }
 
         Material::create([
             'title' => $request->title,
             'description' => $request->description,
-            'asset' => $path,
+            'assets' => json_encode($paths), // Store paths as JSON string
             'user_id' => auth()->id(),
-            'model_id' => $request->model_id
         ]);
 
         return redirect()->route('materials.index')->with('success', 'Material created successfully');
@@ -54,70 +66,81 @@ class MaterialController extends Controller
 
     public function edit(Material $material)
     {
-        $models = ModelAR::all();
-
-        return view('admin.material.edit', compact('material', 'models'));
+        $material->assets = json_decode($material->assets, true);
+        return view('admin.material.edit', compact('material'));
     }
 
-    public function update(Request $request, Material $material)
+    public function update(Request $request, $id)
     {
-        // Validate the request
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'model_id' => 'required|exists:model_a_r_s,id',
-            'asset' => 'nullable|mimes:pdf|max:10240', // Max 10MB
+            'description' => 'nullable|string',
+            'assets' => 'nullable|array', // Tidak wajib meng-upload file baru
+            'assets.*' => 'file|mimes:pdf,mp4,mov,avi|max:102400',
         ]);
 
-        try {
-            // Start transaction
-            DB::beginTransaction();
+        $material = Material::findOrFail($id);
+        $material->title = $request->title;
+        $material->description = $request->description;
 
-            // Handle file upload if new file is provided
-            if ($request->hasFile('asset')) {
-                // Delete old file
-                if ($material->asset && Storage::disk('public')->exists($material->asset)) {
-                    Storage::disk('public')->delete($material->asset);
-                }
-
-                // Store new file
-                $filePath = $request->file('asset')->store('materials', 'public');
-                $validated['asset'] = $filePath;
+        // Jika ada file baru, hapus file lama dan simpan yang baru
+        if ($request->hasFile('assets')) {
+            // Hapus file lama yang ada
+            foreach (json_decode($material->assets) as $asset) {
+                Storage::delete('public/' . $asset); // Hapus file lama
             }
 
-            // Update material
-            $material->update($validated);
-
-            // Commit transaction
-            DB::commit();
-
-            return redirect()
-                ->route('materials.index')
-                ->with('success', 'Material berhasil diperbarui');
-
-        } catch (\Exception $e) {
-            // Rollback transaction
-            DB::rollBack();
-
-            // Delete uploaded file if exists
-            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
-                Storage::disk('public')->delete($filePath);
+            // Upload file baru
+            $newAssets = [];
+            foreach ($request->file('assets') as $file) {
+                $path = $file->store('materials', 'public'); // Menyimpan file baru di folder public/materials
+                $newAssets[] = $path;
             }
-
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui material. Silakan coba lagi.');
+            $material->assets = json_encode($newAssets); // Menyimpan array ke dalam database
         }
-    }
 
+        $material->save();
+
+        return redirect()->route('materials.index')->with('success', 'Material berhasil diperbarui.');
+    }
 
     public function destroy(Material $material)
     {
-        Storage::disk('public')->delete($material->asset);
+        Storage::disk('public')->delete($material->assets);
         $material->delete();
         return redirect()->route('materials.index')->with('success', 'Material deleted successfully');
     }
+
+    public function deleteAsset(Request $request)
+    {
+        $request->validate([
+            'path' => 'required|string',
+        ]);
+
+        $path = $request->input('path');
+
+        // Menghapus file dari storage
+        if (Storage::exists($path)) {
+            Storage::delete($path);
+
+            // Menghapus file dari database (misalnya pada model Material)
+            $material = Material::find($request->input('material_id')); // Ambil material berdasarkan ID
+            $assets = json_decode($material->assets, true); // Mengambil assets yang berupa array
+
+            // Menghapus path file yang ingin dihapus
+            if (($key = array_search($path, $assets)) !== false) {
+                unset($assets[$key]); // Hapus file dari array
+                $material->assets = json_encode(array_values($assets)); // Simpan kembali
+                $material->save(); // Simpan perubahan ke database
+            }
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'File tidak ditemukan.']);
+    }
+
+
 
     // API Method
     public function apiIndex()

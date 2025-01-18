@@ -43,32 +43,17 @@
                             @enderror
                         </div>
 
-                        <!-- Asset -->
+                        <!-- Assets -->
                         <div class="rounded-md">
-                            <label for="asset" class="block text-sm font-medium text-gray-700">Upload File</label>
+                            <label for="assets" class="block text-sm font-medium text-gray-700">Upload Files</label>
                             <div class="mt-2 items-center">
-                                <input type="file" required accept=".pdf" class="basic-filepond" name="asset"
-                                    id="asset">
+                                <input type="file" class="basic-filepond" name="assets[]" multiple
+                                    accept=".pdf,.mp4,.mov,.avi" id="assets">
                             </div>
-                            @error('asset')
+                            @error('assets')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        <!-- Model -->
-                        <div class="rounded-md">
-                            <label for="model_id" class="block text-sm font-medium text-gray-700">Pilih Model</label>
-                            <select name="model_id" id="model_id"
-                                class="block w-full mt-2 px-4 py-2 bg-white border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                                <option value="">-- Pilih Model --</option>
-                                @foreach ($models as $model)
-                                    <option value="{{ $model->id }}"
-                                        {{ old('model_id') == $model->id ? 'selected' : '' }}>
-                                        {{ $model->title }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('model_id')
+                            @error('assets.*')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

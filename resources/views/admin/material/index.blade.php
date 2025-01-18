@@ -24,7 +24,6 @@
                     <th class="pb-4">Deskripsi</th>
                     <th class="pb-4">Asset</th>
                     <th class="pb-4">Author</th>
-                    <th class="pb-4">Model</th>
                     <th class="pb-4">Tanggal Dibuat</th>
                 </tr>
             </thead>
@@ -35,7 +34,6 @@
                         <td>{{ $material->description }}</td>
                         <td>{{ $material->asset }}</td>
                         <td>{{ $material->user->name }}</td>
-                        <td>{{ $material->model->name }}</td>
                         <td>{{ $material->created_at->format('d M Y') }}</td>
                         <td class="relative">
                             <button onclick="toggleDropdown({{ $material->id }})" class="text-gray-400 hover:text-gray-500">

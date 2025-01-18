@@ -4,7 +4,7 @@
 
 @section('content')
     <link rel="stylesheet" href="/assets/extensions/filepond/filepond.css">
-    <link rel="stylesheet" href="/assets/extensions/filepond-plugin-image-preview/filepond-plugin-image-preview.css">
+    {{-- <link rel="stylesheet" href="/assets/extensions/filepond-plugin-image-preview/filepond-plugin-image-preview.css"> --}}
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -14,8 +14,8 @@
                         <h2 class="text-2xl font-bold text-gray-900">Edit Material</h2>
                     </div>
 
-                    <form action="{{ route('materials.update', $material->id) }}" method="POST"
-                        enctype="multipart/form-data" class="space-y-6">
+                    <form action="{{ route('materials.update', $material->id) }}" method="POST" enctype="multipart/form-data"
+                        class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -46,40 +46,47 @@
                             @enderror
                         </div>
 
-                        <!-- Asset -->
-                        <div class="rounded-md">
-                            <label for="asset" class="block text-sm font-medium text-gray-700">Upload File</label>
-                            <div class="mt-2">
-                                <input type="file" name="asset" id="filepond" class="filepond"
-                                    accept="application/pdf">
-                            </div>
-                            <p class="mt-1 text-sm text-gray-500">File PDF saat ini:
-                                <a href="{{ asset('storage/' . $material->asset) }}" class="text-orange-500 hover:underline"
-                                    target="_blank">
-                                    {{ basename($material->asset) }}
-                                </a>
-                            </p>
-                            @error('asset')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Model -->
-                        <div class="rounded-md">
-                            <label for="model_id" class="block text-sm font-medium text-gray-700">Pilih Model</label>
-                            <select name="model_id" id="model_id"
-                                class="block w-full mt-2 px-4 py-2 bg-white border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                                <option value="">-- Pilih Model --</option>
-                                @foreach ($models as $model)
-                                    <option value="{{ $model->id }}"
-                                        {{ old('model_id', $material->model_id) == $model->id ? 'selected' : '' }}>
-                                        {{ $model->title }}
-                                    </option>
+                        <!-- Assets -->
+                        <div class="rounded-md space-y-4">
+                            {{-- <label class="block text-sm font-medium text-gray-700">File yang Ada</label> --}}
+                            {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach ($material->assets as $asset)
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="text-gray-400">
+                                                @if (str_contains($asset, '.pdf'))
+                                                    <i data-lucide="file" class="w-5 h-5"></i>
+                                                @elseif (str_contains($asset, '.mp4'))
+                                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                                @endif
+                                            </span>
+                                            <div>
+                                                <a href="{{ asset('storage/' . $asset) }}"
+                                                    class="text-sm font-medium text-orange-500 hover:underline"
+                                                    target="_blank">
+                                                    {{ basename($asset) }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <button type="button"
+                                            onclick="deleteAsset('{{ $asset }}', {{ $material->id }})"
+                                            class="text-red-500 hover:text-red-700">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 @endforeach
-                            </select>
-                            @error('model_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            </div> --}}
+                            <div class="mt-4">
+                                <label for="assets" class="block text-sm font-medium text-gray-700">Upload File
+                                    Baru</label>
+                                <div class="mt-2">
+                                    <input type="file" name="assets[]" id="filepond"
+                                        class="basic-filepond" required="false" accept="application/pdf,.mp4" multiple>
+                                </div>
+                                @error('assets.*')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="flex justify-end space-x-3">
@@ -99,32 +106,36 @@
     </div>
 
     <script src="/assets/extensions/filepond/filepond.js"></script>
-    <script src="/assets/extensions/filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.js"></script>
-    <script>
-        // Register plugins
-        FilePond.registerPlugin(FilePondPluginFileValidateType);
-
-        // Get a reference to the file input element
-        const inputElement = document.querySelector('input[type="file"].filepond');
-
-        // Create a FilePond instance
-        const pond = FilePond.create(inputElement, {
-            acceptedFileTypes: ['application/pdf'],
-            fileValidateTypeDetectType: (source, type) => new Promise((resolve, reject) => {
-                // Do custom type detection here and return with promise
-                resolve(type);
-            }),
-            labelIdle: 'Seret & Lepaskan file Anda atau <span class="filepond--label-action">Jelajahi</span>',
-            labelFileTypeNotAllowed: 'File harus berformat PDF',
-            fileValidateTypeLabelExpectedTypes: 'File harus berformat PDF',
-            // Disable image preview plugins
-            allowImagePreview: false,
-            allowImageFilter: false,
-            allowImageExifOrientation: false,
-            allowImageCrop: false,
-            allowImageResize: false,
-            allowImageTransform: false,
-            allowImageEdit: false,
-        });
-    </script>
+    <script src="/assets/static/js/pages/filepond.js"></script>
+    {{-- <script src="/assets/extensions/filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.js"></script> --}}
+    {{-- <script>
+        // Function to delete asset
+        function deleteAsset(assetPath, materialId) {
+            if (confirm('Apakah Anda yakin ingin menghapus file ini?')) {
+                fetch("{{ route('materials.delete.asset') }}", {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            path: assetPath,
+                            material_id: materialId, // Kirimkan ID material
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload(); // Refresh halaman setelah berhasil menghapus
+                        } else {
+                            alert('Gagal menghapus file. Silakan coba lagi.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan. Silakan coba lagi.');
+                    });
+            }
+        }
+    </script> --}}
 @endsection

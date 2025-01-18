@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/edit/{material}', [MaterialController::class, 'edit'])->name('materials.edit');
             Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+            Route::delete('/assets', [MaterialController::class, 'deleteAsset'])->name('materials.delete.asset');
         });
 
         Route::prefix('discussions')->group(function () {

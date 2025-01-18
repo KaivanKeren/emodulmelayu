@@ -51,8 +51,6 @@ class MessageController extends Controller
 
             $message->load(['user', 'replies.user', 'replies.replies.user']);
 
-            broadcast(new NewMessageSent($message))->toOthers();
-
             return response()->json([
                 'code' => 200,
                 'message' => 'success',
@@ -87,10 +85,12 @@ class MessageController extends Controller
         }
     }
 
-    public function destroy(Message $message)
+    public function destroy($id)
     {
+        $message = Message::findOrFail($id);
         $this->authorize('delete', $message);
         $message->delete();
+
         return response()->json(['success' => true]);
     }
 }

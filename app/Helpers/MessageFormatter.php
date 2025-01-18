@@ -13,6 +13,7 @@ class MessageFormatter
         $formattedMessages = [];
         foreach ($messages as $message) {
             $formatted = [
+                'id' => $message->id,
                 'user' => $message->user->name,
                 'message' => $message->content
             ];
@@ -21,6 +22,7 @@ class MessageFormatter
                 $replyData = [];
                 foreach ($message->replies as $reply) {
                     $replyData[] = [
+                        'id' => $reply->id,
                         'user' => $reply->user->name,
                         'message' => $reply->content,
                         'replies' => self::format($reply->replies)

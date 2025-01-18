@@ -20,11 +20,19 @@ class AnswerController extends Controller
             ], 404);
         }
 
-        // Validate request
+        // Validate token first
         $validated = $request->validate([
+            'token' => 'required|string',
             'option_ids' => 'required|array',
             'option_ids.*' => 'required|exists:options,id'
         ]);
+
+        // Check if the provided token matches the assessment token
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
 
         // Verify all options belong to the question
         $options = Option::whereIn('id', $validated['option_ids'])
@@ -80,22 +88,30 @@ class AnswerController extends Controller
         });
 
         if ($question->question_type === 'single_choice') {
-            // For single choice, return full score if the one selected option is correct
             return ($selectedOptions->count() === 1 && $selectedCorrectOptions->count() === 1) ? 1 : 0;
         } else {
-            // For multiple choice, calculate partial credit
             $totalOptions = $correctOptions->count();
             $correctlySelected = $selectedCorrectOptions->count();
             $incorrectlySelected = $selectedOptions->count() - $correctlySelected;
 
-            // Calculate score based on correct selections minus penalties for incorrect selections
             $score = ($correctlySelected / $totalOptions) - ($incorrectlySelected * 0.25);
-            return max(0, $score); // Ensure score doesn't go below 0
+            return max(0, $score);
         }
     }
 
-    public function apiIndex(Assessment $assessment, Question $question)
+    public function apiIndex(Request $request, Assessment $assessment, Question $question)
     {
+        // Validate token
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
         if ($question->assessment_id !== $assessment->id) {
             return response()->json([
                 'message' => 'Question does not belong to this assessment'
@@ -110,16 +126,25 @@ class AnswerController extends Controller
         return AnswerResource::collection($answers);
     }
 
-    public function apiShow(Assessment $assessment, Question $question, Answer $answer)
+    public function apiShow(Request $request, Assessment $assessment, Question $question, Answer $answer)
     {
-        // Verify the answer belongs to the authenticated user and question
+        // Validate token
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
         if ($question->assessment_id !== $assessment->id) {
             return response()->json([
                 'message' => 'Question does not belong to this assessment'
             ], 404);
         }
 
-        // Verify the answer belongs to the authenticated user and question
         if ($answer->user_id !== Auth::id() || $answer->question_id !== $question->id) {
             return response()->json([
                 'message' => 'Unauthorized'
@@ -131,24 +156,43 @@ class AnswerController extends Controller
 
     public function apiUpdate(Request $request, Assessment $assessment, Question $question)
     {
-        // First delete existing answers
+        // Validate token
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
         if ($question->assessment_id !== $assessment->id) {
             return response()->json([
                 'message' => 'Question does not belong to this assessment'
             ], 404);
         }
 
-        // First delete existing answers
         Answer::where('question_id', $question->id)
             ->where('user_id', Auth::id())
             ->delete();
 
-        // Then create new answer using store method
-        return $this->store($request, $assessment, $question);
+        return $this->apiStore($request, $assessment, $question);
     }
 
-    public function apiDestroy(Assessment $assessment, Question $question)
+    public function apiDestroy(Request $request, Assessment $assessment, Question $question)
     {
+        // Validate token
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
         if ($question->assessment_id !== $assessment->id) {
             return response()->json([
                 'message' => 'Question does not belong to this assessment'
@@ -165,8 +209,19 @@ class AnswerController extends Controller
         ]);
     }
 
-    public function apiGetResults(Assessment $assessment, Question $question)
+    public function apiGetResults(Request $request, Assessment $assessment, Question $question)
     {
+        // Validate token
+        $validated = $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        if ($validated['token'] !== $assessment->token) {
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
         if ($question->assessment_id !== $assessment->id) {
             return response()->json([
                 'message' => 'Question does not belong to this assessment'
