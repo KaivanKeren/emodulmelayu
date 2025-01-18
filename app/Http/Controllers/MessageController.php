@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\NewMessageSent;
-use App\Models\Discussion;
 use App\Models\Message;
 use Helpers\MessageFormatter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Usamamuneerchaudhary\Commentify\Http\Livewire\Comment;
+use Illuminate\Validation\ValidationException;
 
 class MessageController extends Controller
 {
@@ -56,11 +52,17 @@ class MessageController extends Controller
                 'message' => 'success',
                 'data' => MessageFormatter::format(collect([$message]))
             ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'code' => 422,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'code' => 500,
-                'message' => 'error',
-                'data' => $e->getMessage()
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -85,12 +87,30 @@ class MessageController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $discussion, Message $message)
     {
-        $message = Message::findOrFail($id);
-        $this->authorize('delete', $message);
-        $message->delete();
+        try {
+            // Check if user is authorized to delete the message
+            if ($message->user_id !== auth()->id()) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'You are not authorized to delete this message'
+                ], 403);
+            }
 
-        return response()->json(['success' => true]);
+            // Delete the message
+            $message->delete();
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Message deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'Error deleting message',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
