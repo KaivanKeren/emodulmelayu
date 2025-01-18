@@ -22,7 +22,7 @@
                 <tr class="text-left text-gray-500 text-sm">
                     <th class="pb-4">Judul</th>
                     <th class="pb-4">Deskripsi</th>
-                    <th class="pb-4">Asset</th>
+                    <th class="pb-4">Assets</th>
                     <th class="pb-4">Author</th>
                     <th class="pb-4">Tanggal Dibuat</th>
                 </tr>
@@ -32,7 +32,7 @@
                     <tr class="border-t">
                         <td class="py-4">{{ $material->title }}</td>
                         <td>{{ $material->description }}</td>
-                        <td>{{ $material->asset }}</td>
+                        <td>{{ count(json_decode($material->assets)) }} Files</td>
                         <td>{{ $material->user->name }}</td>
                         <td>{{ $material->created_at->format('d M Y') }}</td>
                         <td class="relative">
