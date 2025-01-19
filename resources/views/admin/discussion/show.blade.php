@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('title',  $discussion->title )
+
 @section('content')
     <div class="max-w-4xl mx-auto px-4 py-8">
         <div class="p-4 sm:px-8">

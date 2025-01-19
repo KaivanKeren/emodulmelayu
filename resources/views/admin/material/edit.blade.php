@@ -26,7 +26,7 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="file-text" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="title" id="title" placeholder="Judul Material"
+                                <input type="text" required name="title" id="title" placeholder="Judul Material"
                                     value="{{ old('title', $material->title) }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
@@ -38,7 +38,7 @@
                         <!-- Description -->
                         <div class="rounded-md">
                             <div class="flex flex-col">
-                                <textarea name="description" id="description" rows="4" placeholder="Deskripsi Material"
+                                <textarea name="description" required id="description" rows="4" placeholder="Deskripsi Material"
                                     class="block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500">{{ old('description', $material->description) }}</textarea>
                             </div>
                             @error('description')

@@ -33,34 +33,6 @@
                     @csrf
                     @method('PUT')
                     <div class="px-4 py-5 sm:p-6">
-                        <!-- Validation Errors -->
-                        @if ($errors->any())
-                            <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-red-800">
-                                            Terdapat beberapa kesalahan dalam pengisian form:
-                                        </h3>
-                                        <div class="mt-2 text-sm text-red-700">
-                                            <ul class="list-disc pl-5 space-y-1">
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
                         <!-- Title Field -->
                         <div class="mb-6">
                             <label for="title" class="block text-sm font-medium text-gray-700 my-2">
@@ -72,7 +44,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="file-text" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="title" id="title"
+                                    <input type="text" required name="title" id="title"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
                                         value="{{ old('title', $discussion->title) }}" placeholder="Masukkan judul diskusi">
                                 </div>
@@ -89,16 +61,13 @@
                                 <div class="rounded-md">
                                     <div
                                         class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                        <textarea name="content" id="content" rows="8"
+                                        <textarea name="content" required id="content" rows="8"
                                             class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
                                             placeholder="Tuliskan isi diskusi di sini...">{{ old('content', $discussion->content) }}</textarea>
                                     </div>
                                     @error('content')
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
-                                    <p class="mt-2 text-sm text-gray-500">
-                                        Tuliskan konten diskusi Anda dengan jelas dan detail.
-                                    </p>
                                 </div>
                             </div>
 

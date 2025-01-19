@@ -94,7 +94,7 @@ class UserController extends Controller
                     }
                 },
             ],
-            'role' => 'sometimes|in:admin,guru,siswa',
+            'role' => 'sometimes|in:Admin,Guru,Siswa',
             'school_id' => 'sometimes|exists:schools,id', // Pastikan ID sekolah valid
             'status' => 'sometimes|boolean',
             'password' => 'nullable|min:6', // Password opsional

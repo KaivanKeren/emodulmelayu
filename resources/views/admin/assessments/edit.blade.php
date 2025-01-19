@@ -21,7 +21,7 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="file-text" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="title" id="title" placeholder="Judul"
+                                <input type="text" required name="title" id="title" placeholder="Judul"
                                     value="{{ old('title', $assessment->title) }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
@@ -37,7 +37,7 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="tag" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="category" id="category" placeholder="Kategori"
+                                <input type="text" required name="category" id="category" placeholder="Kategori"
                                     value="{{ old('category', $assessment->category) }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>

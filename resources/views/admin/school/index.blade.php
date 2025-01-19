@@ -30,7 +30,7 @@
                 @foreach ($schools as $school)
                     <tr class="border-t">
                         <td class="py-4">{{ $school->name }}</td>
-                        <td>{{ $school->address }}</td>
+                        <td>{{ $school->address ?? 'Tidak ada alamat' }}</td>
                         <td>{{ $school->created_at->format('d M Y') }}</td>
                         <td>
                             <button onclick="toggleDropdown({{ $school->id }})" class="text-gray-400 hover:text-gray-500">

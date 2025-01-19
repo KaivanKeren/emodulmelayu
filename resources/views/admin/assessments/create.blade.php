@@ -253,7 +253,7 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="circle" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="questions[${questionIndex}][options][]" 
+                                <input type="text" required name="questions[${questionIndex}][options][]" 
                                     placeholder="Masukkan pilihan jawaban"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
