@@ -73,7 +73,7 @@
                             <span class="text-gray-400">
                                 <i data-lucide="help-circle" class="w-5 h-5"></i>
                             </span>
-                            <input type="text" name="questions[${questionCount}][question_text]"
+                            <input type="text" required name="questions[${questionCount}][question_text]"
                                 placeholder="Masukkan pertanyaan"
                                 class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                         </div>
@@ -134,13 +134,13 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="circle" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="questions[${questionIndex}][options][]" 
+                                <input type="text" required name="questions[${questionIndex}][options][]" 
                                     placeholder="Masukkan pilihan jawaban"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <input type="${type}" 
+                            <input type="${type}" required
                                 name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
                                 value="${optionIndex}"
                                 class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">

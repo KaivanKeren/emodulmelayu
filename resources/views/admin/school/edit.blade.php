@@ -22,7 +22,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="school" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="name" id="name" placeholder="Nama"
+                                    <input type="text" required name="name" id="name" placeholder="Nama"
                                         value="{{ old('name', $school->name) }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>

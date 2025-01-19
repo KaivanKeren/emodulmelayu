@@ -22,7 +22,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="user" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="name" id="name" placeholder="Nama"
+                                    <input type="text" required name="name" id="name" placeholder="Nama"
                                         value="{{ old('name', $user->name) }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
@@ -38,7 +38,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="mail" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="email" name="email" id="email" placeholder="Email"
+                                    <input type="email" required name="email" id="email" placeholder="Email"
                                         value="{{ old('email', $user->email) }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
@@ -54,7 +54,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="id-card" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="nisn_nip" id="nisn_nip" placeholder="NISN/NIP"
+                                    <input type="text" name="nisn_nip" required id="nisn_nip" placeholder="NISN/NIP"
                                         value="{{ old('nisn_nip', $user->nisn_nip) }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
@@ -70,7 +70,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="users" class="w-5 h-5"></i>
                                     </span>
-                                    <select name="role" id="role"
+                                    <select name="role" id="role" required
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                         <option value="">Pilih Role</option>
                                         <option value="Admin" {{ old('role', $user->role) == 'Admin' ? 'selected' : '' }}>
@@ -93,7 +93,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="building" class="w-5 h-5"></i>
                                     </span>
-                                    <select name="school_id" id="school"
+                                    <select name="school_id" required id="school"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                         <option value="">Pilih Sekolah</option>
                                         @foreach ($schools as $school)

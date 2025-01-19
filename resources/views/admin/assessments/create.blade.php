@@ -13,17 +13,21 @@
 
                     <form action="{{ route('assessments.store') }}" method="POST" class="space-y-8">
                         @csrf
-                        
+
                         <!-- Assessment Details -->
                         <div class="space-y-6">
                             <!-- Title -->
                             <div class="rounded-md">
-                                <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                <label for="title" class="block text-sm font-medium text-gray-700 my-2">
+                                    Judul Assessment
+                                </label>
+                                <div
+                                    class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                     <span class="text-gray-400">
                                         <i data-lucide="file-text" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="title" id="title" placeholder="Judul"
-                                        value="{{ old('title') }}"
+                                    <input type="text" name="title" required id="title"
+                                        placeholder="Masukkan judul assessment" value="{{ old('title') }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
                                 @error('title')
@@ -33,12 +37,16 @@
 
                             <!-- Category -->
                             <div class="rounded-md">
-                                <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                <label for="category" class="block text-sm font-medium text-gray-700 my-2">
+                                    Kategori Assessment
+                                </label>
+                                <div
+                                    class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                     <span class="text-gray-400">
                                         <i data-lucide="tag" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="category" id="category" placeholder="Kategori"
-                                        value="{{ old('category') }}"
+                                    <input type="text" name="category" required id="category"
+                                        placeholder="Masukkan kategori assessment" value="{{ old('category') }}"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
                                 @error('category')
@@ -48,7 +56,11 @@
 
                             <!-- Status -->
                             <div class="rounded-md">
-                                <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                <label for="status" class="block text-sm font-medium text-gray-700 my-2">
+                                    Status Assessment
+                                </label>
+                                <div
+                                    class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                     <span class="text-gray-400">
                                         <i data-lucide="check-circle" class="w-5 h-5"></i>
                                     </span>
@@ -113,7 +125,7 @@
                                     <span class="text-gray-400">
                                         <i data-lucide="circle" class="w-5 h-5"></i>
                                     </span>
-                                    <input type="text" name="questions[${questionIndex}][options][]" 
+                                    <input type="text" required name="questions[${questionIndex}][options][]" 
                                         placeholder="Masukkan pilihan jawaban"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                 </div>
@@ -151,7 +163,7 @@
                                 <span class="text-gray-400">
                                     <i data-lucide="help-circle" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="questions[${questionIndex}][content]"
+                                <input type="text" required name="questions[${questionIndex}][content]"
                                     placeholder="Masukkan pertanyaan"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
@@ -214,7 +226,7 @@
             const questionType = button.closest('.question-block').querySelector('select[name*="question_type"]').value;
             const type = questionType === 'single_choice' ? 'radio' : 'checkbox';
             const optionIndex = optionsContainer.children.length;
-            
+
             const newOption = createOptionHTML(questionIndex, optionIndex, type);
             optionsContainer.insertAdjacentHTML('beforeend', newOption);
             lucide.createIcons();
@@ -223,7 +235,7 @@
         function updateQuestionType(select, questionIndex) {
             const optionsContainer = select.closest('.question-block').querySelector('.options-container');
             const type = select.value === 'single_choice' ? 'radio' : 'checkbox';
-            
+
             const inputs = optionsContainer.querySelectorAll('input[type="radio"], input[type="checkbox"]');
             inputs.forEach((input, index) => {
                 input.type = type;
@@ -247,7 +259,7 @@
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <input type="${type}" 
+                            <input type="${type}" required
                                 name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
                                 value="${optionIndex}"
                                 class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">

@@ -15,13 +15,16 @@
                         @csrf
                         <!-- Name -->
                         <div class="rounded-md">
+                            <label for="name" class="block text-sm font-medium text-gray-700 my-2">
+                                Nama Sekolah
+                            </label>
                             <div
                                 class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                 <span class="text-gray-400">
                                     <i data-lucide="school" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="name" id="name" placeholder="Nama Sekolah"
-                                    value="{{ old('name') }}"
+                                <input type="text" name="name" id="name" required
+                                    placeholder="Masukkan nama sekolah" value="{{ old('name') }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
                             @error('name')
@@ -31,12 +34,15 @@
 
                         <!-- Address -->
                         <div class="rounded-md">
+                            <label for="address" class="block text-sm font-medium text-gray-700 my-2">
+                                Alamat Sekolah
+                            </label>
                             <div
                                 class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                 <span class="text-gray-400">
                                     <i data-lucide="map" class="w-5 h-5"></i>
                                 </span>
-                                <input type="text" name="address" id="address" placeholder="Alamat Sekolah"
+                                <input type="text" name="address" id="address" placeholder="Masukkan alamat sekolah"
                                     value="{{ old('address') }}"
                                     class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             </div>
