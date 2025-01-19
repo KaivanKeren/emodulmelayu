@@ -8,6 +8,7 @@ use App\Models\Option;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
 {
@@ -26,54 +27,97 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi data yang diterima dari form
-        $validated = $request->validate([
+        // Validasi dasar untuk struktur data
+        $request->validate([
+            'assessment_id' => 'required|exists:assessments,id',
             'questions' => 'required|array|min:1',
             'questions.*.question_text' => 'required|string|max:255',
             'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
             'questions.*.options' => 'required|array|min:2',
-            'questions.*.correct_answer' => function ($attribute, $value, $fail) use ($request) {
-                $questionType = $request->input('questions')[count($request->input('questions')) - 1]['question_type'];
-                if ($questionType == 'single_choice' && !is_numeric($value)) {
-                    $fail('The correct answer must be a number for single choice questions.');
-                } elseif ($questionType == 'multiple_choice' && !is_array($value)) {
-                    $fail('The correct answers must be an array for multiple choice questions.');
-                }
-            },
         ]);
 
-        // Loop untuk setiap pertanyaan yang dikirimkan
-        foreach ($validated['questions'] as $questionData) {
-            // Membuat pertanyaan
-            $question = Question::create([
-                'content' => $questionData['question_text'],
-                'type' => $questionData['question_type'],
-                'assessment_id' => $request->assessment_id, // Pastikan assessment_id dikirim dari form
-            ]);
+        // Validasi untuk setiap pertanyaan
+        foreach ($request->questions as $index => $question) {
+            $validationRules = [];
 
-            // Mengatur pilihan jawaban dan jawaban yang benar
-            foreach ($questionData['options'] as $index => $optionContent) {
-                $isCorrect = false;
-
-                // Cek apakah ini pertanyaan pilihan tunggal atau ganda
-                if ($questionData['question_type'] === 'single_choice') {
-                    $isCorrect = $index == $questionData['correct_answer'];
-                } else {
-                    // Untuk pilihan ganda, cek apakah pilihan ini benar (bisa lebih dari satu jawaban benar)
-                    $isCorrect = in_array($index, (array) $questionData['correct_answer']);
-                }
-
-                // Simpan pilihan jawaban untuk pertanyaan ini
-                Option::create([
-                    'question_id' => $question->id,
-                    'content' => $optionContent,
-                    'is_correct' => $isCorrect,
-                ]);
+            if ($question['question_type'] === 'single_choice') {
+                $validationRules["questions.{$index}.correct_answer"] = [
+                    'required',
+                    'numeric',
+                    'min:0',
+                    'max:' . (count($question['options']) - 1)
+                ];
+            } else {
+                $validationRules["questions.{$index}.correct_answer"] = [
+                    'required',
+                    'array',
+                    'min:1'
+                ];
+                $validationRules["questions.{$index}.correct_answer.*"] = [
+                    'numeric',
+                    'distinct',
+                    'min:0',
+                    'max:' . (count($question['options']) - 1)
+                ];
             }
+
+            $request->validate($validationRules, [
+                "questions.{$index}.correct_answer.required" => 'Pertanyaan #' . ($index + 1) . ' harus memiliki jawaban yang benar.',
+                "questions.{$index}.correct_answer.*.numeric" => 'Jawaban yang benar harus berupa angka.',
+                "questions.{$index}.correct_answer.*.distinct" => 'Jawaban yang benar tidak boleh duplikat.',
+                "questions.{$index}.correct_answer.*.min" => 'Indeks jawaban tidak valid.',
+                "questions.{$index}.correct_answer.*.max" => 'Indeks jawaban tidak valid.',
+            ]);
         }
 
-        return redirect()->route('assessments.show', $request->assessment_id)
-            ->with('success', 'Pertanyaan berhasil ditambahkan.');
+        try {
+            DB::beginTransaction();
+
+            foreach ($request->questions as $questionData) {
+                // Membuat pertanyaan
+                $question = Question::create([
+                    'content' => $questionData['question_text'],
+                    'question_type' => $questionData['question_type'],
+                    'assessment_id' => $request->assessment_id,
+                ]);
+
+                // Menyiapkan array untuk menyimpan pilihan jawaban
+                $options = [];
+                foreach ($questionData['options'] as $index => $optionContent) {
+                    $isCorrect = false;
+
+                    if ($questionData['question_type'] === 'single_choice') {
+                        $isCorrect = $index == $questionData['correct_answer'];
+                    } else {
+                        $isCorrect = in_array(strval($index), (array)$questionData['correct_answer']);
+                    }
+
+                    $options[] = [
+                        'question_id' => $question->id,
+                        'content' => $optionContent,
+                        'is_correct' => $isCorrect,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // Bulk insert untuk options
+                Option::insert($options);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('assessments.show', $request->assessment_id)
+                ->with('success', 'Pertanyaan berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat menyimpan pertanyaan. Silakan coba lagi.');
+        }
     }
 
     public function show(Question $question)

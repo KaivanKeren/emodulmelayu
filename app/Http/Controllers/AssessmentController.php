@@ -128,36 +128,15 @@ class AssessmentController extends Controller
 
             DB::commit();
 
-            Log::info('Assessment created successfully', [
-                'assessment_id' => $assessment->id,
-                'title' => $assessment->title,
-                'created_by' => auth()->id(),
-                'has_token' => !is_null($tokenData['token']),
-                'token_expires_at' => $tokenData['token_expires_at']
-            ]);
-
             return redirect()->route('assessments.index')
                 ->with('success', 'Assessment berhasil dibuat.');
         } catch (ValidationException $e) {
-            Log::warning('Assessment validation failed', [
-                'errors' => $e->errors(),
-                'user_id' => auth()->id(),
-                'request_data' => $request->except(['_token'])
-            ]);
-
             return redirect()->back()
                 ->withErrors($e->errors())
                 ->withInput()
                 ->with('error', 'Mohon periksa kembali data yang dimasukkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('Failed to create assessment', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => auth()->id(),
-                'request_data' => $request->except(['_token'])
-            ]);
 
             return redirect()->back()
                 ->withInput()

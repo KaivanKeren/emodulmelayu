@@ -34,6 +34,16 @@ class AnswerController extends Controller
             ], 403);
         }
 
+        // Validate if the token has expired
+        $currentTime = now(); // Get the current time
+        $tokenExpiresAt = $assessment->token_expires_at; // Assuming token_expires_at is a datetime field on the assessment model
+
+        if ($currentTime->gt($tokenExpiresAt)) {
+            return response()->json([
+                'message' => 'The assessment token has expired'
+            ], 403);
+        }
+
         // Verify all options belong to the question
         $options = Option::whereIn('id', $validated['option_ids'])
             ->where('question_id', $question->id)

@@ -118,32 +118,34 @@
 
             function createOptionHTML(questionIndex, optionIndex, type) {
                 return `
-                    <div class="option-group">
-                        <div class="flex items-center gap-3">
-                            <div class="flex-1">
-                                <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                    <span class="text-gray-400">
-                                        <i data-lucide="circle" class="w-5 h-5"></i>
-                                    </span>
-                                    <input type="text" required name="questions[${questionIndex}][options][]" 
-                                        placeholder="Masukkan pilihan jawaban"
-                                        class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="${type}" 
-                                    name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
-                                    value="${optionIndex}"
-                                    class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
-                                <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                            </div>
-                            <button type="button" onclick="removeOption(this)" 
-                                class="text-gray-400 hover:text-red-500">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
+            <div class="option-group">
+                <div class="flex items-center gap-3">
+                    <div class="flex-1">
+                        <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                            <span class="text-gray-400">
+                                <i data-lucide="circle" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" required name="questions[${questionIndex}][options][]" 
+                                placeholder="Masukkan pilihan jawaban"
+                                class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                         </div>
                     </div>
-                `;
+                    <div class="flex items-center">
+                        <input type="${type}" 
+                            name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
+                            value="${optionIndex}"
+                            class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 answer-checkbox"
+                            onchange="updateCheckboxRequired(${questionIndex})"
+                            ${type === 'radio' ? 'required' : ''}>
+                        <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
+                    </div>
+                    <button type="button" onclick="removeOption(this)" 
+                        class="text-gray-400 hover:text-red-500">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        `;
             }
 
             function createQuestionHTML(questionIndex) {
@@ -241,7 +243,15 @@
                 input.type = type;
                 input.name = `questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}`;
                 input.value = index;
+                input.required = type === 'radio'; // Only set required for radio buttons
+                if (type === 'checkbox') {
+                    input.onchange = () => updateCheckboxRequired(questionIndex);
+                }
             });
+
+            if (type === 'checkbox') {
+                updateCheckboxRequired(questionIndex);
+            }
         }
 
         function createOptionHTML(questionIndex, optionIndex, type) {
@@ -273,5 +283,21 @@
                 </div>
             `;
         }
+
+        window.updateCheckboxRequired = function(questionIndex) {
+            const questionBlock = document.querySelector(`.question-block:nth-child(${questionIndex + 1})`);
+            const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"]');
+
+            let isAnyChecked = false;
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    isAnyChecked = true;
+                }
+            });
+
+            checkboxes.forEach(checkbox => {
+                checkbox.required = !isAnyChecked;
+            });
+        };
     </script>
 @endsection

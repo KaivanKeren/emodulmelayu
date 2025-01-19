@@ -54,6 +54,13 @@
             const addQuestionButton = document.getElementById('add_question');
             let questionCount = 0;
 
+            document.querySelectorAll('.question-block').forEach(questionBlock => {
+                const questionType = questionBlock.querySelector('select[name*="question_type"]').value;
+                if (questionType === 'multiple_choice') {
+                    handleCheckboxGroup(questionBlock);
+                }
+            });
+
             function createQuestionBlock() {
                 const questionBlock = document.createElement('div');
                 questionBlock.className = 'question-block border border-gray-200 rounded-xl p-6 space-y-6';
@@ -125,46 +132,90 @@
             addQuestionButton.click();
         });
 
+        function handleCheckboxGroup(questionBlock) {
+            const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"][name$="[correct_answer][]"]');
+
+            // Fungsi untuk update required state
+            function updateRequiredState() {
+                const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                checkboxes.forEach(cb => {
+                    cb.required = !isAnyChecked;
+                });
+            }
+
+            // Tambahkan event listener untuk setiap checkbox
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateRequiredState);
+            });
+
+            // Set initial state
+            updateRequiredState();
+        }
+
+        // Update fungsi createOptionHTML untuk multiple choice
         function createOptionHTML(questionIndex, optionIndex, type) {
-            return `
-                <div class="option-group">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1">
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                <span class="text-gray-400">
-                                    <i data-lucide="circle" class="w-5 h-5"></i>
-                                </span>
-                                <input type="text" required name="questions[${questionIndex}][options][]" 
-                                    placeholder="Masukkan pilihan jawaban"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="${type}" required
-                                name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
-                                value="${optionIndex}"
-                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
-                            <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                        </div>
-                        <button type="button" onclick="removeOption(this)" 
-                            class="text-gray-400 hover:text-red-500">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+            const html = `
+        <div class="option-group">
+            <div class="flex items-center gap-3">
+                <div class="flex-1">
+                    <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                        <span class="text-gray-400">
+                            <i data-lucide="circle" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" required name="questions[${questionIndex}][options][]" 
+                            placeholder="Masukkan pilihan jawaban"
+                            class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                     </div>
                 </div>
-            `;
+                <div class="flex items-center">
+                    <input type="${type}" 
+                        name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
+                        value="${optionIndex}"
+                        ${type === 'radio' ? 'required' : ''}
+                        class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
+                    <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
+                </div>
+                <button type="button" onclick="removeOption(this)" 
+                    class="text-gray-400 hover:text-red-500">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    `;
+            return html;
+        }
+
+        function handleCheckboxRequired(checkbox) {
+            const questionBlock = checkbox.closest('.question-block');
+            const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"][name="' + checkbox.getAttribute(
+                'name') + '"]');
+
+            // Check if any checkbox is checked
+            const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+            // Update required attribute for all checkboxes in the group
+            checkboxes.forEach(cb => {
+                cb.required = !isAnyChecked;
+            });
         }
 
         function addOption(button, questionIndex) {
-            const optionsContainer = button.closest('.options-section').querySelector('.options-container');
-            const questionType = button.closest('.question-block').querySelector('select[name*="question_type"]').value;
+            const questionBlock = button.closest('.question-block');
+            const optionsContainer = questionBlock.querySelector('.options-container');
+            const questionType = questionBlock.querySelector('select[name*="question_type"]').value;
             const type = questionType === 'single_choice' ? 'radio' : 'checkbox';
             const optionIndex = optionsContainer.children.length;
 
             const newOption = createOptionHTML(questionIndex, optionIndex, type);
             optionsContainer.insertAdjacentHTML('beforeend', newOption);
+
+            if (type === 'checkbox') {
+                handleCheckboxGroup(questionBlock);
+            }
+
             lucide.createIcons();
         }
+
 
         function removeOption(button) {
             const optionGroup = button.closest('.option-group');
@@ -191,15 +242,38 @@
         }
 
         function updateQuestionType(select, questionIndex) {
-            const optionsContainer = select.closest('.question-block').querySelector('.options-container');
+            const questionBlock = select.closest('.question-block');
+            const optionsContainer = questionBlock.querySelector('.options-container');
             const type = select.value === 'single_choice' ? 'radio' : 'checkbox';
 
-            const inputs = optionsContainer.querySelectorAll('input[type="radio"], input[type="checkbox"]');
-            inputs.forEach((input, index) => {
-                input.type = type;
-                input.name = `questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}`;
-                input.value = index;
+            // Simpan status checked dari input sebelumnya
+            const previousValues = Array.from(optionsContainer.querySelectorAll(
+                    'input[type="radio"], input[type="checkbox"]'))
+                .map(input => input.checked);
+
+            // Buat ulang semua option dengan tipe yang baru
+            const optionGroups = optionsContainer.querySelectorAll('.option-group');
+            optionGroups.forEach((group, index) => {
+                const optionText = group.querySelector('input[type="text"]').value;
+                const newOptionHTML = createOptionHTML(questionIndex, index, type);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newOptionHTML;
+                const newOptionGroup = tempDiv.firstElementChild;
+
+                // Salin nilai teks dan checked status
+                newOptionGroup.querySelector('input[type="text"]').value = optionText;
+                const newInput = newOptionGroup.querySelector(`input[type="${type}"]`);
+                newInput.checked = previousValues[index];
+
+                group.replaceWith(newOptionGroup);
             });
+
+            // Initialize checkbox handling if needed
+            if (type === 'checkbox') {
+                handleCheckboxGroup(questionBlock);
+            }
+
+            lucide.createIcons();
         }
 
         function renumberQuestions() {
