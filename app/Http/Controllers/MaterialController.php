@@ -18,6 +18,35 @@ class MaterialController extends Controller
         return view('admin.material.index', compact('materials'));
     }
 
+    public function filter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['title', 'user', 'description']);
+
+        // Build query with optional filters
+        $query = Material::query();
+
+        if (!empty($filters['title'])) {
+            $query->where('title', 'like', '%' . $filters['title'] . '%');
+        }
+
+        if (!empty($filters['user'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['user'] . '%');
+            });
+        }
+
+        if (!empty($filters['description'])) {
+            $query->where('description', $filters['description']);
+        }
+
+        // Get users with pagination
+        $materials = $query->paginate(10);
+
+        // Return view with materials and filters
+        return view('admin.material.index', compact('materials', 'filters'));
+    }
+
     public function create()
     {
         return view('admin.material.create');

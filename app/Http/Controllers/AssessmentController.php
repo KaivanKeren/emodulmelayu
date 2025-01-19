@@ -22,6 +22,33 @@ class AssessmentController extends Controller
         return view('admin.assessments.index', compact('assessments'));
     }
 
+    public function filter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['title', 'category', 'status']);
+
+        // Build query with optional filters
+        $query = Assessment::query();
+
+        if (!empty($filters['title'])) {
+            $query->where('title', 'like', '%' . $filters['title'] . '%');
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Get users with pagination
+        $assessments = $query->paginate(10);
+
+        // Return view with assessments and filters
+        return view('admin.assessments.index', compact('assessments', 'filters'));
+    }
+
     public function create()
     {
         return view('admin.assessments.create');

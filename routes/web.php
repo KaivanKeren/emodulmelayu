@@ -20,13 +20,12 @@ Route::get('/', function () {
 
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'postLogin'])->name('postLogin');
-Route::get('/register', [AuthController::class, 'register'])->name('register');
-Route::post('/register', [AuthController::class, 'postRegister'])->name('postRegister');
 
 Route::middleware('auth')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('adminDashboard');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
+        Route::get('/filter', [DashboardController::class, 'filter'])->name('users.filter');
 
 
         Route::prefix('users')->group(function () {
@@ -35,6 +34,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{user}', [UserController::class, 'edit'])->name('users.edit');
             Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
             Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+            Route::get('/filter', [UserController::class, 'filter'])->name('users.page.filter');
         });
 
         Route::prefix('assessments')->group(function () {
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/questions/{question}', [QuestionController::class, 'edit'])->name('questions.edit');
             Route::put('/questions/{question}', [QuestionController::class, 'update'])->name('questions.update');
             Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
+
+            Route::get('/filter', [AssessmentController::class, 'filter'])->name('assessments.filter');
         });
 
         Route::prefix('materials')->group(function () {
@@ -63,6 +66,8 @@ Route::middleware('auth')->group(function () {
             Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
             Route::delete('/assets', [MaterialController::class, 'deleteAsset'])->name('materials.delete.asset');
+
+            Route::get('/filter', [MaterialController::class, 'filter'])->name('materials.filter');
         });
 
         Route::prefix('discussions')->group(function () {
@@ -85,6 +90,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{school}', [SchoolController::class, 'edit'])->name('schools.edit');
             Route::put('/{school}', [SchoolController::class, 'update'])->name('schools.update');
             Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('schools.destroy');
+
+            Route::get('/filter', [SchoolController::class, 'filter'])->name('schools.filter');
         });
 
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');

@@ -24,6 +24,46 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
     }
 
+    public function filter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['name', 'role', 'school', 'status']);
+
+        // Build query with optional filters
+        $query = User::query();
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if (!empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+
+        if (!empty($filters['school'])) {
+            $query->whereHas('school', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['school'] . '%');
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Get total count of users
+        $total_users = User::count();
+
+        $materials = Material::count();
+        $assessments = Assessment::count();
+        $discussions = Discussion::count();
+
+        // Get users with pagination
+        $users = $query->paginate(10);
+
+        // Return view with users and filters
+        return view('admin.dashboard', compact('users', 'filters', 'total_users', 'materials', 'assessments', 'discussions'));
+    }
+
     public function search(Request $request): JsonResponse
     {
         try {

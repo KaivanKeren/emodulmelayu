@@ -30,6 +30,29 @@ class SchoolController extends Controller
         return view('admin.school.index', compact('schools'));
     }
 
+    public function filter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['name', 'address']);
+
+        // Build query with optional filters
+        $query = School::query();
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if (!empty($filters['address'])) {
+            $query->where('address', $filters['address']);
+        }
+
+        // Get users with pagination
+        $schools = $query->paginate(10);
+
+        // Return view with schools and filters
+        return view('admin.school.index', compact('schools', 'filters'));
+    }
+
     /**
      * Store a newly created school in storage (API).
      */

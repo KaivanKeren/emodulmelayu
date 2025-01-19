@@ -7,7 +7,7 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold">Manajemen Materi</h2>
             <div class="flex space-x-3">
-                <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <button onclick="toggleModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
                 <a href="{{ route('materials.create') }}">
@@ -72,10 +72,44 @@
                 @endforeach
             </tbody>
         </table>
+
+        <div id="filterModal" class="fixed inset-0 z-50 hidden bg-gray-800 bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+                <h3 class="text-lg font-semibold mb-4">Filter Materi</h3>
+                <form action="{{ route('materials.filter') }}" method="GET">
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Judul</label>
+                        <input type="text" id="name" name="name"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                    </div>
+                    <div class="mb-4">
+                        <label for="user" class="block text-sm font-medium text-gray-700">Author</label>
+                        <input type="text" id="user" name="user"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                    </div>
+                    <div class="mb-4">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                        <input type="text" id="description" name="description"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="toggleModal()"
+                            class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Terapkan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript for dropdown functionality -->
 <script>
+    function toggleModal() {
+        const modal = document.getElementById('filterModal');
+        modal.classList.toggle('hidden');
+    }
+
     function toggleDropdown(materialId) {
         // Close all other dropdowns
         document.querySelectorAll('[id^="dropdown-"]').forEach(dropdown => {

@@ -51,12 +51,10 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold">Manajemen Pengguna</h2>
             <div class="flex space-x-3">
-                <button class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <!-- Button to open modal -->
+                <button onclick="toggleModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                {{-- <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
-                    Tambah User
-                </button> --}}
             </div>
         </div>
 
@@ -107,5 +105,58 @@
                 @endif
             </tbody>
         </table>
+
+        <!-- Modal for filtering users -->
+        <div id="filterModal" class="fixed inset-0 z-50 hidden bg-gray-800 bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+                <h3 class="text-lg font-semibold mb-4">Filter Pengguna</h3>
+                <form action="{{ route('users.filter') }}" method="GET">
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Nama</label>
+                        <input type="text" id="name" name="name"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                    </div>
+                    <div class="mb-4">
+                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                        <select id="role" name="role"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                            <option value="">Semua</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Siswa">Siswa</option>
+                            <option value="Guru">Guru</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="school" class="block text-sm font-medium text-gray-700">Sekolah</label>
+                        <input type="text" id="school" name="school"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                    </div>
+                    <div class="mb-4">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" name="status"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                            <option value="">Semua</option>
+                            <option value="Accepted">Accepted</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="toggleModal()"
+                            class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Terapkan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function toggleModal() {
+            const modal = document.getElementById('filterModal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+
 @endsection

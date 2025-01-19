@@ -15,6 +15,39 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
+    public function filter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['name', 'role', 'school', 'status']);
+
+        // Build query with optional filters
+        $query = User::query();
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if (!empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+
+        if (!empty($filters['school'])) {
+            $query->whereHas('school', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['school'] . '%');
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Get users with pagination
+        $users = $query->paginate(10);
+
+        // Return view with users and filters
+        return view('admin.users.index', compact('users', 'filters'));
+    }
+
     public function create()
     {
         return view('admin.users.create');

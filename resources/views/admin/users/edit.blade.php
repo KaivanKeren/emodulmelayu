@@ -73,11 +73,11 @@
                                     <select name="role" id="role"
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                         <option value="">Pilih Role</option>
-                                        <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
+                                        <option value="Admin" {{ old('role', $user->role) == 'Admin' ? 'selected' : '' }}>
                                             Admin</option>
-                                        <option value="guru" {{ old('role', $user->role) == 'guru' ? 'selected' : '' }}>
+                                        <option value="Guru" {{ old('role', $user->role) == 'Guru' ? 'selected' : '' }}>
                                             Guru</option>
-                                        <option value="siswa" {{ old('role', $user->role) == 'siswa' ? 'selected' : '' }}>
+                                        <option value="Siswa" {{ old('role', $user->role) == 'Siswa' ? 'selected' : '' }}>
                                             Siswa</option>
                                     </select>
                                 </div>
