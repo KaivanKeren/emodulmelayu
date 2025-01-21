@@ -114,16 +114,4 @@
     </div>
 
     <script src="/assets/create-question.js"></script>
-
-    <script src="/assets/extensions/filepond/filepond.js"></script>
-    <script src="/assets/static/js/pages/filepond.js"></script>
-    <!-- FilePond and plugins -->
-    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
-    <script src="https://unpkg.com/filepond-plugin-image-resize/dist/filepond-plugin-image-resize.js"></script>
-    <script src="https://unpkg.com/filepond-plugin-image-crop/dist/filepond-plugin-image-crop.js"></script>
-    <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
-
-    <!-- FilePond styles -->
-    <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
-    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
 @endsection

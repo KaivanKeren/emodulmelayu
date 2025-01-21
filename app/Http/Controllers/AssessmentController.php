@@ -69,7 +69,7 @@ class AssessmentController extends Controller
                 'questions.*.options.*' => 'required|string|max:255',
                 'questions.*.correct_answer' => 'required_if:questions.*.question_type,single_choice',
                 'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice',
-                'questions.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048' // Added image validation
+                'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048' // Added image validation
             ], [
                 'title.required' => 'Judul assessment wajib diisi',
                 'title.max' => 'Judul tidak boleh lebih dari 255 karakter',
@@ -118,17 +118,18 @@ class AssessmentController extends Controller
                 // Log::info('Question data:', ['image' => $request->hasFile("questions.{->$loopindex}.image")]);
 
                 $imagePath = null;
-                if (isset($questionData['image']) && $questionData['image']) {
+                if (isset($questionData['image']) && $questionData['image'] !== null) {
                     try {
                         if (!Storage::disk('public')->exists('question-images')) {
                             Storage::disk('public')->makeDirectory('question-images');
                         }
 
-                        $filename = time() . '_' . uniqid() . '.' . $questionData['image']->getClientOriginalExtension();
-
-                        $imagePath = $questionData['image']->storeAs('question-images', $filename, 'public');
-
-                        Log::info('Image uploaded:', ['path' => $imagePath]);
+                        $image = $questionData['image'];
+                        if ($image && $image->isValid()) {
+                            $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                            $imagePath = $image->storeAs('question-images', $filename, 'public');
+                            Log::info('Image uploaded:', ['path' => $imagePath]);
+                        }
                     } catch (\Exception $e) {
                         Log::error('Image upload failed:', ['error' => $e->getMessage()]);
                         throw $e;

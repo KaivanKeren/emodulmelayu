@@ -112,9 +112,8 @@
                                                 <h3 class="text-lg font-medium text-gray-900">{{ $question->content }}</h3>
                                                 @if ($question->image)
                                                     <div class="mt-3 mb-4">
-                                                        {{-- <img src="{{ asset($question->image) }}" alt="Question image" --}}
-                                                        <img src="https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"
-                                                            alt="Question image"
+                                                        <img src="{{ asset('storage/' . $question->image) }}"
+                                                            alt="Question image" alt="Question image"
                                                             class="rounded-lg max-w-md h-auto shadow-sm">
                                                     </div>
                                                 @endif
