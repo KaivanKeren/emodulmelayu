@@ -9,7 +9,6 @@ use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\ModelARController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
@@ -24,6 +23,8 @@ Route::get('/user', function (Request $request) {
 Route::middleware('api')->group(function () {
     Route::post('/user/login', [AuthController::class, 'apiLogin'])->name('apiLogin');
     Route::post('/user/register', [AuthController::class, 'apiRegister'])->name('apiRegister');
+
+    Route::get('/schools', [SchoolController::class, 'indexApi']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/user/logout', [AuthController::class, 'apiLogout'])->name('apiLogout')->middleware('auth:sanctum');
@@ -62,7 +63,6 @@ Route::middleware('api')->group(function () {
         });
 
         Route::prefix('schools')->group(function () {
-            Route::get('/', [SchoolController::class, 'indexApi']);
             Route::post('/', [SchoolController::class, 'storeApi']);
             Route::get('/{school}', [SchoolController::class, 'showApi']);
             Route::put('/{school}', [SchoolController::class, 'updateApi']);
