@@ -66,9 +66,9 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        // Validate file size (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert("Ukuran file harus kurang dari 10MB");
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Ukuran file tidak boleh lebih dari 2MB");
             input.value = "";
             return;
         }
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             onchange="handleImageUpload(this)">
                                     </label>
-                                    <p class="text-xs text-gray-500">PNG, JPG, GIF (Maks. 10MB)</p>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF (Maks. 2MB)</p>
                                 </div>
                             </div>
                         </div>
