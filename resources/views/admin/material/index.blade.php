@@ -83,8 +83,8 @@
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
                     </div>
                     <div class="mb-4">
-                        <label for="user" class="block text-sm font-medium text-gray-700">Author</label>
-                        <input type="text" id="user" name="user"
+                        <label for="title" class="block text-sm font-medium text-gray-700">Author</label>
+                        <input type="text" id="title" name="title"
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
                     </div>
                     <div class="mb-4">

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -67,7 +68,8 @@ class AssessmentController extends Controller
                 'questions.*.options' => 'required|array|min:1',
                 'questions.*.options.*' => 'required|string|max:255',
                 'questions.*.correct_answer' => 'required_if:questions.*.question_type,single_choice',
-                'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice'
+                'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice',
+                'questions.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048' // Added image validation
             ], [
                 'title.required' => 'Judul assessment wajib diisi',
                 'title.max' => 'Judul tidak boleh lebih dari 255 karakter',
@@ -82,7 +84,10 @@ class AssessmentController extends Controller
                 'questions.*.options.min' => 'Setiap pertanyaan harus memiliki minimal satu pilihan jawaban',
                 'questions.*.options.*.required' => 'Teks pilihan jawaban wajib diisi',
                 'questions.*.correct_answer.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda',
-                'questions.*.correct_answer.*.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda kompleks'
+                'questions.*.correct_answer.*.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda kompleks',
+                'questions.*.image.image' => 'File harus berupa gambar',
+                'questions.*.image.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
+                'questions.*.image.max' => 'Ukuran gambar tidak boleh lebih dari 2MB'
             ]);
 
             DB::beginTransaction();
@@ -95,7 +100,7 @@ class AssessmentController extends Controller
             // Generate token only if status is 'Terbuka'
             if ($validated['status'] === 'Terbuka') {
                 $tokenData = [
-                    'token' => Str::random(6),
+                    'token' => substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6),
                     'token_expires_at' => now()->addMinutes(30)
                 ];
             }
@@ -109,9 +114,31 @@ class AssessmentController extends Controller
             ]);
 
             foreach ($validated['questions'] as $questionData) {
+                // Handle image upload if present
+                // Log::info('Question data:', ['image' => $request->hasFile("questions.{->$loopindex}.image")]);
+
+                $imagePath = null;
+                if (isset($questionData['image']) && $questionData['image']) {
+                    try {
+                        if (!Storage::disk('public')->exists('question-images')) {
+                            Storage::disk('public')->makeDirectory('question-images');
+                        }
+
+                        $filename = time() . '_' . uniqid() . '.' . $questionData['image']->getClientOriginalExtension();
+
+                        $imagePath = $questionData['image']->storeAs('question-images', $filename, 'public');
+
+                        Log::info('Image uploaded:', ['path' => $imagePath]);
+                    } catch (\Exception $e) {
+                        Log::error('Image upload failed:', ['error' => $e->getMessage()]);
+                        throw $e;
+                    }
+                }
+
                 $question = $assessment->questions()->create([
                     'content' => $questionData['content'],
-                    'question_type' => $questionData['question_type']
+                    'question_type' => $questionData['question_type'],
+                    'image' => $imagePath // Add image path to question
                 ]);
 
                 foreach ($questionData['options'] as $index => $optionText) {
@@ -151,7 +178,7 @@ class AssessmentController extends Controller
         }
 
         $assessment->update([
-            'token' => Str::random(6),
+            'token' => substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6),
             'token_expires_at' => now()->addMinutes(30)
         ]);
 
@@ -174,7 +201,7 @@ class AssessmentController extends Controller
 
         // Jika status berubah menjadi Terbuka, generate token
         if ($validated['status'] === 'Terbuka' && $assessment->status !== 'Terbuka') {
-            $validated['token'] = Str::random(6);
+            $validated['token'] = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
             $validated['token_expires_at'] = now()->addMinutes(30);
         }
 
@@ -215,7 +242,7 @@ class AssessmentController extends Controller
             'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
         ]);
 
-        $validated['token'] = Str::random(6);
+        $validated['token'] = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
         $assessment = Assessment::create($validated);
 
         return response()->json([

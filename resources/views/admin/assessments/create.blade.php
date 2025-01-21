@@ -3,6 +3,8 @@
 @section('title', 'Create Assessment')
 
 @section('content')
+    <link rel="stylesheet" href="/assets/extensions/filepond/filepond.css">
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
@@ -11,7 +13,8 @@
                         <h2 class="text-2xl font-bold text-gray-900">Buat Assessment Baru</h2>
                     </div>
 
-                    <form action="{{ route('assessments.store') }}" method="POST" class="space-y-8">
+                    <form action="{{ route('assessments.store') }}" enctype="multipart/form-data" method="POST"
+                        class="space-y-8">
                         @csrf
 
                         <!-- Assessment Details -->
@@ -110,194 +113,17 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const questionsContainer = document.getElementById('questions_container');
-            const addQuestionButton = document.getElementById('add_question');
-            let questionCount = 0;
+    <script src="/assets/create-question.js"></script>
 
-            function createOptionHTML(questionIndex, optionIndex, type) {
-                return `
-            <div class="option-group">
-                <div class="flex items-center gap-3">
-                    <div class="flex-1">
-                        <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                            <span class="text-gray-400">
-                                <i data-lucide="circle" class="w-5 h-5"></i>
-                            </span>
-                            <input type="text" required name="questions[${questionIndex}][options][]" 
-                                placeholder="Masukkan pilihan jawaban"
-                                class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="${type}" 
-                            name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
-                            value="${optionIndex}"
-                            class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 answer-checkbox"
-                            onchange="updateCheckboxRequired(${questionIndex})"
-                            ${type === 'radio' ? 'required' : ''}>
-                        <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                    </div>
-                    <button type="button" onclick="removeOption(this)" 
-                        class="text-gray-400 hover:text-red-500">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-            }
+    <script src="/assets/extensions/filepond/filepond.js"></script>
+    <script src="/assets/static/js/pages/filepond.js"></script>
+    <!-- FilePond and plugins -->
+    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-resize/dist/filepond-plugin-image-resize.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-crop/dist/filepond-plugin-image-crop.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
 
-            function createQuestionHTML(questionIndex) {
-                return `
-                    <div class="question-block border border-gray-200 rounded-xl p-6 space-y-6">
-                        <div class="flex justify-between items-center">
-                            <h4 class="text-lg font-medium text-gray-900">Pertanyaan ${questionIndex + 1}</h4>
-                            <button type="button" onclick="removeQuestion(this)" 
-                                class="text-gray-400 hover:text-red-500">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-
-                        <!-- Question Text -->
-                        <div class="rounded-md">
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                <span class="text-gray-400">
-                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
-                                </span>
-                                <input type="text" required name="questions[${questionIndex}][content]"
-                                    placeholder="Masukkan pertanyaan"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Question Type -->
-                        <div class="rounded-md">
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                <span class="text-gray-400">
-                                    <i data-lucide="list" class="w-5 h-5"></i>
-                                </span>
-                                <select name="questions[${questionIndex}][question_type]"
-                                    onchange="updateQuestionType(this, ${questionIndex})"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                                    <option value="single_choice">Pilihan Ganda</option>
-                                    <option value="multiple_choice">Pilihan Ganda Kompleks</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Options Section -->
-                        <div class="options-section space-y-4">
-                            <div class="flex justify-between items-center">
-                                <label class="block text-sm font-medium text-gray-700">Pilihan Jawaban</label>
-                                <button type="button" onclick="addOption(this, ${questionIndex})"
-                                    class="px-3 py-1.5 text-sm rounded-full text-orange-600 bg-orange-50 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                                    <i data-lucide="plus" class="w-4 h-4 inline-block mr-1"></i>
-                                    Tambah Pilihan
-                                </button>
-                            </div>
-                            <div class="options-container space-y-3">
-                                ${createOptionHTML(questionIndex, 0, 'radio')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            addQuestionButton.addEventListener('click', function() {
-                const newQuestion = createQuestionHTML(questionCount);
-                questionsContainer.insertAdjacentHTML('beforeend', newQuestion);
-                questionCount++;
-                lucide.createIcons();
-            });
-
-            // Add first question automatically
-            addQuestionButton.click();
-        });
-
-        function removeQuestion(button) {
-            button.closest('.question-block').remove();
-        }
-
-        function removeOption(button) {
-            button.closest('.option-group').remove();
-        }
-
-        function addOption(button, questionIndex) {
-            const optionsContainer = button.closest('.options-section').querySelector('.options-container');
-            const questionType = button.closest('.question-block').querySelector('select[name*="question_type"]').value;
-            const type = questionType === 'single_choice' ? 'radio' : 'checkbox';
-            const optionIndex = optionsContainer.children.length;
-
-            const newOption = createOptionHTML(questionIndex, optionIndex, type);
-            optionsContainer.insertAdjacentHTML('beforeend', newOption);
-            lucide.createIcons();
-        }
-
-        function updateQuestionType(select, questionIndex) {
-            const optionsContainer = select.closest('.question-block').querySelector('.options-container');
-            const type = select.value === 'single_choice' ? 'radio' : 'checkbox';
-
-            const inputs = optionsContainer.querySelectorAll('input[type="radio"], input[type="checkbox"]');
-            inputs.forEach((input, index) => {
-                input.type = type;
-                input.name = `questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}`;
-                input.value = index;
-                input.required = type === 'radio'; // Only set required for radio buttons
-                if (type === 'checkbox') {
-                    input.onchange = () => updateCheckboxRequired(questionIndex);
-                }
-            });
-
-            if (type === 'checkbox') {
-                updateCheckboxRequired(questionIndex);
-            }
-        }
-
-        function createOptionHTML(questionIndex, optionIndex, type) {
-            return `
-                <div class="option-group">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1">
-                            <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                <span class="text-gray-400">
-                                    <i data-lucide="circle" class="w-5 h-5"></i>
-                                </span>
-                                <input type="text" required name="questions[${questionIndex}][options][]" 
-                                    placeholder="Masukkan pilihan jawaban"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="${type}" required
-                                name="questions[${questionIndex}][correct_answer]${type === 'checkbox' ? '[]' : ''}" 
-                                value="${optionIndex}"
-                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
-                            <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                        </div>
-                        <button type="button" onclick="removeOption(this)" 
-                            class="text-gray-400 hover:text-red-500">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        window.updateCheckboxRequired = function(questionIndex) {
-            const questionBlock = document.querySelector(`.question-block:nth-child(${questionIndex + 1})`);
-            const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"]');
-
-            let isAnyChecked = false;
-            checkboxes.forEach(checkbox => {
-                if (checkbox.checked) {
-                    isAnyChecked = true;
-                }
-            });
-
-            checkboxes.forEach(checkbox => {
-                checkbox.required = !isAnyChecked;
-            });
-        };
-    </script>
+    <!-- FilePond styles -->
+    <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
+    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
 @endsection

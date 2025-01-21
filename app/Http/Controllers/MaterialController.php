@@ -77,12 +77,20 @@ class MaterialController extends Controller
             }
         }
 
-        Material::create([
+        $material = Material::create([
             'title' => $request->title,
             'description' => $request->description,
-            'assets' => json_encode($paths), // Store paths as JSON string
+            'assets' => json_encode($paths),
             'user_id' => auth()->id(),
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Material created successfully',
+                'material' => $material
+            ]);
+        }
 
         return redirect()->route('materials.index')->with('success', 'Material created successfully');
     }

@@ -127,6 +127,11 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('error', 'Aksi tidak valid.');
     }
 
+    public function acceptAll()
+    {
+        User::where('status', 'Pending')->update(['status' => 'Accepted']);
+        return redirect()->back()->with('success', 'Semua pengguna pending telah diterima');
+    }
 
     public function destroy(User $user)
     {

@@ -56,8 +56,10 @@
                                             <div class="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
                                                 <div class="font-mono text-lg text-gray-900">{{ $assessment->token }}</div>
                                                 <div class="text-xs text-gray-500 mt-1">
-                                                    Berlaku hingga: {{ $assessment->token_expires_at->format('H:i') }}
-                                                    ({{ $assessment->token_expires_at->diffForHumans() }})
+                                                    Berlaku hingga:
+                                                    {{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->format('H:i') }}
+                                                    ({{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->diffForHumans() }})
+
                                                 </div>
                                             </div>
                                         @else
@@ -108,6 +110,14 @@
                                         <div class="flex justify-between items-start mb-4">
                                             <div class="space-y-2">
                                                 <h3 class="text-lg font-medium text-gray-900">{{ $question->content }}</h3>
+                                                @if ($question->image)
+                                                    <div class="mt-3 mb-4">
+                                                        {{-- <img src="{{ asset($question->image) }}" alt="Question image" --}}
+                                                        <img src="https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"
+                                                            alt="Question image"
+                                                            class="rounded-lg max-w-md h-auto shadow-sm">
+                                                    </div>
+                                                @endif
                                                 <button id="toggle-btn-{{ $question->id }}"
                                                     onclick="toggleCorrectAnswers({{ $question->id }})"
                                                     class="inline-flex items-center px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
