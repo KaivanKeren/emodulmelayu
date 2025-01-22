@@ -77,13 +77,6 @@ Route::middleware('api')->group(function () {
             Route::delete('/{material}', [MaterialController::class, 'apiDestroy']);
         });
 
-        // Route::prefix('models')->group(function () {
-        //     Route::get('/', [ModelARController::class, 'apiIndex']);
-        //     Route::post('/', [ModelARController::class, 'apiStore']);
-        //     Route::get('/{model}', [ModelARController::class, 'apiShow']);
-        //     // Route::put('/{model}', [ModelARController::class, 'apiUpdate']);
-        //     Route::delete('/{model}', [ModelARController::class, 'apiDestroy']);
-        // });
 
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'apiIndex']);

@@ -182,8 +182,18 @@ class MaterialController extends Controller
     // API Method
     public function apiIndex()
     {
-        $materials = Material::with(['user', 'model'])->latest()->get();
-        return response()->json(['data' => $materials], 200);
+        $materials = Material::with(['user'])->latest()->get();
+
+        $formattedMaterials = $materials->map(function ($material) {
+            return [
+                'id' => $material->id,
+                'name' => $material->title,
+                'description' => $material->description,
+                'author' => $material->user ? $material->user->name : 'Unknown',
+            ];
+        });
+
+        return response()->json(['data' => $formattedMaterials], 200);
     }
 
     public function apiStore(Request $request)
@@ -215,8 +225,19 @@ class MaterialController extends Controller
 
     public function apiShow(Material $material)
     {
-        return response()->json(['data' => $material->load(['user', 'model'])], 200);
+        $material->load(['user', 'model']);
+
+        // Ubah format response untuk hanya menampilkan nama file dari assets
+        $formattedMaterial = [
+            'id' => $material->id,
+            'filename' => collect(json_decode($material->assets))->map(function ($asset) {
+                return basename($asset); // Mengambil hanya nama file
+            }),
+        ];
+
+        return response()->json(['data' => $formattedMaterial], 200);
     }
+
 
     public function apiDestroy(Material $material)
     {
