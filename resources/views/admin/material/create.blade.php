@@ -103,6 +103,7 @@
                 allowMultiple: true,
                 acceptedFileTypes: ['application/pdf', 'video/mp4', 'video/quicktime', 'video/x-msvideo'],
                 maxFileSize: '100MB',
+                credits: false,
             });
 
             form.addEventListener('submit', async function(e) {
@@ -111,7 +112,6 @@
                 // Disable submit button
                 submitBtn.disabled = true;
                 submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
                 progressDiv.classList.remove('hidden');
 
                 const formData = new FormData(form);

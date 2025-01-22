@@ -114,8 +114,6 @@ class AssessmentController extends Controller
             ]);
 
             foreach ($validated['questions'] as $questionData) {
-                // Handle image upload if present
-                // Log::info('Question data:', ['image' => $request->hasFile("questions.{->$loopindex}.image")]);
 
                 $imagePath = null;
                 if (isset($questionData['image']) && $questionData['image'] !== null) {
@@ -128,10 +126,8 @@ class AssessmentController extends Controller
                         if ($image && $image->isValid()) {
                             $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                             $imagePath = $image->storeAs('question-images', $filename, 'public');
-                            Log::info('Image uploaded:', ['path' => $imagePath]);
                         }
                     } catch (\Exception $e) {
-                        Log::error('Image upload failed:', ['error' => $e->getMessage()]);
                         throw $e;
                     }
                 }
@@ -240,17 +236,45 @@ class AssessmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'category' => 'required|max:255',
-            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
+            'questions' => 'array',
+            'questions.*.content' => 'required',
+            'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
+            'questions.*.options' => 'required|array',
+            'questions.*.options.*.content' => 'required',
+            'questions.*.options.*.is_correct' => 'required|boolean'
         ]);
 
-        $validated['token'] = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
-        $assessment = Assessment::create($validated);
+        $assessment = Assessment::create([
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'status' => $validated['status'],
+            'user_id' => Auth::id()
+        ]);
+
+        if (isset($validated['questions'])) {
+            foreach ($validated['questions'] as $questionData) {
+                $question = $assessment->questions()->create([
+                    'content' => $questionData['content'],
+                    'question_type' => $questionData['question_type']
+                ]);
+
+                foreach ($questionData['options'] as $optionData) {
+                    $question->options()->create([
+                        'content' => $optionData['content'],
+                        'is_correct' => $optionData['is_correct']
+                    ]);
+                }
+            }
+        }
+
+        $assessment->load(['questions.options']);
 
         return response()->json([
-            'code' => 201,
-            'message' => 'Assessment created successfully.',
+            'code' => 200,
+            'message' => 'Assessment created successfully',
             'data' => $assessment
-        ], 201);
+        ]);
     }
 
     public function show(Assessment $assessment)

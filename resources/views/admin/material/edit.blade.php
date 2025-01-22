@@ -14,8 +14,17 @@
                         <h2 class="text-2xl font-bold text-gray-900">Edit Material</h2>
                     </div>
 
-                    <form action="{{ route('materials.update', $material->id) }}" method="POST" enctype="multipart/form-data"
-                        class="space-y-6">
+                    <!-- Progress Bar (Initially Hidden) -->
+                    <div id="uploadProgress" class="hidden mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progressBar" class="bg-gradient-to-r from-orange-500 to-yellow-500 h-2.5 rounded-full"
+                                style="width: 0%"></div>
+                        </div>
+                        <p id="progressText" class="text-sm text-gray-600 mt-2">Mengunggah: 0%</p>
+                    </div>
+
+                    <form id="materialForm" action="{{ route('materials.update', $material->id) }}" method="POST"
+                        enctype="multipart/form-data" class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -48,40 +57,21 @@
 
                         <!-- Assets -->
                         <div class="rounded-md space-y-4">
-                            {{-- <label class="block text-sm font-medium text-gray-700">File yang Ada</label> --}}
-                            {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="block text-sm font-medium text-gray-700">File yang Ada</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach ($material->assets as $asset)
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                        <div class="flex items-center space-x-3">
-                                            <span class="text-gray-400">
-                                                @if (str_contains($asset, '.pdf'))
-                                                    <i data-lucide="file" class="w-5 h-5"></i>
-                                                @elseif (str_contains($asset, '.mp4'))
-                                                    <i data-lucide="video" class="w-5 h-5"></i>
-                                                @endif
-                                            </span>
-                                            <div>
-                                                <a href="{{ asset('storage/' . $asset) }}"
-                                                    class="text-sm font-medium text-orange-500 hover:underline"
-                                                    target="_blank">
-                                                    {{ basename($asset) }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <button type="button"
-                                            onclick="deleteAsset('{{ $asset }}', {{ $material->id }})"
-                                            class="text-red-500 hover:text-red-700">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
+                                    <a href="{{ asset('storage/' . $asset) }}"
+                                        class="text-sm font-medium text-orange-500 hover:underline" target="_blank">
+                                        {{ basename($asset) }}
+                                    </a>
                                 @endforeach
-                            </div> --}}
+                            </div>
                             <div class="mt-4">
                                 <label for="assets" class="block text-sm font-medium text-gray-700">Upload File
                                     Baru</label>
                                 <div class="mt-2">
-                                    <input type="file" name="assets[]" id="filepond"
-                                        class="basic-filepond" required="false" accept="application/pdf,.mp4" multiple>
+                                    <input type="file" name="assets[]" id="filepond" class="basic-filepond"
+                                        required="false" accept="application/pdf,.mp4" multiple>
                                 </div>
                                 @error('assets.*')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -94,7 +84,7 @@
                                 class="px-6 py-2.5 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 Batal
                             </a>
-                            <button type="submit"
+                            <button type="submit" id="submitBtn"
                                 class="px-6 py-2.5 rounded-full text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                                 Simpan Perubahan
                             </button>
@@ -107,35 +97,97 @@
 
     <script src="/assets/extensions/filepond/filepond.js"></script>
     <script src="/assets/static/js/pages/filepond.js"></script>
-    {{-- <script src="/assets/extensions/filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.js"></script> --}}
-    {{-- <script>
-        // Function to delete asset
-        function deleteAsset(assetPath, materialId) {
-            if (confirm('Apakah Anda yakin ingin menghapus file ini?')) {
-                fetch("{{ route('materials.delete.asset') }}", {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            path: assetPath,
-                            material_id: materialId, // Kirimkan ID material
-                        }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.reload(); // Refresh halaman setelah berhasil menghapus
-                        } else {
-                            alert('Gagal menghapus file. Silakan coba lagi.');
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('materialForm');
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Initialize FilePond
+            const pond = FilePond.create(document.querySelector('.basic-filepond'), {
+                allowMultiple: true,
+                acceptedFileTypes: ['application/pdf', 'video/mp4', 'video/quicktime', 'video/x-msvideo'],
+                maxFileSize: '100MB',
+                credits: false
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                progressDiv.classList.remove('hidden');
+
+                const formData = new FormData(form);
+
+                // Get files from FilePond
+                const pondFiles = pond.getFiles();
+                pondFiles.forEach((pondFile, index) => {
+                    formData.append(`assets[${index}]`, pondFile.file);
+                });
+
+                try {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', form.action);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                    xhr.upload.onprogress = function(e) {
+                        if (e.lengthComputable) {
+                            const percentComplete = (e.loaded / e.total) * 100;
+                            progressBar.style.width = percentComplete + '%';
+                            progressText.textContent =
+                            `Mengunggah: ${Math.round(percentComplete)}%`;
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Terjadi kesalahan. Silakan coba lagi.');
-                    });
+                    };
+
+                    xhr.onload = function() {
+                        try {
+                            // Check if the response is JSON
+                            const contentType = xhr.getResponseHeader('Content-Type');
+                            if (contentType && contentType.includes('application/json')) {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.success) {
+                                    window.location.href = form.dataset.redirectUrl || '/materials';
+                                    return;
+                                }
+                            }
+
+                            // If we get here, either the response wasn't JSON or success was false
+                            throw new Error(
+                            'Upload failed: Server returned an unexpected response');
+                        } catch (error) {
+                            console.error('Response parsing error:', error);
+                            console.error('Server response:', xhr.responseText);
+                            handleError('Terjadi kesalahan saat memproses respons server.');
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        handleError('Gagal menghubungi server. Periksa koneksi internet Anda.');
+                    };
+
+                    xhr.send(formData);
+
+                } catch (error) {
+                    handleError('Terjadi kesalahan saat mengunggah file.');
+                }
+            });
+
+            function handleError(message) {
+                // Reset the form state
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                progressDiv.classList.add('hidden');
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Mengunggah: 0%';
+
+                window.location.href = '/admin/materials';
             }
-        }
-    </script> --}}
+        });
+    </script>
 @endsection

@@ -9,6 +9,7 @@ use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
 {
@@ -34,6 +35,7 @@ class QuestionController extends Controller
             'questions.*.question_text' => 'required|string|max:255',
             'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
             'questions.*.options' => 'required|array|min:2',
+            'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         // Validasi untuk setiap pertanyaan
@@ -67,6 +69,9 @@ class QuestionController extends Controller
                 "questions.{$index}.correct_answer.*.distinct" => 'Jawaban yang benar tidak boleh duplikat.',
                 "questions.{$index}.correct_answer.*.min" => 'Indeks jawaban tidak valid.',
                 "questions.{$index}.correct_answer.*.max" => 'Indeks jawaban tidak valid.',
+                "questions.{$index}.image.image" => 'File harus berupa gambar',
+                "questions.{$index}.image.mimes" => 'Format gambar harus jpeg, png, jpg, atau gif',
+                "questions.{$index}.image.max" => 'Ukuran gambar tidak boleh lebih dari 2MB'
             ]);
         }
 
@@ -74,11 +79,18 @@ class QuestionController extends Controller
             DB::beginTransaction();
 
             foreach ($request->questions as $questionData) {
+                // Handle image upload
+                $imagePath = null;
+                if (isset($questionData['image']) && $questionData['image']) {
+                    $imagePath = $questionData['image']->store('question-images', 'public');
+                }
+
                 // Membuat pertanyaan
                 $question = Question::create([
                     'content' => $questionData['question_text'],
                     'question_type' => $questionData['question_type'],
                     'assessment_id' => $request->assessment_id,
+                    'image' => $imagePath, // Tambahkan image_path ke database
                 ]);
 
                 // Menyiapkan array untuk menyimpan pilihan jawaban
@@ -113,13 +125,18 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            // Jika terjadi error, hapus file yang sudah terupload (jika ada)
+            if (isset($imagePath)) {
+                Storage::disk('public')->delete($imagePath);
+            }
+
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan saat menyimpan pertanyaan. Silakan coba lagi.');
         }
     }
-
+    
     public function show(Question $question)
     {
         return view('questions.show', compact('question'));
