@@ -242,7 +242,9 @@ class AssessmentController extends Controller
             'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
             'questions.*.options' => 'required|array',
             'questions.*.options.*.content' => 'required',
-            'questions.*.options.*.is_correct' => 'required|boolean'
+            'questions.*.options.*.is_correct' => 'required|boolean',
+            'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+
         ]);
 
         $assessment = Assessment::create([
@@ -254,9 +256,27 @@ class AssessmentController extends Controller
 
         if (isset($validated['questions'])) {
             foreach ($validated['questions'] as $questionData) {
+
+                if (isset($questionData['image']) && $questionData['image'] !== null) {
+                    try {
+                        if (!Storage::disk('public')->exists('question-images')) {
+                            Storage::disk('public')->makeDirectory('question-images');
+                        }
+
+                        $image = $questionData['image'];
+                        if ($image && $image->isValid()) {
+                            $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                            $imagePath = $image->storeAs('question-images', $filename, 'public');
+                        }
+                    } catch (\Exception $e) {
+                        throw $e;
+                    }
+                }
+
                 $question = $assessment->questions()->create([
                     'content' => $questionData['content'],
-                    'question_type' => $questionData['question_type']
+                    'question_type' => $questionData['question_type'],
+                    'image' => $imagePath
                 ]);
 
                 foreach ($questionData['options'] as $optionData) {

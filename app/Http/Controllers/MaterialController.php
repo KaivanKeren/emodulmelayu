@@ -177,8 +177,6 @@ class MaterialController extends Controller
         return response()->json(['success' => false, 'message' => 'File tidak ditemukan.']);
     }
 
-
-
     // API Method
     public function apiIndex()
     {

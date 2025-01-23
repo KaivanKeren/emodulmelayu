@@ -9,6 +9,7 @@ use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
@@ -90,7 +91,7 @@ class QuestionController extends Controller
                     'content' => $questionData['question_text'],
                     'question_type' => $questionData['question_type'],
                     'assessment_id' => $request->assessment_id,
-                    'image' => $imagePath, // Tambahkan image_path ke database
+                    'image' => $imagePath,
                 ]);
 
                 // Menyiapkan array untuk menyimpan pilihan jawaban
@@ -125,6 +126,10 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            // Log the full error details
+            Log::error('Question creation error: ' . $e->getMessage());
+            Log::error('Error trace: ' . $e->getTraceAsString());
+
             // Jika terjadi error, hapus file yang sudah terupload (jika ada)
             if (isset($imagePath)) {
                 Storage::disk('public')->delete($imagePath);
@@ -136,7 +141,7 @@ class QuestionController extends Controller
                 ->with('error', 'Terjadi kesalahan saat menyimpan pertanyaan. Silakan coba lagi.');
         }
     }
-    
+
     public function show(Question $question)
     {
         return view('questions.show', compact('question'));

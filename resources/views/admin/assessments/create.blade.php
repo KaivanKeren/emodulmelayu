@@ -113,5 +113,5 @@
         </div>
     </div>
 
-    <script src="/assets/create-question.js"></script>
+    <script src="/assets/create-question-asm.js"></script>
 @endsection
