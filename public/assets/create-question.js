@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!validateImageFile(file)) {
             input.value = ""; // Clear the input
             return;
-        }    
+        }
 
         // Validate file size (2MB)
         if (file.size > 2 * 1024 * 1024) {

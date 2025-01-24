@@ -161,9 +161,31 @@ class QuestionController extends Controller
             'question_type' => 'required|in:single_choice,multiple_choice',
             'options' => 'required|array|min:2',
             'options.*' => 'required|string|max:255',
+            'correct_answer' => $request->input('question_type') === 'single_choice'
+                ? 'required|integer'
+                : 'required|array',
+            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Update question
+        // Handle image update
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($question->image) {
+                Storage::delete($question->image);
+            }
+
+            // Store new image
+            $imagePath = $request->file('image')->store('question_images', 'public');
+            $question->image = $imagePath;
+        } elseif ($request->input('remove_image') === '1') {
+            // Option to remove existing image
+            if ($question->image) {
+                Storage::delete($question->image);
+                $question->image = null;
+            }
+        }
+
+        // Update question details
         $question->update([
             'content' => $validated['question_text'],
             'assessment_id' => $validated['assessment_id'],
@@ -176,7 +198,7 @@ class QuestionController extends Controller
             $correctAnswers = [(int) $request->input('correct_answer')];
         } else {
             // For multiple choice, get all checked options
-            $correctAnswers = array_keys(array_filter($request->input('correct_answer', [])));
+            $correctAnswers = $request->input('correct_answer', []);
         }
 
         // Delete existing options
@@ -184,11 +206,23 @@ class QuestionController extends Controller
 
         // Create new options with correct answers
         foreach ($validated['options'] as $index => $optionContent) {
+            $isCorrect = false;
+
+            if ($validated['question_type'] === 'single_choice') {
+                $isCorrect = $index === $correctAnswers[0];
+            } else {
+                // For multiple choice, check if the index is in the correct answers array
+                $isCorrect = in_array($index, array_keys($correctAnswers));
+            }
+
             $question->options()->create([
                 'content' => $optionContent,
-                'is_correct' => in_array($index, $correctAnswers)
+                'is_correct' => $isCorrect
             ]);
         }
+
+        // Save the question with potential image update
+        $question->save();
 
         return redirect()->route('assessments.show', $question->assessment_id)
             ->with('success', 'Pertanyaan berhasil diperbarui.');
