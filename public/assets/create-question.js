@@ -172,6 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const questionBlock = document.createElement("div");
         questionBlock.className =
             "question-block border border-gray-200 rounded-xl p-6 space-y-6";
+        questionBlock.dataset.questionIndex = questionIndex;
 
         questionBlock.innerHTML = `
             <div class="flex justify-between items-center mb-4">

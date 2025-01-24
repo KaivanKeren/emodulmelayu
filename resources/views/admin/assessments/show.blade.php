@@ -116,6 +116,12 @@
             </div>
 
             <div class="space-y-4">
+                <button onclick="toggleAllCorrectAnswers()"
+                    class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 shadow-sm transition-colors">
+                    <i data-lucide="eye" class="w-4 h-4 mr-2 show-icon"></i>
+                    <i data-lucide="eye-off" class="w-4 h-4 mr-2 hide-icon hidden"></i>
+                    Tampilkan Semua Jawaban
+                </button>
                 @forelse ($assessment->questions as $index => $question)
                     <div class="bg-gray-50 rounded-lg p-6 border border-gray-100 hover:border-orange-200 transition-colors">
                         <div class="flex items-start gap-4">
@@ -217,8 +223,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize all toggle states to hidden
             let toggleStates = {};
+            let allQuestionsToggleState = false;
 
-            // Function to toggle correct answers for a specific question
             window.toggleCorrectAnswers = function(questionId) {
                 const correctIcons = document.querySelectorAll(`.correct-icon-${questionId}`);
                 const toggleButton = document.querySelector(`#toggle-btn-${questionId}`);
@@ -245,6 +251,52 @@
                     toggleButton.querySelector('.show-icon').classList.remove('hidden');
                     toggleButton.querySelector('.hide-icon').classList.add('hidden');
                     toggleButton.querySelector('.toggle-text').textContent = 'Tampilkan Jawaban';
+                }
+            };
+
+
+            // Function to toggle correct answers for a specific question
+            window.toggleAllCorrectAnswers = function() {
+                // Get all question IDs
+                const questionIds = @json($assessment->questions->pluck('id'));
+                const allToggleButton = document.querySelector('button[onclick="toggleAllCorrectAnswers()"]');
+
+                // Toggle the state for all questions
+                allQuestionsToggleState = !allQuestionsToggleState;
+
+                questionIds.forEach(questionId => {
+                    const correctIcons = document.querySelectorAll(`.correct-icon-${questionId}`);
+                    const toggleButton = document.querySelector(`#toggle-btn-${questionId}`);
+
+                    // Update correct answer icons
+                    correctIcons.forEach(icon => {
+                        icon.classList.toggle('hidden', !allQuestionsToggleState);
+                    });
+
+                    // Update toggle button
+                    if (allQuestionsToggleState) {
+                        toggleButton.querySelector('.show-icon').classList.add('hidden');
+                        toggleButton.querySelector('.hide-icon').classList.remove('hidden');
+                        toggleButton.querySelector('.toggle-text').textContent = 'Sembunyikan Jawaban';
+                    } else {
+                        toggleButton.querySelector('.show-icon').classList.remove('hidden');
+                        toggleButton.querySelector('.hide-icon').classList.add('hidden');
+                        toggleButton.querySelector('.toggle-text').textContent = 'Tampilkan Jawaban';
+                    }
+
+                    // Update toggle states
+                    toggleStates[questionId] = allQuestionsToggleState;
+                });
+
+                // Update the icon and text of the "Tampilkan Semua Jawaban Benar" button
+                if (allQuestionsToggleState) {
+                    allToggleButton.querySelector('.show-icon').classList.add('hidden');
+                    allToggleButton.querySelector('.hide-icon').classList.remove('hidden');
+                    allToggleButton.querySelector('span').textContent = 'Sembunyikan Semua Jawaban Benar';
+                } else {
+                    allToggleButton.querySelector('.show-icon').classList.remove('hidden');
+                    allToggleButton.querySelector('.hide-icon').classList.add('hidden');
+                    allToggleButton.querySelector('span').textContent = 'Tampilkan Semua Jawaban Benar';
                 }
             };
         });
