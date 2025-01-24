@@ -23,7 +23,7 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('questions.store') }}" method="POST" class="space-y-8">
+                    <form action="{{ route('questions.store') }}" method="POST" class="space-y-8" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="assessment_id" value="{{ $assessment->id }}">
 
