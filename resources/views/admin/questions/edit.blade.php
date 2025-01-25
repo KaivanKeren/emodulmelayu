@@ -184,6 +184,55 @@
 
             let optionCount = {{ count($question->options) }};
 
+            function initialize() {
+                initializeImageUpload();
+            }
+
+            // Image Upload Functionality
+            function initializeImageUpload() {
+                document.querySelectorAll(".border-dashed").forEach(uploadArea => {
+                    uploadArea.addEventListener("dragenter", handleDragEnter);
+                    uploadArea.addEventListener("dragleave", handleDragLeave);
+                    uploadArea.addEventListener("dragover", handleDragOver);
+                    uploadArea.addEventListener("drop", handleDrop);
+                });
+            }
+
+            function handleDragEnter(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add("border-orange-500", "bg-orange-50");
+            }
+
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove("border-orange-500", "bg-orange-50");
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const uploadContainer = document.querySelector('.border-dashed');
+                const uploadArea = e.currentTarget;
+                uploadArea.classList.remove("border-orange-500", "bg-orange-50");
+
+                const fileInput = uploadArea.querySelector('input[type="file"]');
+                const files = e.dataTransfer.files;
+
+                if (files.length) {
+                    fileInput.files = files;
+                    handleImageUpload(fileInput);
+                    uploadContainer.classList.add('hidden');
+                }
+            }
+
             function handleImageRemoval() {
                 if (imagePreview) {
                     imagePreview.style.display = 'none';
@@ -223,34 +272,38 @@
 
             window.handleImageUpload = function(input) {
                 if (input.files && input.files[0]) {
+                    // Hapus preview yang sudah ada
+                    const existingPreview = document.getElementById('image-preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+
                     const reader = new FileReader();
 
                     reader.onload = function(e) {
-                        // Check if image preview already exists
-                        if (imagePreview) {
-                            const img = imagePreview.querySelector('img');
-                            img.src = e.target.result;
-                            imagePreview.style.display = 'block';
-
-                            if (imageUploadContainer) {
-                                imageUploadContainer.classList.add('hidden');
-                            }
-                        } else {
-                            // Create new preview if it doesn't exist
-                            const previewHtml = `
-                    <div id="image-preview" class="mb-3">
-                        <div class="relative inline-block group">
-                            <img src="${e.target.result}" alt="Gambar Pertanyaan"
-                                 class="max-h-48 rounded-lg border border-gray-200 object-cover">
-                            <button type="button" id="remove-image" 
-                                    class="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-gray-200 text-gray-400 hover:text-red-500 transition-colors">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>
+                        const previewHtml = `
+                <div id="image-preview" class="mb-3">
+                    <div class="relative inline-block group">
+                        <img src="${e.target.result}" alt="Gambar Pertanyaan"
+                             class="max-h-48 rounded-lg border border-gray-200 object-cover">
+                        <button type="button" id="remove-image" 
+                                class="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-gray-200 text-gray-400 hover:text-red-500 transition-colors">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    `;
-                            input.closest('.rounded-md').insertAdjacentHTML('afterbegin', previewHtml);
+                </div>
+            `;
+
+                        // Pastikan hanya ada satu container untuk preview
+                        const uploadContainer = input.closest('.rounded-md');
+                        const existingContainer = uploadContainer.querySelector('#image-preview');
+                        if (existingContainer) {
+                            existingContainer.remove();
                         }
+
+                        // Sisipkan preview baru
+                        uploadContainer.insertAdjacentHTML('afterbegin', previewHtml);
+                        imageUploadContainer.classList.add('hidden');
 
                         // Reset removal input
                         removeImageInput.value = '0';
@@ -258,6 +311,7 @@
                         // Rebind remove image button
                         const newRemoveButton = document.getElementById('remove-image');
                         if (newRemoveButton) {
+                            newRemoveButton.removeEventListener('click', handleImageRemoval);
                             newRemoveButton.addEventListener('click', handleImageRemoval);
                         }
                     };
@@ -270,7 +324,6 @@
             fileInput.addEventListener('change', function() {
                 handleImageUpload(this);
             });
-
 
             // Function to update input types based on question type
             function updateAnswerInputs() {
@@ -324,6 +377,8 @@
                 optionCount++;
                 lucide.createIcons();
             });
+
+            initialize();
         });
 
         function removeOption(button) {

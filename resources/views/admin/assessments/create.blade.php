@@ -82,18 +82,18 @@
                         </div>
 
                         <!-- Questions Section -->
+                        <h3 class="text-lg font-medium text-gray-900">Pertanyaan</h3>
+
+                        <div id="questions_container" class="space-y-8">
+                            <!-- Questions will be added here -->
+                        </div>
                         <div class="space-y-6">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-medium text-gray-900">Pertanyaan</h3>
+                            <div class="flex justify-end items-center">
                                 <button type="button" id="add_question"
                                     class="px-4 py-2 rounded-full text-orange-600 bg-orange-50 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                                     <i data-lucide="plus" class="w-5 h-5 inline-block mr-1"></i>
                                     Tambah Pertanyaan
                                 </button>
-                            </div>
-
-                            <div id="questions_container" class="space-y-8">
-                                <!-- Questions will be added here -->
                             </div>
                         </div>
 

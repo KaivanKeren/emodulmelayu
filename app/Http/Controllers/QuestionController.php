@@ -175,7 +175,7 @@ class QuestionController extends Controller
             }
 
             // Store new image
-            $imagePath = $request->file('image')->store('question_images', 'public');
+            $imagePath = $request->file('image')->store('question-images', 'public');
             $question->image = $imagePath;
         } elseif ($request->input('remove_image') === '1') {
             // Option to remove existing image
