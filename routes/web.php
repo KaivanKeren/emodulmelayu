@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
             Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
+            Route::get('/password/{id}', [UserController::class, 'showPassword'])->name('users.show-password');
         });
 
         Route::prefix('assessments')->group(function () {

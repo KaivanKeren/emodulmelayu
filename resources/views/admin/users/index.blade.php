@@ -27,10 +27,12 @@
                 <thead>
                     <tr class="text-left text-gray-500 text-sm">
                         <th class="pb-4">Nama</th>
+                        <th class="pb-4">Email</th>
                         <th class="pb-4">Role</th>
                         <th class="pb-4">Sekolah</th>
                         <th class="pb-4">Status</th>
                         <th class="pb-4">Tanggal Daftar</th>
+                        <th class="pb-4">Password</th>
                         <th class="pb-4">Aksi</th>
                         <th class="pb-4">Terima</th>
                     </tr>
@@ -39,6 +41,7 @@
                     @foreach ($users as $user)
                         <tr class="border-t">
                             <td class="py-4">{{ $user->name }}</td>
+                            <td class="py-4">{{ $user->email }}</td>
                             <td>{{ $user->role }}</td>
                             <td>{{ $user->school->name }}</td>
                             <td>
@@ -52,6 +55,13 @@
                                 </span>
                             </td>
                             <td>{{ $user->created_at->format('d M Y') }}</td>
+                            <td class="flex justify-center" id="password-{{ $user->id }}">
+                                <button type="button" onclick="showPassword('{{ $user->id }}')"
+                                    class="mt-3 text-blue-500 hover:text-blue-700">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+
                             <td class="py-4">
                                 <div class="flex space-x-2">
                                     <button type="button" onclick="toggleDropdown({{ $user->id }})"
@@ -84,8 +94,7 @@
                             </td>
                             <td>
                                 @if ($user->status === 'Pending')
-                                    <a href="{{ route('users.accept', $user->id) }}"
-                                        class="text-sm text-green-600">
+                                    <a href="{{ route('users.accept', $user->id) }}" class="text-sm text-green-600">
                                         <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
                                     </a>
                                 @else
@@ -150,6 +159,7 @@
         {{ $users->links() }}
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         function confirmAcceptAll() {
             if (confirm('Apakah Anda yakin ingin menerima semua pengguna yang pending?')) {
@@ -192,5 +202,43 @@
                 }
             });
         });
+
+        function showPassword(userId) {
+            $.ajax({
+                url: `/admin/users/password/${userId}`,
+                type: 'GET',
+                success: function(response) {
+                    if (response.status) {
+                        const passwordElement = document.getElementById('password-' + userId);
+                        if (passwordElement) {
+                            // Check if the password is currently visible
+                            if (passwordElement.innerHTML.includes('Hide')) {
+                                // If it's visible, hide it
+                                passwordElement.innerHTML = `
+                            <button type="button" onclick="showPassword('${userId}')"
+                                class="text-blue-500 hover:text-blue-700">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                            } else {
+                                // If it's hidden, show it
+                                passwordElement.innerHTML = `
+                            <span class="mt-3 text-sm font-medium">${response.password}</span>
+                            <button type="button" onclick="showPassword('${userId}')"
+                                class="text-red-500 hover:text-red-700">
+                                <i data-lucide="eye-off" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                            }
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat mengambil data password.');
+                }
+            });
+        }
     </script>
 @endsection

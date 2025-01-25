@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -185,6 +186,7 @@ class AuthController extends Controller
                 'school_id' => $validated['school_id'],
                 'nisn_nip' => $validated['nisn_nip'],
                 'password' => Hash::make($validated['password']),
+                'first_password' => Crypt::encryptString($validated['password']),
                 'role' => $role,
             ]);
 

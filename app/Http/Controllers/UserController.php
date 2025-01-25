@@ -6,6 +6,8 @@ use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -13,6 +15,24 @@ class UserController extends Controller
     {
         $users = User::with('school')->paginate(10);
         return view('admin.users.index', compact('users'));
+    }
+
+    public function showPassword($id)
+    {
+        $user = User::findOrFail($id);
+
+        try {
+            $decryptedPassword = Crypt::decryptString($user->first_password);
+            return response()->json([
+                'password' => $decryptedPassword,
+                'status' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal mendekripsi password',
+                'status' => false
+            ]);
+        }
     }
 
     public function filter(Request $request)

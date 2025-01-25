@@ -26,6 +26,7 @@ class User extends Authenticatable
         'nisn_nip',
         'status',
         'password',
+        'first_password',
     ];
 
     /**
