@@ -43,15 +43,12 @@ class AuthController extends Controller
 
             if (auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
                 // Redirect berdasarkan role pengguna
-                switch (auth()->user()->role) {
-                    case 'Siswa':
-                        return redirect()->route('studentDashboard');
-                    case 'Guru':
-                        return redirect()->route('teacherDashboard');
-                    case 'Admin':
-                        return redirect()->route('adminDashboard');
-                    default:
-                        return redirect()->route('dashboard');
+                if (auth()->user()->role === 'Admin') {
+                    return redirect()->route('adminDashboard');
+                } else {
+                    auth()->logout();
+                    return redirect()->route('login')
+                        ->with('error', 'Akses Ditolak. Hanya admin yang bisa login.');
                 }
             }
         }
