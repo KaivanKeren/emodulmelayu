@@ -106,7 +106,14 @@
             <div class="flex justify-between items-center mb-6">
                 <div class="space-y-1">
                     <h2 class="text-xl font-semibold text-gray-900">Pertanyaan</h2>
-                    <p class="text-sm text-gray-500">Total: {{ $assessment->questions->count() }} pertanyaan</p>
+                    <div class="flex items-center gap-4">
+                        <p class="text-sm text-gray-500">Total: {{ $assessment->questions->count() }} pertanyaan</p>
+                        <span class="text-gray-300">|</span>
+                        <p class="text-sm text-gray-500">
+                            <i data-lucide="users" class="w-4 h-4 inline-block mr-1"></i>
+                            {{ $respondents }} siswa sudah menjawab
+                        </p>
+                    </div>
                 </div>
                 <a href="{{ route('questions.create', ['assessment' => $assessment->id]) }}"
                     class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 shadow-sm transition-colors">

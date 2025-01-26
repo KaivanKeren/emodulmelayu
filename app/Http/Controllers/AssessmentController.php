@@ -301,10 +301,15 @@ class AssessmentController extends Controller
     {
         $assessment->load(['questions.options']);
 
+        // Hitung jumlah user unik yang sudah menjawab
+        $respondents = $assessment->userAnswers()->count();
+
         return view('admin.assessments.show', [
-            'assessment' => $assessment
+            'assessment' => $assessment,
+            'respondents' => $respondents
         ]);
     }
+    
     public function apiShow(Assessment $assessment)
     {
         $assessment->load(['questions.options']);
