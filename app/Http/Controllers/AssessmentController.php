@@ -299,17 +299,23 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment)
     {
+        // Load relationships
         $assessment->load(['questions.options']);
 
-        // Hitung jumlah user unik yang sudah menjawab
-        $respondents = $assessment->userAnswers()->count();
+        // Count unique users who answered this assessment
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->selectRaw('COUNT(DISTINCT user_id) as total')
+            ->value('total');
+
 
         return view('admin.assessments.show', [
             'assessment' => $assessment,
             'respondents' => $respondents
         ]);
     }
-    
+
     public function apiShow(Assessment $assessment)
     {
         $assessment->load(['questions.options']);

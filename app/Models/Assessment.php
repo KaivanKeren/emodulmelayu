@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Assessment extends Model
 {
@@ -18,6 +19,18 @@ class Assessment extends Model
         return $this->hasManyThrough(Answer::class, Question::class)
             ->select('user_id')
             ->distinct();
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'answers', 'assessment_id', 'user_id')
+            ->through('questions')
+            ->distinct();
+    }
+
+    public function getRespondentsCountAttribute()
+    {
+        return $this->users()->count();
     }
 
     protected $casts = [
