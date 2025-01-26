@@ -23,7 +23,7 @@
                     <th class="pb-4">Nama Sekolah</th>
                     <th class="pb-4">Alamat</th>
                     <th class="pb-4">Tanggal Dibuat</th>
-                    <th class="pb-4"></th>
+                    <th class="pb-4">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-sm">

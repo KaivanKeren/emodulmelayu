@@ -24,6 +24,7 @@
                     <th class="pb-4">Kategori</th>
                     <th class="pb-4">Status</th>
                     <th class="pb-4">Tanggal Dibuat</th>
+                    <th class="pb-4">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-sm">
