@@ -86,8 +86,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{discussion}/messages/{message}', [MessageController::class, 'destroy'])->name('discussions.messages.destroy');
 
         });
-        
-        Route::get('/filter-message', [FilterMessageController::class, 'index'])->name('filter_messages.index');
+
+        Route::get('/filter-message', [FilterMessageController::class, 'index'])->name('filter-message.index');
         Route::post('/filter-message', [FilterMessageController::class, 'store'])->name('filter-message.store');
         Route::delete('/filter-message/{filterMessage}', [FilterMessageController::class, 'destroy'])->name('filter-message.destroy');
 
