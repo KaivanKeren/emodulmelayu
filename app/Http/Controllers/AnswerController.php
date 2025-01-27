@@ -44,6 +44,12 @@ class AnswerController extends Controller
             ], 403);
         }
 
+        if ($assessment->status == 'Terjawab') {
+            return response()->json([
+                'message' => 'Assessment ini sudah terjawab'
+            ], 403);
+        }
+
         // Verify all options belong to the question
         $options = Option::whereIn('id', $validated['option_ids'])
             ->where('question_id', $question->id)

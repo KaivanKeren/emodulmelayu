@@ -274,15 +274,20 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-    window.updateCheckboxRequired = function(questionIndex) {
-        const questionBlock = document.querySelector(`.question-block:nth-child(${questionIndex + 1})`);
-        const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"]');
-        
-        let isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-        checkboxes.forEach(checkbox => {
-            checkbox.required = !isAnyChecked;
+    function updateCheckboxRequired(checkbox) {
+        const questionBlock = checkbox.closest(".question-block");
+        const checkboxes = questionBlock.querySelectorAll(
+            'input[type="checkbox"][name="' + checkbox.getAttribute("name") + '"]'
+        );
+    
+        // Check if any checkbox is checked
+        const isAnyChecked = Array.from(checkboxes).some((cb) => cb.checked);
+    
+        // Update required attribute for all checkboxes in the group
+        checkboxes.forEach((cb) => {
+            cb.required = !isAnyChecked;
         });
-    };
+    }
 
     // Event Listeners
     addQuestionButton.addEventListener("click", function() {

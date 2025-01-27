@@ -12,9 +12,11 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.5",
+        "masbug/flysystem-google-drive-ext": "*",
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-backup": "*",
-        "usamamuneerchaudhary/commentify": "^1.5"
+        "usamamuneerchaudhary/commentify": "^1.5",
+        "yaza/laravel-google-drive-storage": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -108,11 +108,12 @@
                     <h2 class="text-xl font-semibold text-gray-900">Pertanyaan</h2>
                     <div class="flex items-center gap-4">
                         <p class="text-sm text-gray-500">Total: {{ $assessment->questions->count() }} pertanyaan</p>
-                        <span class="text-gray-300">|</span>
-                        <p class="text-sm text-gray-500">
-                            <i data-lucide="users" class="w-4 h-4 inline-block mr-1"></i>
-                            {{ $respondents }} siswa sudah menjawab
-                        </p>
+                        @if ($respondents > 0)
+                            <span class="text-gray-300">|</span>
+                            <p class="text-sm text-gray-500">
+                                Assessment sudah dijawab oleh : {{ $respondents }}
+                            </p>
+                        @endif
                     </div>
                 </div>
                 <a href="{{ route('questions.create', ['assessment' => $assessment->id]) }}"

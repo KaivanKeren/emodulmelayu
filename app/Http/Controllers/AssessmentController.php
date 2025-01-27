@@ -302,17 +302,26 @@ class AssessmentController extends Controller
         // Load relationships
         $assessment->load(['questions.options']);
 
-        // Count unique users who answered this assessment
+        // Get unique users who answered this assessment
         $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
         })
-            ->selectRaw('COUNT(DISTINCT user_id) as total')
-            ->value('total');
+            ->with('user')
+            ->select('user_id')
+            ->distinct()
+            ->get()
+            ->map(function ($answer) {
+                return $answer->user->name;
+            });
 
+        // Fix status update when there are respondents
+        if ($respondents->count() > 0) {
+            $assessment->update(['status' => 'Terjawab']);
+        }
 
         return view('admin.assessments.show', [
             'assessment' => $assessment,
-            'respondents' => $respondents
+            'respondents' => str_replace(['[', ']', '"'], '', $respondents)
         ]);
     }
 
