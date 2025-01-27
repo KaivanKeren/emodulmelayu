@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title',  $discussion->title )
+@section('title', $discussion->title)
 
 @section('content')
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -107,9 +107,15 @@
                         alt="{{ Auth::user()->name }}" class="w-12 h-12 rounded-full ring-2 ring-gray-100">
 
                     <div class="flex-1 min-w-0">
+                        <!-- Error Message Display -->
+                        <div class="error-container hidden mb-3">
+                            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                                <p class="text-sm error-message"></p>
+                            </div>
+                        </div>
                         <textarea name="message" rows="4"
                             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition"
-                            placeholder="Share your thoughts..."></textarea>
+                            placeholder="Ketik pesan..."></textarea>
 
                         <div class="mt-4 flex justify-end">
                             <button type="submit"
@@ -305,6 +311,22 @@
             <div class="replies-container-${message.id} mt-4 space-y-4 pl-10 border-l-2 border-gray-200"></div>
         </div>
     `;
+        }
+
+        function showError(container, message) {
+            const errorContainer = container.querySelector('.error-container');
+            const errorMessage = errorContainer.querySelector('.error-message');
+            errorContainer.classList.remove('hidden');
+            errorMessage.textContent = message;
+        }
+
+        function hideError(container) {
+            const errorContainer = container.querySelector('.error-container');
+            if (errorContainer) {
+                errorContainer.classList.add('hidden');
+                const errorMessage = errorContainer.querySelector('.error-message');
+                errorMessage.textContent = '';
+            }
         }
     </script>
 @endsection

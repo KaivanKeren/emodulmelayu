@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FilterMessage;
 use App\Models\Message;
 use Helpers\MessageFormatter;
 use Illuminate\Http\Request;
@@ -37,6 +38,21 @@ class MessageController extends Controller
                 'message' => 'required|string',
                 'reply' => 'nullable|exists:messages,id'
             ]);
+
+            // Get all filtered words
+            $filter_words = FilterMessage::pluck('word')->toArray();
+
+            // Check if message contains any filtered words
+            $message_content = strtolower($validated['message']);
+            foreach ($filter_words as $word) {
+                if (str_contains($message_content, strtolower($word))) {
+                    return response()->json([
+                        'code' => 422,
+                        'message' => 'Pesan mengandung kata yang difilter',
+                        'error' => 'Pesan mengandung kata yang difilter'
+                    ], 422);
+                }
+            }
 
             $message = Message::create([
                 'content' => $validated['message'],

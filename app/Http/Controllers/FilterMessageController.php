@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\FilterMessage;
+use Illuminate\Http\Request;
+
+class FilterMessageController extends Controller
+{
+    public function index()
+    {
+        $filterWords = FilterMessage::latest()
+        ->paginate(10);
+
+        return view('admin.filter_message.index', compact('filterWords'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'word' => 'required|string|max:255',
+        ]);
+
+        FilterMessage::create($validated);
+
+        return redirect()
+            ->route('filter_messages.index')
+            ->with('success', 'Filter message berhasil dibuat');
+    }
+
+    public function destroy(FilterMessage $filterMessage)
+    {
+        $filterMessage->delete();
+
+        return redirect()
+            ->route('filter_messages.index')
+            ->with('success', 'Filter message berhasil dihapus');
+    }
+}

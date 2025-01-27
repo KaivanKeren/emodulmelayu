@@ -6,6 +6,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FilterMessageController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\QuestionController;
@@ -70,8 +71,8 @@ Route::middleware('auth')->group(function () {
             Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
             Route::delete('/assets', [MaterialController::class, 'deleteAsset'])->name('materials.delete.asset');
-        });
 
+        });
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
             Route::get('/create', [DiscussionController::class, 'create'])->name('discussions.create');
@@ -83,7 +84,12 @@ Route::middleware('auth')->group(function () {
 
             Route::post('/{discussion}/messages', [MessageController::class, 'store'])->name('discussions.messages.store');
             Route::delete('/{discussion}/messages/{message}', [MessageController::class, 'destroy'])->name('discussions.messages.destroy');
+
         });
+        
+        Route::get('/filter-message', [FilterMessageController::class, 'index'])->name('filter_messages.index');
+        Route::post('/filter-message', [FilterMessageController::class, 'store'])->name('filter-message.store');
+        Route::delete('/filter-message/{filterMessage}', [FilterMessageController::class, 'destroy'])->name('filter-message.destroy');
 
         Route::prefix('schools')->group(function () {
             Route::get('/', [SchoolController::class, 'index'])->name('schools.index');
