@@ -10,7 +10,7 @@ class FilterMessageController extends Controller
     public function index()
     {
         $filterWords = FilterMessage::latest()
-        ->paginate(10);
+            ->paginate(10);
 
         return view('admin.filter_message.index', compact('filterWords'));
     }
@@ -35,5 +35,43 @@ class FilterMessageController extends Controller
         return redirect()
             ->route('filter_messages.index')
             ->with('success', 'Filter message berhasil dihapus');
+    }
+
+    // API Method
+    public function apiIndex()
+    {
+        $filterWords = FilterMessage::latest()
+            ->paginate(10);
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'Data filter message',
+            'data' => $filterWords
+        ]);
+    }
+
+    public function apiStore(Request $request)
+    {
+        $validated = $request->validate([
+            'word' => 'required|string|max:255',
+        ]);
+
+        $data = FilterMessage::create($validated);
+
+        return response()->json([
+            'code' => 201,
+            'message' => 'Filter message berhasil dibuat',
+            'data' => $data
+        ]);
+    }
+
+    public function apiDestroy(FilterMessage $filterMessage)
+    {
+        $filterMessage->delete();
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'Filter message berhasil dihapus'
+        ]);
     }
 }

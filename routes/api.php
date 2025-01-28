@@ -7,6 +7,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FilterMessageController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\QuestionController;
@@ -77,7 +78,6 @@ Route::middleware('api')->group(function () {
             Route::delete('/{material}', [MaterialController::class, 'apiDestroy']);
         });
 
-
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'apiIndex']);
             Route::post('/', [DiscussionController::class, 'apiStore']);
@@ -89,6 +89,10 @@ Route::middleware('api')->group(function () {
             Route::post('/{discussion}/messages', [MessageController::class, 'store']);
             Route::delete('/{discussion}/messages/{id}', [MessageController::class, 'destroy']);
         });
+
+        Route::get('/filter-messages', [FilterMessageController::class, 'apiIndex']);
+        Route::post('/filter-messages', [FilterMessageController::class, 'apiStore']);
+        Route::delete('/filter-messages/{filterMessage}', [FilterMessageController::class, 'apiDestroy']);
 
         Route::get('/calendar', [CalendarController::class, 'apiIndex']);
         Route::post('/events', [EventController::class, 'store']);
