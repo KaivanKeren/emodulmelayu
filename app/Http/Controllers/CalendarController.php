@@ -32,19 +32,19 @@ class CalendarController extends Controller
 
     public function apiIndex(Request $request)
     {
-        $tanggalSaatIni = Carbon::now();
+        $currentDate = Carbon::now();
 
         // Jika request memiliki parameter 'tahun' dan 'bulan', gunakan tanggal tersebut
         if ($request->has(['tahun', 'bulan'])) {
-            $tanggalSaatIni = Carbon::createFromDate($request->tahun, $request->bulan, 1);
+            $currentDate = Carbon::createFromDate($request->tahun, $request->bulan, 1);
         }
 
         // Generate kalender untuk bulan yang dipilih
-        $kalender = $this->generateKalender($tanggalSaatIni);
+        $calendar = $this->generateKalender($currentDate);
 
         // Ambil event berdasarkan tahun dan bulan yang dipilih
-        $events = Event::whereYear('date', $tanggalSaatIni->year)
-            ->whereMonth('date', $tanggalSaatIni->month)
+        $events = Event::whereYear('date', $currentDate->year)
+            ->whereMonth('date', $currentDate->month)
             ->orderBy('date')
             ->get()
             ->groupBy(function ($event) {
@@ -53,8 +53,63 @@ class CalendarController extends Controller
 
         // Format response JSON
         return response()->json([
-            'tanggalSaatIni' => $tanggalSaatIni->toDateString(),
-            'kalender' => $kalender,
+            'currentDate' => $currentDate->toDateString(),
+            'calendar' => $calendar,
+            'events' => $events->map(function ($group) {
+                return $group->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'description' => $event->description,
+                        'date' => $event->date->toDateString(),
+                    ];
+                });
+            }),
+        ]);
+    }
+
+    public function apiAllMonths(Request $request)
+    {
+        $year = $request->get('year', Carbon::now()->year);
+
+        $months = collect(range(1, 12))->map(function ($month) use ($year) {
+            $date = Carbon::createFromDate($year, $month, 1);
+            $daysInMonth = $date->daysInMonth;
+
+            $days = collect(range(1, $daysInMonth))->map(function ($day) use ($year, $month) {
+                $date = Carbon::createFromDate($year, $month, $day);
+                return [
+                    'date' => $date->format('Y-m-d'),
+                    'day' => $day,
+                ];
+            });
+
+
+            return [
+                'monthNumber' => $month,
+                'monthName' => $date->format('F'),
+                'year' => $year,
+                'totalDays' => $daysInMonth,
+                'firstDayOfMonth' => Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
+                'lastDayOfMonth' => Carbon::createFromDate($year, $month, $daysInMonth)->format('Y-m-d'),
+                'calendar' => $this->generateKalender($date),
+            ];
+        });
+
+        // Get events for the entire year
+        $events = Event::whereYear('date', $year)
+            ->orderBy('date')
+            ->get()
+            ->groupBy(function ($event) {
+                return $event->date->format('Y-m-d');
+            });
+
+        $currentDate = Carbon::now();
+
+        return response()->json([
+            'currentDate' => $currentDate->toDateString(),
+            'year' => $year,
+            'months' => $months,
             'events' => $events->map(function ($group) {
                 return $group->map(function ($event) {
                     return [
