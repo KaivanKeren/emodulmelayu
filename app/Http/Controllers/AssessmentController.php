@@ -6,6 +6,7 @@ use App\Http\Resources\AnswerResource;
 use App\Http\Resources\AssessmentResource;
 use App\Models\Answer;
 use App\Models\Assessment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,8 @@ class AssessmentController extends Controller
     public function index()
     {
         $assessments = Assessment::latest()->paginate(10);
-        return view('admin.assessments.index', compact('assessments'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.assessments.index', compact('assessments', 'pendingUsers'));
     }
 
     public function filter(Request $request)
@@ -52,7 +54,8 @@ class AssessmentController extends Controller
 
     public function create()
     {
-        return view('admin.assessments.create');
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.assessments.create', compact('pendingUsers'));
     }
 
     public function store(Request $request)
@@ -185,7 +188,8 @@ class AssessmentController extends Controller
 
     public function edit(Assessment $assessment)
     {
-        return view('admin.assessments.edit', compact('assessment'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.assessments.edit', compact('assessment', 'pendingUsers'));
     }
 
     public function update(Request $request, Assessment $assessment)
@@ -299,6 +303,8 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment)
     {
+        $pendingUsers = User::where('status', 'Pending')->count();
+       
         // Load relationships
         $assessment->load(['questions.options']);
 
@@ -322,7 +328,7 @@ class AssessmentController extends Controller
         return view('admin.assessments.show', [
             'assessment' => $assessment,
             'respondents' => str_replace(['[', ']', '"'], '', $respondents)
-        ]);
+        ], compact('pendingUsers'));
     }
 
     public function apiShow(Assessment $assessment)

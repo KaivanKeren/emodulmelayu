@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\School;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
 class SchoolController extends Controller
@@ -27,7 +28,8 @@ class SchoolController extends Controller
     public function index()
     {
         $schools = School::paginate(10);
-        return view('admin.school.index', compact('schools'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.school.index', compact('schools', 'pendingUsers'));
     }
 
     public function filter(Request $request)
@@ -77,7 +79,8 @@ class SchoolController extends Controller
      */
     public function create()
     {
-        return view('admin.school.create');
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.school.create', compact('pendingUsers'));
     }
 
     /**
@@ -139,7 +142,8 @@ class SchoolController extends Controller
      */
     public function edit(School $school)
     {
-        return view('admin.school.edit', compact('school'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.school.edit', compact('school', 'pendingUsers'));
     }
 
     /**

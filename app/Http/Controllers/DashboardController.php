@@ -15,18 +15,19 @@ class DashboardController extends Controller
 {
     public function adminDashboard()
     {
+        $schools = School::all();
         $users = User::all();
-        $total_users = User::count();
 
+        $total_users = User::count();
+        $pendingUsers = User::where('status', 'Pending')->count();
         $materials = Material::count();
         $assessments = Assessment::count();
         $discussions = Discussion::count();
-        return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions'));
+        return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions', 'pendingUsers', 'schools'));
     }
 
     public function filter(Request $request)
     {
-        // Retrieve filters from request
         $filters = $request->only(['name', 'role', 'school', 'status']);
 
         // Build query with optional filters
@@ -50,6 +51,11 @@ class DashboardController extends Controller
             $query->where('status', $filters['status']);
         }
 
+        // Get users with pagination
+        $users = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
+        $schools = School::all();
+
         // Get total count of users
         $total_users = User::count();
 
@@ -57,11 +63,8 @@ class DashboardController extends Controller
         $assessments = Assessment::count();
         $discussions = Discussion::count();
 
-        // Get users with pagination
-        $users = $query->paginate(10);
-
         // Return view with users and filters
-        return view('admin.dashboard', compact('users', 'filters', 'total_users', 'materials', 'assessments', 'discussions'));
+        return view('admin.dashboard', compact('users', 'filters', 'total_users', 'materials', 'assessments', 'discussions', 'schools', 'pendingUsers'));
     }
 
     public function search(Request $request): JsonResponse

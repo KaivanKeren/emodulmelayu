@@ -1,4 +1,4 @@
-<aside class="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
+<aside class=" sticky top-0 left-0 w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
     <div class="p-6">
         <h1 class="text-xl font-bold text-gray-900">Admin Panel</h1>
     </div>
@@ -22,10 +22,16 @@
         </a>
 
         <a href="{{ route('users.index') }}"
-            class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
-            {{ Request::is('admin/users*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
+            class="flex items-center px-3 py-2 text-sm font-medium rounded-lg relative
+        {{ Request::is('admin/users*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
             <i data-lucide="users" class="w-5 h-5 mr-3"></i>
             Pengguna
+            @if ($pendingUsers > 0)
+                <span
+                    class="absolute inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full right-3">
+                    {{ $pendingUsers }}
+                </span>
+            @endif
         </a>
 
         <a href="{{ route('schools.index') }}"
@@ -41,13 +47,6 @@
             <i data-lucide="file-text" class="w-5 h-5 mr-3"></i>
             Assessment
         </a>
-
-        {{-- <a href="#"
-            class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
-            {{ Request::is('admin/models*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
-            <i data-lucide="box" class="w-5 h-5 mr-3"></i>
-            Model AR
-        </a> --}}
 
         <a href="{{ route('materials.index') }}"
             class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
@@ -70,14 +69,4 @@
             Kalender
         </a>
     </nav>
-    <div class="p-3">
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit"
-                class="flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
-                Logout
-            </button>
-        </form>
-    </div>
 </aside>

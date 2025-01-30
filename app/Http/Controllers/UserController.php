@@ -13,8 +13,10 @@ class UserController extends Controller
 {
     public function index()
     {
+        $schools = School::all();
         $users = User::with('school')->paginate(10);
-        return view('admin.users.index', compact('users'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.users.index', compact('users', 'pendingUsers', 'schools'));
     }
 
     public function showPassword($id)
@@ -63,15 +65,17 @@ class UserController extends Controller
 
         // Get users with pagination
         $users = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
+        $schools = School::all();
 
         // Return view with users and filters
-        return view('admin.users.index', compact('users', 'filters'));
+        return view('admin.users.index', compact('users', 'filters', 'schools', 'pendingUsers'));
     }
 
-    public function create()
-    {
-        return view('admin.users.create');
-    }
+    // public function create()
+    // {
+    //     return view('admin.users.create');
+    // }
 
     public function store(Request $request)
     {
@@ -96,7 +100,8 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $schools = School::all();
-        return view('admin.users.edit', compact('user', 'schools'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.users.edit', compact('user', 'schools', 'pendingUsers'));
     }
 
     public function update(Request $request, User $user): RedirectResponse

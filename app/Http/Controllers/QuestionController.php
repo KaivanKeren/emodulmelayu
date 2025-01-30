@@ -6,6 +6,7 @@ use App\Http\Resources\QuestionResource;
 use App\Models\Assessment;
 use App\Models\Option;
 use App\Models\Question;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -14,17 +15,12 @@ use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
 {
-    public function index()
-    {
-        $questions = Question::with('options')->get();
-        return view('questions.index', compact('questions'));
-    }
-
     public function create(Request $request)
     {
+        $pendingUsers = User::where('status', 'Pending')->count();
         // Get assessment from the query parameter
         $assessment = Assessment::findOrFail($request->query('assessment'));
-        return view('admin.questions.create', compact('assessment'));
+        return view('admin.questions.create', compact('assessment', 'pendingUsers'));
     }
 
     public function store(Request $request)
@@ -142,15 +138,16 @@ class QuestionController extends Controller
         }
     }
 
-    public function show(Question $question)
-    {
-        return view('questions.show', compact('question'));
-    }
+    // public function show(Question $question)
+    // {
+    //     return view('questions.show', compact('question'));
+    // }
 
     public function edit(Question $question)
     {
         $question->load('assessment');
-        return view('admin.questions.edit', compact('question'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.questions.edit', compact('question', 'pendingUsers'));
     }
 
     public function update(Request $request, Question $question)

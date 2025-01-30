@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Material;
 use App\Models\ModelAR;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +16,8 @@ class MaterialController extends Controller
     public function index()
     {
         $materials = Material::with(['user', 'model'])->latest()->paginate(10);
-        return view('admin.material.index', compact('materials'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.material.index', compact('materials', 'pendingUsers'));
     }
 
     public function filter(Request $request)
@@ -49,7 +51,8 @@ class MaterialController extends Controller
 
     public function create()
     {
-        return view('admin.material.create');
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.material.create', compact('pendingUsers'));
     }
 
     public function store(Request $request)
@@ -98,13 +101,16 @@ class MaterialController extends Controller
     public function show($id)
     {
         $material = Material::findOrFail($id);
-        return view('admin.material.show', compact('material'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        return view('admin.material.show', compact('material', 'pendingUsers'));
     }
 
     public function edit(Material $material)
     {
         $material->assets = json_decode($material->assets, true);
-        return view('admin.material.edit', compact('material'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('admin.material.edit', compact('material', 'pendingUsers'));
     }
 
     public function update(Request $request, $id)

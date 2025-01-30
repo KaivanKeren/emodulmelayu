@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Discussion;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
@@ -16,13 +17,16 @@ class DiscussionController extends Controller
         $discussions = Discussion::with('user')
             ->latest()
             ->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
 
-        return view('admin.discussion.index', compact('discussions'));
+        return view('admin.discussion.index', compact('discussions', 'pendingUsers'));
     }
 
     public function create()
     {
-        return view('admin.discussion.create');
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        return view('admin.discussion.create', compact('pendingUsers'));
     }
 
     public function store(Request $request)
@@ -46,15 +50,19 @@ class DiscussionController extends Controller
             ->with(['user', 'replies.user', 'replies.replies.user'])
             ->where('discussion_id', $discussion->id)
             ->get();
+        $pendingUsers = User::where('status', 'Pending')->count();
 
-        return view('admin.discussion.show', compact('discussion', 'messages'));
+
+        return view('admin.discussion.show', compact('discussion', 'messages', 'pendingUsers'));
     }
 
 
     public function edit(Discussion $discussion)
     {
         $this->authorize('update', $discussion);
-        return view('admin.discussion.edit', compact('discussion'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        return view('admin.discussion.edit', compact('discussion', 'pendingUsers'));
     }
 
     public function update(Request $request, Discussion $discussion)

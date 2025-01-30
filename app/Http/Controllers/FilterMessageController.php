@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FilterMessage;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class FilterMessageController extends Controller
@@ -12,7 +13,10 @@ class FilterMessageController extends Controller
         $filterWords = FilterMessage::latest()
             ->paginate(10);
 
-        return view('admin.filter_message.index', compact('filterWords'));
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+
+        return view('admin.filter_message.index', compact('filterWords', 'pendingUsers'));
     }
 
     public function store(Request $request)

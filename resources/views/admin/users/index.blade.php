@@ -131,8 +131,13 @@
                     </div>
                     <div class="mb-4">
                         <label for="school" class="block text-sm font-medium text-gray-700">Sekolah</label>
-                        <input type="text" id="school" name="school"
+                        <select type="text" id="school" name="school"
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
+                            <option value="">Semua</option>
+                        @foreach ($schools as $school)
+                            <option value="{{ $school->name }}">{{ $school->name }}</option>
+                        @endforeach
+                        </select>
                     </div>
                     <div class="mb-4">
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>

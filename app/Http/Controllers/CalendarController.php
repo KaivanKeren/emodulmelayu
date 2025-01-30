@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -10,6 +11,8 @@ class CalendarController extends Controller
 {
     public function index(Request $request)
     {
+        $pendingUsers = User::where('status', 'Pending')->count();
+
         $tanggalSaatIni = Carbon::now();
 
         if ($request->has(['tahun', 'bulan'])) {
@@ -27,7 +30,7 @@ class CalendarController extends Controller
                 return $event->date->format('Y-m-d');
             });
 
-        return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events'));
+        return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events', 'pendingUsers'));
     }
 
     public function apiIndex(Request $request)
