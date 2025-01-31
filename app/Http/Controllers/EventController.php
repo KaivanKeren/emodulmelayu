@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -87,7 +88,6 @@ class EventController extends Controller
                 'code' => 200,
                 'message' => 'Event deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -96,17 +96,38 @@ class EventController extends Controller
         }
     }
 
+    public function getTodayEvents()
+    {
+        $today = Carbon::now();
+        $events = Event::whereDate('date', $today)->get();
+
+        try {
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Events retrieved successfully',
+                'data' => $events,
+                'date' => $today
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'date' => $today,
+                'status' => 'error',
+                'message' => 'Events not found'
+            ], 404);
+        }
+    }
+
     public function show($id)
     {
         try {
             $event = Event::findOrFail($id);
-            
+
             return response()->json([
                 'code' => 200,
                 'message' => 'Event retrieved successfully',
                 'data' => $event
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -114,5 +135,4 @@ class EventController extends Controller
             ], 404);
         }
     }
-
 }

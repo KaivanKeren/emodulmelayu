@@ -97,8 +97,10 @@ Route::middleware('api')->group(function () {
         Route::get('/calendar', [CalendarController::class, 'apiIndex']);
         Route::get('/calendar/all-months', [CalendarController::class, 'apiAllMonths']);
         Route::post('/events', [EventController::class, 'store']);
+        Route::get('/events/today', [EventController::class, 'getTodayEvents']);
         Route::get('/events/{id}', [EventController::class, 'show']);
         Route::put('/events/{id}', [EventController::class, 'update']);
         Route::delete('/events/{id}', [EventController::class, 'destroy']);
+
     });
 });
