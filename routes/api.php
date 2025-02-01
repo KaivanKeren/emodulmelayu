@@ -87,7 +87,7 @@ Route::middleware('api')->group(function () {
 
             Route::get('/{discussion}/messages', [MessageController::class, 'index']);
             Route::post('/{discussion}/messages', [MessageController::class, 'store']);
-            Route::delete('/{discussion}/messages/{id}', [MessageController::class, 'destroy']);
+            Route::delete('/{discussion}/messages/{message}', [MessageController::class, 'destroy']);
         });
 
         Route::get('/filter-messages', [FilterMessageController::class, 'apiIndex']);
