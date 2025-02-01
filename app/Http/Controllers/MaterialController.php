@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MaterialRequest;
 use App\Models\Material;
 use App\Models\ModelAR;
 use App\Models\User;
@@ -55,48 +56,108 @@ class MaterialController extends Controller
         return view('admin.material.create', compact('pendingUsers'));
     }
 
-    public function store(Request $request)
+    public function store(MaterialRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'assets.*' => 'required|file|mimes:pdf,mp4,mov,avi|max:102400', // 100MB max file 
-        ]);
+        try {
+            $material = Material::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'assets' => $this->processUrls($request->drive_urls),
+                'user_id' => auth()->id(),
+            ]);
 
-        $paths = [];
+            return $this->sendResponse($material, 'Material created successfully');
+        } catch (\Exception $e) {
+            Log::error('Error creating material: ' . $e->getMessage());
+            return $this->sendError('Error creating material', 500);
+        }
+    }
 
-        if ($request->hasFile('assets')) {
-            foreach ($request->file('assets') as $file) {
-                // Get file extension
-                $extension = $file->getClientOriginalExtension();
-
-                // Determine storage directory based on file type
-                $directory = in_array($extension, ['mp4', 'mov', 'avi'])
-                    ? 'materials/videos'
-                    : 'materials/pdf';
-
-                // Store file and get path
-                $paths[] = $file->store($directory, 'public');
-            }
+    /**
+     * Process array of Google Drive URLs
+     *
+     * @param array|null $urls
+     * @return string
+     */
+    private function processUrls(?array $urls): string
+    {
+        if (empty($urls)) {
+            return json_encode([]);
         }
 
-        $material = Material::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'assets' => json_encode($paths),
-            'user_id' => auth()->id(),
-        ]);
+        $processedUrls = array_map(function ($url) {
+            return $this->standardizeUrl($url);
+        }, array_filter($urls));
 
-        if ($request->ajax()) {
+        return json_encode(array_values($processedUrls));
+    }
+
+    /**
+     * Standardize Google Drive URL format
+     *
+     * @param string|null $url
+     * @return string|null
+     */
+    private function standardizeUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        // Ensure URL starts with https://
+        $url = preg_replace('/^(?!https:\/\/)/', 'https://', $url);
+
+        // Extract file ID and standardize format
+        if (preg_match('/\/file\/d\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            return "https://drive.google.com/file/d/{$matches[1]}/view";
+        }
+
+        // Remove any trailing parameters and ensure /view at the end
+        return preg_replace('/\/[a-z]+\?.*$|\/[a-z]+$/', '/view', $url);
+    }
+
+    /**
+     * Send success response
+     *
+     * @param mixed $data
+     * @param string $message
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    private function sendResponse($data, string $message)
+    {
+        if (request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Material created successfully',
-                'material' => $material
+                'message' => $message,
+                'material' => $data
             ]);
         }
 
-        return redirect()->route('materials.index')->with('success', 'Material created successfully');
+        return redirect()->route('materials.index')
+            ->with('success', $message);
     }
+
+    /**
+     * Send error response
+     *
+     * @param string $message
+     * @param int $code
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    private function sendError(string $message, int $code = 400)
+    {
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message
+            ], $code);
+        }
+
+        return redirect()->back()
+            ->with('error', $message)
+            ->withInput();
+    }
+
 
     public function show($id)
     {

@@ -98,10 +98,9 @@ class EventController extends Controller
 
     public function getTodayEvents()
     {
-        $today = Carbon::now();
-        $events = Event::whereDate('date', $today)->get();
-
         try {
+            $today = Carbon::now();
+            $events = Event::whereDate('date', $today)->get();
 
             return response()->json([
                 'code' => 200,
