@@ -158,7 +158,6 @@ class MaterialController extends Controller
             ->withInput();
     }
 
-
     public function show($id)
     {
         $material = Material::findOrFail($id);
@@ -169,43 +168,25 @@ class MaterialController extends Controller
 
     public function edit(Material $material)
     {
-        $material->assets = json_decode($material->assets, true);
+        // $material->assets = json_decode($material->assets);
         $pendingUsers = User::where('status', 'Pending')->count();
         return view('admin.material.edit', compact('material', 'pendingUsers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(MaterialRequest $request, Material $material)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'assets' => 'nullable|array', // Tidak wajib meng-upload file baru
-            'assets.*' => 'file|mimes:pdf,mp4,mov,avi|max:102400',
-        ]);
+        try {
+            $material->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'assets' => $this->processUrls($request->drive_urls),
+            ]);
 
-        $material = Material::findOrFail($id);
-        $material->title = $request->title;
-        $material->description = $request->description;
-
-        // Jika ada file baru, hapus file lama dan simpan yang baru
-        if ($request->hasFile('assets')) {
-            // Hapus file lama yang ada
-            foreach (json_decode($material->assets) as $asset) {
-                Storage::delete('public/' . $asset); // Hapus file lama
-            }
-
-            // Upload file baru
-            $newAssets = [];
-            foreach ($request->file('assets') as $file) {
-                $path = $file->store('materials', 'public'); // Menyimpan file baru di folder public/materials
-                $newAssets[] = $path;
-            }
-            $material->assets = json_encode($newAssets); // Menyimpan array ke dalam database
+            return $this->sendResponse($material, 'Material updated successfully');
+        } catch (\Exception $e) {
+            Log::error('Error updating material: ' . $e->getMessage());
+            return $this->sendError('Error updating material', 500);
         }
-
-        $material->save();
-
-        return redirect()->route('materials.index')->with('success', 'Material berhasil diperbarui.');
     }
 
     public function destroy(Material $material)

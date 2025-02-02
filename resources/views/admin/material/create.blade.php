@@ -58,12 +58,10 @@
                             @enderror
                         </div>
 
-                        <!-- Assets -->
                         {{-- Google Drive URLs Input Component --}}
                         <div class="drive-input space-y-2">
                             <label for="drive_urls" class="block text-sm font-medium text-gray-700">
                                 URL Google Drive
-                                <span class="text-red-500">*</span>
                             </label>
 
                             <div class="space-y-2" x-data="{ urls: [''] }">
@@ -72,17 +70,7 @@
                                         <div
                                             class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition duration-150">
                                             <span class="text-gray-400 flex-shrink-0">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"
-                                                    fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                    </path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                    <line x1="16" y1="13" x2="8" y2="13">
-                                                    </line>
-                                                    <line x1="16" y1="17" x2="8" y2="17">
-                                                    </line>
-                                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                                </svg>
+                                                <i data-lucide="link" class="w-5 h-5"></i>
                                             </span>
 
                                             <input type="url" :name="'drive_urls[' + index + ']'"
@@ -154,7 +142,6 @@
     </div>
 
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="/assets/extensions/filepond/filepond.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('materialForm');
@@ -177,15 +164,7 @@
             });
 
             container.appendChild(addButton);
-
-            // Initialize FilePond
-            const pond = FilePond.create(document.querySelector('.basic-filepond'), {
-                allowMultiple: true,
-                acceptedFileTypes: ['application/pdf', 'video/mp4', 'video/quicktime', 'video/x-msvideo'],
-                maxFileSize: '100MB',
-                credits: false,
-            });
-
+            
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 

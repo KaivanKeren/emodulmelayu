@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Material extends Model
 {
-    protected $fillable = ['title', 'description', 'assets', 'user_id', 'thumbnails'];
-
+    protected $fillable = ['title', 'description', 'assets', 'user_id'];
+    
     public function model()
     {
         return $this->belongsTo(ModelAR::class);
