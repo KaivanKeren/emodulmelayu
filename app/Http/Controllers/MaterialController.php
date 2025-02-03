@@ -196,35 +196,6 @@ class MaterialController extends Controller
         return redirect()->route('materials.index')->with('success', 'Material deleted successfully');
     }
 
-    public function deleteAsset(Request $request)
-    {
-        $request->validate([
-            'path' => 'required|string',
-        ]);
-
-        $path = $request->input('path');
-
-        // Menghapus file dari storage
-        if (Storage::exists($path)) {
-            Storage::delete($path);
-
-            // Menghapus file dari database (misalnya pada model Material)
-            $material = Material::find($request->input('material_id')); // Ambil material berdasarkan ID
-            $assets = json_decode($material->assets, true); // Mengambil assets yang berupa array
-
-            // Menghapus path file yang ingin dihapus
-            if (($key = array_search($path, $assets)) !== false) {
-                unset($assets[$key]); // Hapus file dari array
-                $material->assets = json_encode(array_values($assets)); // Simpan kembali
-                $material->save(); // Simpan perubahan ke database
-            }
-
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'File tidak ditemukan.']);
-    }
-
     // API Method
     public function apiIndex()
     {
@@ -242,53 +213,65 @@ class MaterialController extends Controller
         return response()->json(['data' => $formattedMaterials], 200);
     }
 
-    public function apiStore(Request $request)
+    public function apiStore(MaterialRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'asset' => 'required|mimes:pdf|max:10240', // 10MB max
-            'model_id' => 'required|exists:models,id'
-        ]);
+        try {
+            $material = Material::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'assets' => $this->processUrls($request->drive_urls),
+                'user_id' => auth()->id(),
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'code' => 201,
+                'message' => 'Material created successfully',
+                'data' => $material
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error creating material'], 500);
         }
-
-        $file = $request->file('asset');
-        $path = $file->store('materials/pdf', 'public');
-
-        $material = Material::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'asset' => $path,
-            'user_id' => auth()->id(),
-            'model_id' => $request->model_id
-        ]);
-
-        return response()->json(['data' => $material, 'message' => 'Material created successfully'], 201);
     }
 
     public function apiShow(Material $material)
     {
-        $material->load(['user', 'model']);
-
-        // Ubah format response untuk hanya menampilkan nama file dari assets
-        $formattedMaterial = [
+        return response()->json([
             'id' => $material->id,
-            'filename' => collect(json_decode($material->assets))->map(function ($asset) {
-                return basename($asset); // Mengambil hanya nama file
-            }),
-        ];
+            'filename' => json_decode($material->assets),
+        ], 200);
+    }
 
-        return response()->json(['data' => $formattedMaterial], 200);
+    public function apiUpdate(MaterialRequest $request, Material $material)
+    {
+        try {
+            $material->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'assets' => $this->processUrls($request->drive_urls),
+            ]);
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Material updated successfully',
+                'data' => $material
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating material'], 500);
+        }
     }
 
 
     public function apiDestroy(Material $material)
     {
-        Storage::disk('public')->delete($material->asset);
-        $material->delete();
-        return response()->json(['message' => 'Material deleted successfully'], 200);
+        try {
+            $material->delete();
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Material deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error deleting material'], 500);
+        }
     }
 }

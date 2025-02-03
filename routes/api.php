@@ -74,7 +74,7 @@ Route::middleware('api')->group(function () {
             Route::get('/', [MaterialController::class, 'apiIndex']);
             Route::post('/', [MaterialController::class, 'apiStore']);
             Route::get('/{material}', [MaterialController::class, 'apiShow']);
-            // Route::put('/{material}', [MaterialController::class, 'apiUpdate']);
+            Route::put('/{material}', [MaterialController::class, 'apiUpdate']);
             Route::delete('/{material}', [MaterialController::class, 'apiDestroy']);
         });
 
