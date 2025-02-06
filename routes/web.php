@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [AssessmentController::class, 'create'])->name('assessments.create');
             Route::get('/edit/{assessment}', [AssessmentController::class, 'edit'])->name('assessments.edit');
             Route::post('/', [AssessmentController::class, 'store'])->name('assessments.store');
+            Route::post('/upload-image', [AssessmentController::class, 'upload'])->name('image.qeustion.store');
             Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
             Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
@@ -70,9 +71,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/edit/{material}', [MaterialController::class, 'edit'])->name('materials.edit');
             Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
-            Route::delete('/assets', [MaterialController::class, 'deleteAsset'])->name('materials.delete.asset');
-
         });
+        
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
             Route::get('/create', [DiscussionController::class, 'create'])->name('discussions.create');

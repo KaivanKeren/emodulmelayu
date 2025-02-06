@@ -79,13 +79,13 @@
                 <h3 class="text-lg font-semibold mb-4">Filter Materi</h3>
                 <form action="{{ route('materials.filter') }}" method="GET">
                     <div class="mb-4">
-                        <label for="name" class="block text-sm font-medium text-gray-700">Judul</label>
-                        <input type="text" id="name" name="name"
+                        <label for="title" class="block text-sm font-medium text-gray-700">Judul</label>
+                        <input type="text" id="title" name="title"
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
                     </div>
                     <div class="mb-4">
-                        <label for="title" class="block text-sm font-medium text-gray-700">Author</label>
-                        <input type="text" id="title" name="title"
+                        <label for="name" class="block text-sm font-medium text-gray-700">Author</label>
+                        <input type="text" id="name" name="name"
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
                     </div>
                     <div class="mb-4">
