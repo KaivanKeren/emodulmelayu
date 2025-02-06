@@ -1,8 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', 'Detail Assessment')
+@section('title', $assessment->title)
 
 @section('content')
+    <link rel="stylesheet" href="/assets/quill.css">
+
     <div class="min-h-screen bg-gray-50 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Header Section -->
@@ -134,19 +136,16 @@
                     <div class="bg-gray-50 rounded-lg p-6 border border-gray-100 hover:border-orange-200 transition-colors">
                         <div class="flex items-start gap-4">
                             <div
-                                class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 font-semibold text-sm">
+                                class="flex-shrink-0 mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 font-semibold text-sm">
                                 {{ $index + 1 }}
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="space-y-2">
-                                        <h3 class="text-lg font-medium text-gray-900">{{ $question->content }}</h3>
-                                        @if ($question->image)
-                                            <div class="mt-3 mb-4">
-                                                <img src="{{ asset('storage/' . $question->image) }}" alt="Question image"
-                                                    alt="Question image" class="rounded-lg max-w-md h-auto shadow-sm">
-                                            </div>
-                                        @endif
+                                        <!-- Question content using Quill viewer -->
+                                        <h3 class="text-lg font-medium text-gray-900">
+                                            <div class="ql-viewer">{!! $question->content !!}</div>
+                                        </h3>
                                         <button id="toggle-btn-{{ $question->id }}"
                                             onclick="toggleCorrectAnswers({{ $question->id }})"
                                             class="inline-flex items-center px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
@@ -165,15 +164,17 @@
                                 </div>
                                 <div class="space-y-3 ml-4">
                                     @foreach ($question->options as $optionIndex => $option)
-                                        <div class="flex items-center gap-3 text-gray-700">
-                                            <span class="text-sm text-gray-500 w-6">{{ chr(65 + $optionIndex) }}.</span>
-                                            <span class="flex items-center gap-2">
-                                                {{ $option->content }}
+                                        <div class="flex items-start gap-3 text-gray-700">
+                                            <span
+                                                class="text-sm text-gray-500 w-6 mt-1">{{ chr(65 + $optionIndex) }}.</span>
+                                            <div class="flex items-start gap-4 flex-1">
+                                                <!-- Option content using Quill viewer -->
+                                                <div class="ql-viewer">{!! $option->content !!}</div>
                                                 @if ($option->is_correct)
                                                     <i data-lucide="check-circle"
-                                                        class="w-5 h-5 text-green-500 hidden correct-icon-{{ $question->id }}"></i>
+                                                        class="w-5 h-5 text-green-500 hidden correct-icon-{{ $question->id }} flex-shrink-0"></i>
                                                 @endif
-                                            </span>
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -196,9 +197,8 @@
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-12 bg-gray-50 rounded-lg border border-gray-100">
-                        <i data-lucide="clipboard-list" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
-                        <p class="text-gray-500">Tidak ada pertanyaan untuk assessment ini.</p>
+                    <div class="text-center py-12">
+                        <p class="text-gray-500">Belum ada pertanyaan yang ditambahkan</p>
                     </div>
                 @endforelse
             </div>
