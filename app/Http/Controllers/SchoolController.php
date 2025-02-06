@@ -50,9 +50,10 @@ class SchoolController extends Controller
 
         // Get users with pagination
         $schools = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
 
         // Return view with schools and filters
-        return view('admin.school.index', compact('schools', 'filters'));
+        return view('admin.school.index', compact('schools', 'filters', 'pendingUsers'));
     }
 
     /**

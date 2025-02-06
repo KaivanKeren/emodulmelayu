@@ -45,9 +45,10 @@ class MaterialController extends Controller
 
         // Get users with pagination
         $materials = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
 
         // Return view with materials and filters
-        return view('admin.material.index', compact('materials', 'filters'));
+        return view('admin.material.index', compact('materials', 'filters', 'pendingUsers'));
     }
 
     public function create()
