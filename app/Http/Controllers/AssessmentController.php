@@ -47,9 +47,10 @@ class AssessmentController extends Controller
 
         // Get users with pagination
         $assessments = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
 
         // Return view with assessments and filters
-        return view('admin.assessments.index', compact('assessments', 'filters'));
+        return view('admin.assessments.index', compact('assessments', 'filters', 'pendingUsers'));
     }
 
     public function create()
@@ -66,13 +67,12 @@ class AssessmentController extends Controller
                 'category' => 'required|max:255',
                 'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
                 'questions' => 'required|array|min:1',
-                'questions.*.content' => 'required|string|max:255',
+                'questions.*.content' => 'required|string',
                 'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
                 'questions.*.options' => 'required|array|min:1',
-                'questions.*.options.*' => 'required|string|max:255',
+                'questions.*.options.*' => 'required|string',
                 'questions.*.correct_answer' => 'required_if:questions.*.question_type,single_choice',
                 'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice',
-                'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048' // Added image validation
             ], [
                 'title.required' => 'Judul assessment wajib diisi',
                 'title.max' => 'Judul tidak boleh lebih dari 255 karakter',
@@ -88,9 +88,6 @@ class AssessmentController extends Controller
                 'questions.*.options.*.required' => 'Teks pilihan jawaban wajib diisi',
                 'questions.*.correct_answer.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda',
                 'questions.*.correct_answer.*.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda kompleks',
-                'questions.*.image.image' => 'File harus berupa gambar',
-                'questions.*.image.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
-                'questions.*.image.max' => 'Ukuran gambar tidak boleh lebih dari 2MB'
             ]);
 
             DB::beginTransaction();
@@ -119,26 +116,10 @@ class AssessmentController extends Controller
             foreach ($validated['questions'] as $questionData) {
 
                 $imagePath = null;
-                if (isset($questionData['image']) && $questionData['image'] !== null) {
-                    try {
-                        if (!Storage::disk('public')->exists('question-images')) {
-                            Storage::disk('public')->makeDirectory('question-images');
-                        }
-
-                        $image = $questionData['image'];
-                        if ($image && $image->isValid()) {
-                            $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                            $imagePath = $image->storeAs('question-images', $filename, 'public');
-                        }
-                    } catch (\Exception $e) {
-                        throw $e;
-                    }
-                }
 
                 $question = $assessment->questions()->create([
                     'content' => $questionData['content'],
                     'question_type' => $questionData['question_type'],
-                    'image' => $imagePath // Add image path to question
                 ]);
 
                 foreach ($questionData['options'] as $index => $optionText) {
@@ -170,6 +151,41 @@ class AssessmentController extends Controller
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
+
+    public function upload(Request $request)
+    {
+        if (!$request->hasFile('image')) {
+            return response()->json(['error' => 'No image file uploaded'], 400);
+        }
+
+        try {
+            $file = $request->file('image');
+            
+            // Validate the uploaded file
+            $validator = validator(['image' => $file], [
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()->first()], 400);
+            }
+
+            // Generate a unique filename
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            
+            // Store the file in the public disk
+            $path = $file->storeAs('uploads/images', $filename, 'public');
+            
+            // Generate the URL for the stored image
+            $url = Storage::url($path);
+            
+            return response()->json(['url' => $url]);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to upload image'], 500);
+        }
+    }
+
 
     public function regenerateToken(Assessment $assessment)
     {

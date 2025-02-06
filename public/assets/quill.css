@@ -1,0 +1,160 @@
+/* Editor Styling */
+.quill-editor {
+    height: 150px;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+}
+
+.quill-editor .ql-container {
+    border: none;
+}
+
+/* Viewer Styling */
+.ql-viewer {
+    @apply text-gray-700;
+}
+
+/* Paragraf */
+.ql-viewer p {
+    @apply mb-2;
+}
+
+/* Indentasi */
+.ql-viewer .ql-indent-1 {
+    padding-left: 3em;
+}
+.ql-viewer .ql-indent-2 {
+    padding-left: 6em;
+}
+.ql-viewer .ql-indent-3 {
+    padding-left: 9em;
+}
+.ql-viewer .ql-indent-4 {
+    padding-left: 12em;
+}
+.ql-viewer .ql-indent-5 {
+    padding-left: 15em;
+}
+.ql-viewer .ql-indent-6 {
+    padding-left: 18em;
+}
+.ql-viewer .ql-indent-7 {
+    padding-left: 21em;
+}
+.ql-viewer .ql-indent-8 {
+    padding-left: 24em;
+}
+
+/* Alignment */
+.ql-viewer .ql-align-center {
+    text-align: center;
+}
+
+.ql-viewer .ql-align-right {
+    text-align: right;
+}
+
+/* RTL Direction */
+.ql-viewer .ql-direction-rtl {
+    direction: rtl;
+    unicode-bidi: embed;
+}
+
+/* Font Family */
+.ql-viewer .ql-font-serif {
+    font-family: serif;
+}
+
+.ql-viewer .ql-font-monospace {
+    font-family: monospace;
+}
+
+.ql-viewer .ql-font-sans {
+    font-family: sans-serif;
+}
+
+/* Images */
+.ql-viewer img {
+    @apply max-w-full h-auto rounded-lg my-4;
+}
+
+/* Lists */
+.ql-viewer ul {
+    @apply list-disc pl-6 mb-4;
+}
+
+.ql-viewer ol {
+    @apply list-decimal pl-6 mb-4;
+}
+
+.ql-viewer ol li,
+.ql-viewer ul li {
+    display: list-item !important;
+}
+
+/* Blockquotes */
+.ql-viewer blockquote {
+    @apply border-l-4 border-gray-300 pl-4 my-4 italic;
+}
+
+/* Text Formatting */
+.ql-viewer strong {
+    @apply font-bold;
+}
+
+.ql-viewer em {
+    @apply italic;
+}
+
+/* Headings */
+.ql-viewer h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 0.67em 0;
+}
+
+.ql-viewer h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0.75em 0;
+}
+
+.ql-viewer h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+    margin: 0.83em 0;
+}
+
+.ql-viewer h4 {
+    font-size: 1em;
+    font-weight: bold;
+    margin: 1.12em 0;
+}
+
+.ql-viewer h5 {
+    font-size: 0.83em;
+    font-weight: bold;
+    margin: 1.5em 0;
+}
+
+.ql-viewer h6 {
+    font-size: 0.67em;
+    font-weight: bold;
+    margin: 1.67em 0;
+}
+
+/* Math Styling */
+.math-inline {
+    @apply inline-block align-middle;
+}
+
+/* Hide unwanted Math elements */
+.ql-viewer span .mord.mathnormal,
+.ql-viewer span .base {
+    display: none;
+}
+
+/* Prevent text alignment inheritance issues */
+.ql-viewer [class^="ql-align-"] {
+    text-align: inherit;
+}

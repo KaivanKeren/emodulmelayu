@@ -1,197 +1,160 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const questionsContainer = document.getElementById("questions_container");
     const addQuestionButton = document.getElementById("add_question");
     let questionCount = 0;
 
-    // Initialize the form
-    function initialize() {
-        initializeImageUpload();
-        // Add first question automatically
-        addQuestionButton.click();
+    function imageHandler() {
+        const input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.setAttribute("accept", "image/*");
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                // Add CSRF token to the request
+                const csrfToken = document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content");
+
+                const response = await fetch(
+                    "/admin/assessments/upload-image",
+                    {
+                        method: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": csrfToken,
+                        },
+                        body: formData,
+                    }
+                );
+
+                const result = await response.json();
+
+                if (result.url) {
+                    const range = this.quill.getSelection(true);
+                    this.quill.insertEmbed(range.index, "image", result.url);
+                } else {
+                    console.error("Upload failed:", result.error);
+                    alert("Image upload failed. Please try again.");
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+                alert("An error occurred while uploading the image.");
+            }
+        };
     }
 
-    // Image Upload Functionality
-    function initializeImageUpload() {
-        document.querySelectorAll(".border-dashed").forEach(uploadArea => {
-            uploadArea.addEventListener("dragenter", handleDragEnter);
-            uploadArea.addEventListener("dragleave", handleDragLeave);
-            uploadArea.addEventListener("dragover", handleDragOver);
-            uploadArea.addEventListener("drop", handleDrop);
-        });
-    }
-
-    function handleDragEnter(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.add("border-orange-500", "bg-orange-50");
-    }
-
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove("border-orange-500", "bg-orange-50");
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const uploadArea = e.currentTarget;
-        uploadArea.classList.remove("border-orange-500", "bg-orange-50");
-
-        const fileInput = uploadArea.querySelector('input[type="file"]');
-        const files = e.dataTransfer.files;
-
-        if (files.length) {
-            fileInput.files = files;
-            handleImageUpload(fileInput);
-        }
-    }
-
-    // Image Processing Functions
-    window.handleImageUpload = function(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        // Validate file type
-        const validTypes = ["image/jpeg", "image/png", "image/gif"];
-        if (!validTypes.includes(file.type)) {
-            alert("Mohon upload file gambar (PNG, JPG, atau GIF)");
-            input.value = "";
-            return;
-        }
-
-        // Validate file size (2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            alert("Ukuran file tidak boleh lebih dari 2MB");
-            input.value = "";
-            return;
-        }
-
-        // Get question index from the input name
-        const questionIndex = input.name.match(/questions\[(\d+)\]/)[1];
-        previewImage(input, questionIndex);
+    // Enhanced Quill configuration with image handler
+    const quillConfigs = {
+        modules: {
+            toolbar: {
+                container: [
+                    ["bold", "italic", "underline", "strike"],
+                    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    [{ script: "sub" }, { script: "super" }],
+                    [{ indent: "-1" }, { indent: "+1" }],
+                    [{ direction: "rtl" }],
+                    [{ font: [] }],
+                    [{ align: [] }],
+                    ["link", "image", "formula"],
+                    ["clean"],
+                ],
+                handlers: {
+                    image: imageHandler,
+                },
+            },
+            imageResize: {
+                modules: ["Resize", "DisplaySize", "Toolbar"],
+            },
+        },
+        theme: "snow",
     };
 
-    window.previewImage = function(input, questionIndex) {
-        const file = input.files[0];
-        if (!file) return;
+    // Initialize Quill Editor with proper configuration
+    function initializeQuillEditor(elementId, placeholder, hiddenInput) {
+        const element = document.querySelector(elementId);
+        if (!element) return null;
 
-        const reader = new FileReader();
-        const previewContainer = document.getElementById(`image-preview-${questionIndex}`);
-        const uploadArea = input.closest(".border-dashed");
-        const previewImg = previewContainer.querySelector("img");
-
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewContainer.classList.remove("hidden");
-            uploadArea.classList.add("hidden");
+        const config = {
+            ...quillConfigs,
+            placeholder: placeholder || "Tulis teks...",
+            formats: [
+                "bold",
+                "italic",
+                "underline",
+                "strike",
+                "script",
+                "formula",
+                "image",
+                "align",
+                "link",
+                "font",
+                "header",
+                "list",
+                "indent",
+                "direction",
+            ],
         };
 
-        reader.readAsDataURL(file);
-    };
+        function cleanupFormula(input) {
+            return input.replace(/(\$[^$]+\$)\1+/g, "$1");
+        }
 
-    window.clearImage = function(button, questionIndex) {
-        const previewContainer = document.getElementById(`image-preview-${questionIndex}`);
-        const questionBlock = button.closest(".question-block");
-        const uploadArea = questionBlock.querySelector(".border-dashed");
-        const fileInput = questionBlock.querySelector('input[type="file"]');
+        const quill = new Quill(element, config);
 
-        fileInput.value = "";
-        previewContainer.classList.add("hidden");
-        previewContainer.querySelector("img").src = "";
-        uploadArea.classList.remove("hidden");
-    };
+        quill.on("text-change", function () {
+            if (hiddenInput) {
+                let content = quill.root.innerHTML;
+                content = cleanupFormula(content);
+                hiddenInput.value = content;
+            }
+        });
 
-    // Question Management Functions
+        return quill;
+    }
+
     function createQuestionHTML(questionIndex) {
         return `
-            <div class="question-block border border-gray-200 rounded-xl p-6 space-y-6">
+            <div class="question-block border border-gray-200 rounded-xl p-6 space-y-6" data-question-index="${questionIndex}">
                 <div class="flex justify-between items-center">
-                    <h4 class="text-lg font-medium text-gray-900">Pertanyaan ${questionIndex + 1}</h4>
-                    <button type="button" onclick="removeQuestion(this)" 
-                        class="text-gray-400 hover:text-red-500">
+                    <h4 class="text-lg font-medium text-gray-900">Pertanyaan ${
+                        questionIndex + 1
+                    }</h4>
+                    <button type="button" class="remove-question text-gray-400 hover:text-red-500">
                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                     </button>
                 </div>
 
-                <!-- Question Text -->
                 <div class="rounded-md">
-                    <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                        <span class="text-gray-400">
-                            <i data-lucide="help-circle" class="w-5 h-5"></i>
-                        </span>
-                        <input type="text" required name="questions[${questionIndex}][content]"
-                            placeholder="Masukkan pertanyaan"
-                            class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Pertanyaan</label>
+                    <div id="quill-editor-${questionIndex}" class="quill-editor"></div>
+                    <input type="hidden" 
+                        name="questions[${questionIndex}][content]" 
+                        class="quill-content-input"
+                        required>
                 </div>
 
-                <!-- Image Upload -->
-                <div class="rounded-md">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Pertanyaan (Opsional)</label>
-                    <div class="relative">
-                        <!-- Image Preview Container -->
-                        <div id="image-preview-${questionIndex}" class="hidden mb-3">
-                            <div class="relative inline-block group">
-                                <img src="" alt="Preview" class="max-h-48 rounded-lg border border-gray-200">
-                                <button type="button" 
-                                    onclick="clearImage(this, ${questionIndex})"
-                                    class="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-gray-200 text-gray-400 hover:text-red-500 transition-colors">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- File Upload Area -->
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all duration-200 ease-in-out">
-                            <div class="flex flex-col items-center justify-center space-y-3">
-                                <span class="text-gray-400">
-                                    <i data-lucide="image-plus" class="w-10 h-10"></i>
-                                </span>
-                                <div class="text-center space-y-2">
-                                    <label class="relative cursor-pointer">
-                                        <span class="text-orange-600 hover:text-orange-700 text-sm font-medium">Klik untuk upload</span>
-                                        <span class="text-gray-500 text-sm"> atau drag and drop</span>
-                                        <input type="file" 
-                                            name="questions[${questionIndex}][image]"
-                                            accept="image/*"
-                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                            onchange="handleImageUpload(this)">
-                                    </label>
-                                    <p class="text-xs text-gray-500">PNG, JPG, GIF (Maks. 2MB)</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Question Type -->
-                <div class="rounded-md">
+                <div class="rounded-md mt-4">
                     <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                         <span class="text-gray-400">
                             <i data-lucide="list" class="w-5 h-5"></i>
                         </span>
                         <select name="questions[${questionIndex}][question_type]"
-                            onchange="updateQuestionType(this, ${questionIndex})"
-                            class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
+                            class="question-type-select block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                             <option value="single_choice">Pilihan Ganda</option>
                             <option value="multiple_choice">Pilihan Ganda Kompleks</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Options Section -->
                 <div class="options-section space-y-4">
                     <div class="flex justify-between items-center">
                         <label class="block text-sm font-medium text-gray-700">Pilihan Jawaban</label>
-                        <button type="button" onclick="addOption(this, ${questionIndex})"
-                            class="px-3 py-1.5 text-sm rounded-full text-orange-600 bg-orange-50 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        <button type="button" class="add-option px-3 py-1.5 text-sm rounded-full text-orange-600 bg-orange-50 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                             <i data-lucide="plus" class="w-4 h-4 inline-block mr-1"></i>
                             Tambah Pilihan
                         </button>
@@ -205,29 +168,26 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function createOptionHTML(questionIndex, optionIndex, type) {
+        const optionId = `quill-option-${questionIndex}-${optionIndex}`;
         return `
-            <div class="option-group">
+            <div class="option-group" data-option-index="${optionIndex}">
                 <div class="flex items-center gap-3">
                     <div class="flex-1">
-                        <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                            <span class="text-gray-400">
-                                <i data-lucide="circle" class="w-5 h-5"></i>
-                            </span>
-                            <input type="text" required name="questions[${questionIndex}][options][]" 
-                                placeholder="Masukkan pilihan jawaban"
-                                class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                        </div>
+                        <div id="${optionId}" class="quill-option-editor"></div>
+                        <input type="hidden" 
+                            name="questions[${questionIndex}][options][]" 
+                            class="quill-option-input"
+                            required>
                     </div>
                     <div class="flex items-center">
                         <input type="${type}" 
                             name="questions[${questionIndex}][correct_answer]${type === "checkbox" ? "[]" : ""}" 
                             value="${optionIndex}"
-                            class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300"
+                            class="answer-input h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300"
                             ${type === "radio" ? "required" : ""}>
                         <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
                     </div>
-                    <button type="button" onclick="removeOption(this)" 
-                        class="text-gray-400 hover:text-red-500">
+                    <button type="button" class="remove-option text-gray-400 hover:text-red-500">
                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -235,69 +195,175 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // Global Functions
-    window.removeQuestion = function(button) {
-        button.closest(".question-block").remove();
-    };
+    // Event delegation for dynamic elements
+    questionsContainer.addEventListener("click", function (e) {
+        const target = e.target.closest("button");
+        if (!target) return;
 
-    window.removeOption = function(button) {
-        button.closest(".option-group").remove();
-    };
-
-    window.addOption = function(button, questionIndex) {
-        const optionsContainer = button.closest(".options-section").querySelector(".options-container");
-        const questionType = button.closest(".question-block").querySelector('select[name*="question_type"]').value;
-        const type = questionType === "single_choice" ? "radio" : "checkbox";
-        const optionIndex = optionsContainer.children.length;
-
-        optionsContainer.insertAdjacentHTML("beforeend", createOptionHTML(questionIndex, optionIndex, type));
-        lucide.createIcons();
-    };
-
-    window.updateQuestionType = function(select, questionIndex) {
-        const optionsContainer = select.closest(".question-block").querySelector(".options-container");
-        const type = select.value === "single_choice" ? "radio" : "checkbox";
-
-        const inputs = optionsContainer.querySelectorAll('input[type="radio"], input[type="checkbox"]');
-        inputs.forEach((input, index) => {
-            input.type = type;
-            input.name = `questions[${questionIndex}][correct_answer]${type === "checkbox" ? "[]" : ""}`;
-            input.value = index;
-            input.required = type === "radio";
-            if (type === "checkbox") {
-                input.onchange = () => updateCheckboxRequired(questionIndex);
+        if (target.classList.contains("remove-question")) {
+            const questionBlock = target.closest(".question-block");
+            if (questionBlock) {
+                questionBlock.remove();
+                renumberQuestions();
             }
-        });
+        } else if (target.classList.contains("remove-option")) {
+            const optionGroup = target.closest(".option-group");
+            const questionBlock = optionGroup.closest(".question-block");
+            if (optionGroup && questionBlock) {
+                optionGroup.remove();
+                renumberOptions(questionBlock);
+                updateCheckboxRequired(questionBlock);
+            }
+        } else if (target.classList.contains("add-option")) {
+            const questionBlock = target.closest(".question-block");
+            const questionIndex = parseInt(questionBlock.dataset.questionIndex);
+            const optionsContainer =
+                questionBlock.querySelector(".options-container");
+            const questionType = questionBlock.querySelector(
+                ".question-type-select"
+            ).value;
+            const type =
+                questionType === "single_choice" ? "radio" : "checkbox";
+            const optionIndex = optionsContainer.children.length;
 
-        if (type === "checkbox") {
-            updateCheckboxRequired(questionIndex);
+            optionsContainer.insertAdjacentHTML(
+                "beforeend",
+                createOptionHTML(questionIndex, optionIndex, type)
+            );
+
+            const optionId = `quill-option-${questionIndex}-${optionIndex}`;
+            const optionInput = document.querySelector(
+                `#${optionId} + .quill-option-input`
+            );
+
+            initializeQuillEditor(
+                `#${optionId}`,
+                "Masukkan pilihan jawaban...",
+                optionInput
+            );
+
+            lucide.createIcons();
         }
-    };
+    });
 
-    function updateCheckboxRequired(checkbox) {
-        const questionBlock = checkbox.closest(".question-block");
+    // Event delegation for select changes
+    questionsContainer.addEventListener("change", function (e) {
+        if (e.target.classList.contains("question-type-select")) {
+            const questionBlock = e.target.closest(".question-block");
+            const type =
+                e.target.value === "single_choice" ? "radio" : "checkbox";
+            const questionIndex = parseInt(questionBlock.dataset.questionIndex);
+
+            const inputs = questionBlock.querySelectorAll(".answer-input");
+            inputs.forEach((input, index) => {
+                input.type = type;
+                input.name = `questions[${questionIndex}][correct_answer]${
+                    type === "checkbox" ? "[]" : ""
+                }`;
+                input.value = index;
+                input.required = type === "radio";
+            });
+
+            if (type === "checkbox") {
+                updateCheckboxRequired(questionBlock);
+            }
+        }
+    });
+
+    function updateCheckboxRequired(questionBlock) {
         const checkboxes = questionBlock.querySelectorAll(
-            'input[type="checkbox"][name="' + checkbox.getAttribute("name") + '"]'
+            'input[type="checkbox"]'
         );
-    
-        // Check if any checkbox is checked
         const isAnyChecked = Array.from(checkboxes).some((cb) => cb.checked);
-    
-        // Update required attribute for all checkboxes in the group
         checkboxes.forEach((cb) => {
             cb.required = !isAnyChecked;
         });
     }
 
-    // Event Listeners
-    addQuestionButton.addEventListener("click", function() {
+    function renumberQuestions() {
+        document.querySelectorAll(".question-block").forEach((block, index) => {
+            block.dataset.questionIndex = index;
+            const header = block.querySelector("h4");
+            if (header) {
+                header.textContent = `Pertanyaan ${index + 1}`;
+            }
+
+            // Update all name attributes within the question block
+            updateQuestionBlockIndexes(block, index);
+        });
+    }
+
+    function updateQuestionBlockIndexes(block, newIndex) {
+        // Update question content input
+        const contentInput = block.querySelector(".quill-content-input");
+        if (contentInput) {
+            contentInput.name = `questions[${newIndex}][content]`;
+        }
+
+        // Update question type select
+        const typeSelect = block.querySelector(".question-type-select");
+        if (typeSelect) {
+            typeSelect.name = `questions[${newIndex}][question_type]`;
+        }
+
+        // Update options
+        const optionInputs = block.querySelectorAll(".quill-option-input");
+        optionInputs.forEach((input, i) => {
+            input.name = `questions[${newIndex}][options][]`;
+        });
+
+        // Update answer inputs
+        const answerInputs = block.querySelectorAll(".answer-input");
+        const type =
+            typeSelect.value === "single_choice" ? "radio" : "checkbox";
+        answerInputs.forEach((input, i) => {
+            input.name = `questions[${newIndex}][correct_answer]${
+                type === "checkbox" ? "[]" : ""
+            }`;
+            input.value = i;
+        });
+    }
+
+    function renumberOptions(questionBlock) {
+        const options = questionBlock.querySelectorAll(".option-group");
+        options.forEach((option, index) => {
+            option.dataset.optionIndex = index;
+            const input = option.querySelector(".answer-input");
+            if (input) {
+                input.value = index;
+            }
+        });
+    }
+
+    // Add new question button handler
+    addQuestionButton.addEventListener("click", function () {
         const newQuestion = createQuestionHTML(questionCount);
         questionsContainer.insertAdjacentHTML("beforeend", newQuestion);
+
+        // Initialize main question editor
+        const contentInput = document.querySelector(
+            `#quill-editor-${questionCount} + .quill-content-input`
+        );
+        initializeQuillEditor(
+            `#quill-editor-${questionCount}`,
+            "Masukkan pertanyaan...",
+            contentInput
+        );
+
+        // Initialize first option editor
+        const optionInput = document.querySelector(
+            `#quill-option-${questionCount}-0 + .quill-option-input`
+        );
+        initializeQuillEditor(
+            `#quill-option-${questionCount}-0`,
+            "Masukkan pilihan jawaban...",
+            optionInput
+        );
+
         questionCount++;
         lucide.createIcons();
-        initializeImageUpload();
     });
 
-    // Initialize the form
-    initialize();
+    // Initialize the form with first question
+    addQuestionButton.click();
 });
