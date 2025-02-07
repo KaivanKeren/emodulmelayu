@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>E-Modul Budaya Melayu Riau - Login</title>
+    <link rel="icon" type="image/x-icon" href="/assets/Logo emodul melayu2.png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -38,6 +39,8 @@
         <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
             <!-- Logo/Image Container -->
             <div class="flex flex-col items-center">
+                <img src="/assets/Logo emodul melayu.png" alt="E-Modul Logo" class="w-20 h-30 mb-6">
+
                 <h2 class="text-2xl font-bold text-gray-900 text-center mb-2">
                     Selamat datang di E-Modul
                 </h2>
