@@ -276,7 +276,11 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         const isAnyChecked = Array.from(checkboxes).some((cb) => cb.checked);
         checkboxes.forEach((cb) => {
-            cb.required = !isAnyChecked;
+            if (isAnyChecked) {
+                cb.removeAttribute("required");
+            } else {
+                cb.setAttribute("required", "required");
+            }
         });
     }
 
@@ -323,6 +327,15 @@ document.addEventListener("DOMContentLoaded", function () {
             input.value = i;
         });
     }
+
+    questionsContainer.addEventListener("change", function (e) {
+        if (e.target.type === "checkbox") {
+            const questionBlock = e.target.closest(".question-block");
+            if (questionBlock) {
+                updateCheckboxRequired(questionBlock);
+            }
+        }
+    });
 
     function renumberOptions(questionBlock) {
         const options = questionBlock.querySelectorAll(".option-group");
