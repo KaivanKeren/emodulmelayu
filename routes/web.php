@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
@@ -51,11 +52,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/edit/{assessment}', [AssessmentController::class, 'edit'])->name('assessments.edit');
             Route::post('/', [AssessmentController::class, 'store'])->name('assessments.store');
             Route::post('/upload-image', [AssessmentController::class, 'upload'])->name('image.qeustion.store');
+            Route::get('/{assessment}/answers', [AnswerController::class, 'show'])->name('answers.show');
+            Route::get('/{assessment}/answers/{user}', [AnswerController::class, 'detail'])->name('answers.detail');
             Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
             Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
             Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])
-                ->name('assessments.regenerate-token');
+            ->name('assessments.regenerate-token');
             Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
             Route::get('/questions/{question}', [QuestionController::class, 'edit'])->name('questions.edit');

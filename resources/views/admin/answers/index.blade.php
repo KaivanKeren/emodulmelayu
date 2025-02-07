@@ -66,10 +66,10 @@
                                             class="text-sm text-gray-500">{{ $respondent['completion_percentage'] }}%</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{-- <a href="{{ route('admin.answers.show', ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
-                                            class="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">
+                                        <a href="{{ route('answers.detail', ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
+                                            class="text-blue-500 hover:text-blue-700 text-sm font-medium">
                                             Lihat Detail
-                                        </a> --}}
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach

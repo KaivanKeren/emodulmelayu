@@ -97,6 +97,71 @@ class AnswerController extends Controller
         return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
     }
 
+    public function detail(Assessment $assessment, User $user)
+    {
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
+
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        // Get user's answers for this assessment
+        $userAnswers = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->where('user_id', $user->id)
+            ->with(['question.options', 'option'])
+            ->get()
+            ->groupBy('question_id');
+
+        // Prepare detailed answer data
+        $questionsDetail = $assessment->questions->map(function ($question) use ($userAnswers) {
+            $answers = $userAnswers->get($question->id);
+
+            return [
+                'question' => [
+                    'id' => $question->id,
+                    'content' => $question->content,
+                    'type' => $question->question_type,
+                ],
+                'is_answered' => !is_null($answers),
+                'user_answers' => $answers ? [
+                    'selected_options' => $answers->map(function ($answer) {
+                        return [
+                            'option_id' => $answer->option->id,
+                            'option_content' => $answer->option->content,
+                            'is_correct' => $answer->option->is_correct,
+                        ];
+                    }),
+                    'score' => $answers->first()->score,
+                    'submitted_at' => $answers->first()->created_at->format('Y-m-d H:i:s'),
+                ] : null,
+                'all_options' => $question->options->map(function ($option) {
+                    return [
+                        'id' => $option->id,
+                        'content' => $option->content,
+                        'is_correct' => $option->is_correct,
+                    ];
+                }),
+            ];
+        });
+
+        // Calculate summary statistics
+        $totalQuestions = $assessment->questions->count();
+        $answeredQuestions = $userAnswers->count();
+        $totalScore = $userAnswers->flatten()->sum('score');
+
+        $summary = [
+            'total_questions' => $totalQuestions,
+            'answered_questions' => $answeredQuestions,
+            'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
+            'total_score' => round($totalScore, 2),
+            'assessment_started_at' => $userAnswers->flatten()->min('created_at'),
+            'assessment_completed_at' => $userAnswers->flatten()->max('created_at'),
+        ];
+
+        return view('admin.answers.detail', compact('assessment', 'user', 'questionsDetail', 'summary', 'pendingUsers'));
+    }
+
     public function exportPdf(Assessment $assessment)
     {
         $answers = Answer::whereHas('question', function ($query) use ($assessment) {
