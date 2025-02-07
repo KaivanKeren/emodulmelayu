@@ -106,15 +106,33 @@
         <!-- Questions Section -->
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
-                <div class="space-y-1">
-                    <h2 class="text-xl font-semibold text-gray-900">Pertanyaan</h2>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">Pertanyaan</h2>
+                    </div>
                     <div class="flex items-center gap-4">
-                        <p class="text-sm text-gray-500">Total: {{ $assessment->questions->count() }} pertanyaan</p>
-                        @if ($respondents > 0)
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm text-gray-600">Total: <span
+                                    class="font-medium">{{ $assessment->questions->count() }}</span> pertanyaan</p>
+                        </div>
+                        @if ($respondentCount > 0)
                             <span class="text-gray-300">|</span>
-                            <p class="text-sm text-gray-500">
-                                Assessment sudah dijawab oleh : {{ $respondents }}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <a href="{{ route('answers.show', $assessment->id) }}"
+                                    class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:cursor-pointer">
+                                    <span class="font-medium">{{ $respondentCount }}</span> siswa sudah menjawab
+                                </a>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -184,7 +202,8 @@
                                     class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                     <i data-lucide="edit" class="w-5 h-5"></i>
                                 </a>
-                                <form action="{{ route('questions.destroy', $question) }}" method="POST" class="inline">
+                                <form action="{{ route('questions.destroy', $question) }}" method="POST"
+                                    class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

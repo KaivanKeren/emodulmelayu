@@ -10,7 +10,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -160,7 +159,7 @@ class AssessmentController extends Controller
 
         try {
             $file = $request->file('image');
-            
+
             // Validate the uploaded file
             $validator = validator(['image' => $file], [
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
@@ -172,15 +171,14 @@ class AssessmentController extends Controller
 
             // Generate a unique filename
             $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            
+
             // Store the file in the public disk
             $path = $file->storeAs('uploads/images', $filename, 'public');
-            
+
             // Generate the URL for the stored image
             $url = Storage::url($path);
-            
+
             return response()->json(['url' => $url]);
-            
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload image'], 500);
         }
@@ -320,7 +318,7 @@ class AssessmentController extends Controller
     public function show(Assessment $assessment)
     {
         $pendingUsers = User::where('status', 'Pending')->count();
-       
+
         // Load relationships
         $assessment->load(['questions.options']);
 
@@ -336,15 +334,12 @@ class AssessmentController extends Controller
                 return $answer->user->name;
             });
 
-        // Fix status update when there are respondents
-        if ($respondents->count() > 0) {
-            $assessment->update(['status' => 'Terjawab']);
-        }
+        $respondentCount = $respondents->count();
 
         return view('admin.assessments.show', [
             'assessment' => $assessment,
             'respondents' => str_replace(['[', ']', '"'], '', $respondents)
-        ], compact('pendingUsers'));
+        ], compact('pendingUsers', 'respondentCount'));
     }
 
     public function apiShow(Assessment $assessment)

@@ -8,10 +8,105 @@ use App\Models\Option;
 use Illuminate\Http\Request;
 use App\Http\Resources\AnswerResource;
 use App\Models\Assessment;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class AnswerController extends Controller
 {
+    public function show(Assessment $assessment)
+    {
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
+
+        // Get total number of questions for score calculation
+        $totalQuestions = $assessment->questions->count();
+
+        // Get answers grouped by user with calculated scores
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->with(['user', 'question.options', 'option'])
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($userAnswers) use ($totalQuestions) {
+                $user = $userAnswers->first()->user;
+
+                // Group answers by question to properly calculate scores
+                $questionGroups = $userAnswers->groupBy('question_id');
+
+                $totalScore = 0;
+                foreach ($questionGroups as $questionId => $answers) {
+                    $question = $answers->first()->question;
+                    $selectedOptions = $answers->pluck('option');
+
+                    if ($question->question_type === 'single_choice') {
+                        // For single choice questions
+                        $isCorrect = $selectedOptions->contains(function ($option) {
+                            return $option->is_correct;
+                        });
+                        $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                    } else {
+                        // For multiple choice questions
+                        $correctOptions = $question->options->where('is_correct', true);
+                        $totalCorrectOptions = $correctOptions->count();
+
+                        if ($selectedOptions->count() > $totalCorrectOptions) {
+                            $questionScore = 0;
+                        } else {
+                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                            // Calculate base score
+                            $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                            // Calculate penalty
+                            $totalOptions = $question->options->count();
+                            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                            // Calculate final question score
+                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                        }
+                    }
+
+                    $totalScore += $questionScore;
+                }
+
+                // Get answered questions count
+                $answeredQuestions = $questionGroups->count();
+
+                return [
+                    'user' => $user,
+                    'total_score' => round($totalScore, 2),
+                    'answered_questions' => $answeredQuestions,
+                    'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
+                    'questions_detail' => $questionGroups->map(function ($answers) {
+                        return [
+                            'question_id' => $answers->first()->question_id,
+                            'question_type' => $answers->first()->question->question_type,
+                            'selected_options' => $answers->pluck('option.id')->toArray(),
+                            'score' => $answers->first()->score
+                        ];
+                    })
+                ];
+            });
+
+        return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
+    }
+
+    public function exportPdf(Assessment $assessment)
+    {
+        $answers = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })->with(['user', 'question', 'option'])->get();
+
+        $pdf = Pdf::loadView('admin.answers.pdf', compact('answers', 'assessment'));
+        return $pdf->download('Jawaban_Siswa.pdf');
+    }
+
     public function apiStore(Request $request, Assessment $assessment, Question $question)
     {
         if ($question->assessment_id !== $assessment->id) {
@@ -41,12 +136,6 @@ class AnswerController extends Controller
         if ($currentTime->gt($tokenExpiresAt)) {
             return response()->json([
                 'message' => 'The assessment token has expired'
-            ], 403);
-        }
-
-        if ($assessment->status == 'Terjawab') {
-            return response()->json([
-                'message' => 'Assessment ini sudah terjawab'
             ], 403);
         }
 
@@ -103,15 +192,45 @@ class AnswerController extends Controller
             return $option->is_correct;
         });
 
+        // Get total questions in the assessment for score normalization
+        $totalQuestions = Question::where('assessment_id', $question->assessment_id)->count();
+        $scorePerQuestion = 100 / $totalQuestions;
+
         if ($question->question_type === 'single_choice') {
-            return ($selectedOptions->count() === 1 && $selectedCorrectOptions->count() === 1) ? 1 : 0;
+            // For single choice, it's either full score or zero
+            return ($selectedOptions->count() === 1 && $selectedCorrectOptions->count() === 1)
+                ? $scorePerQuestion
+                : 0;
         } else {
-            $totalOptions = $correctOptions->count();
+            // For multiple choice
+            $totalCorrectOptions = $correctOptions->count();
+            $totalOptions = Option::where('question_id', $question->id)->count();
+
+            // Calculate weights
+            $weightPerCorrectOption = 1 / $totalCorrectOptions;
+
+            // Calculate score components
             $correctlySelected = $selectedCorrectOptions->count();
             $incorrectlySelected = $selectedOptions->count() - $correctlySelected;
 
-            $score = ($correctlySelected / $totalOptions) - ($incorrectlySelected * 0.25);
-            return max(0, $score);
+            // Validate if user selected more options than possible correct answers
+            if ($selectedOptions->count() > $totalCorrectOptions) {
+                return 0; // Zero score if selected more than possible correct answers
+            }
+
+            // Calculate base score from correct selections
+            $baseScore = ($correctlySelected * $weightPerCorrectOption);
+
+            // Apply penalties for incorrect selections
+            // Penalty is proportional to the total number of options
+            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+            $penalties = $incorrectlySelected * $penaltyPerWrong;
+
+            // Calculate final score
+            $finalScore = max(0, $baseScore - $penalties);
+
+            // Normalize to question's portion of total score
+            return $finalScore * $scorePerQuestion;
         }
     }
 
