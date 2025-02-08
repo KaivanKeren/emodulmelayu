@@ -15,6 +15,7 @@ class MessageController extends Controller
         try {
             $messages = Message::rootMessages()
                 ->with(['user', 'replies.user', 'replies.replies.user'])
+                ->orderBy('created_at', 'asc')  // Add this line to sort by creation date
                 ->get();
 
             return response()->json([

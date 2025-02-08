@@ -2,9 +2,9 @@
 
 namespace Helpers;
 
-class MessageFormatter 
+class MessageFormatter
 {
-    public static function format($messages) 
+    public static function format($messages)
     {
         if ($messages->isEmpty()) {
             return null;
@@ -20,17 +20,20 @@ class MessageFormatter
 
             if ($message->replies->isNotEmpty()) {
                 $replyData = [];
-                foreach ($message->replies as $reply) {
+                // Sort replies by creation date
+                $sortedReplies = $message->replies->sortBy('created_at');
+
+                foreach ($sortedReplies as $reply) {
                     $replyData[] = [
                         'id' => $reply->id,
                         'user' => $reply->user->name,
                         'message' => $reply->content,
-                        'replies' => self::format($reply->replies)
+                        'replies' => self::format($reply->replies->sortBy('created_at')) // Sort nested replies
                     ];
                 }
                 $formatted['replies'] = $replyData;
             }
-            
+
             $formattedMessages[] = $formatted;
         }
 
