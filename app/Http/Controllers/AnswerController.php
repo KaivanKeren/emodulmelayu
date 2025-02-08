@@ -113,6 +113,48 @@ class AnswerController extends Controller
             ->get()
             ->groupBy('question_id');
 
+        // Get total number of questions for score calculation
+        $totalQuestions = $assessment->questions->count();
+
+        // Calculate total score using the same logic as show function
+        $totalScore = 0;
+        foreach ($userAnswers as $questionId => $answers) {
+            $question = $answers->first()->question;
+            $selectedOptions = $answers->pluck('option');
+
+            if ($question->question_type === 'single_choice') {
+                // For single choice questions
+                $isCorrect = $selectedOptions->contains(function ($option) {
+                    return $option->is_correct;
+                });
+                $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+            } else {
+                // For multiple choice questions
+                $correctOptions = $question->options->where('is_correct', true);
+                $totalCorrectOptions = $correctOptions->count();
+
+                if ($selectedOptions->count() > $totalCorrectOptions) {
+                    $questionScore = 0;
+                } else {
+                    $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                    $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                    // Calculate base score
+                    $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                    // Calculate penalty
+                    $totalOptions = $question->options->count();
+                    $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+                    $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                    // Calculate final question score
+                    $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                }
+            }
+
+            $totalScore += $questionScore;
+        }
+
         // Prepare detailed answer data
         $questionsDetail = $assessment->questions->map(function ($question) use ($userAnswers) {
             $answers = $userAnswers->get($question->id);
@@ -146,9 +188,7 @@ class AnswerController extends Controller
         });
 
         // Calculate summary statistics
-        $totalQuestions = $assessment->questions->count();
         $answeredQuestions = $userAnswers->count();
-        $totalScore = $userAnswers->flatten()->sum('score');
 
         $summary = [
             'total_questions' => $totalQuestions,
@@ -180,56 +220,60 @@ class AnswerController extends Controller
             ], 404);
         }
 
-        // Validate token first
+        // Validate token and inputs
         $validated = $request->validate([
             'token' => 'required|string',
             'option_ids' => 'required|array',
             'option_ids.*' => 'required|exists:options,id'
         ]);
 
-        // Check if the provided token matches the assessment token
+        // Check token validity
         if ($validated['token'] !== $assessment->token) {
             return response()->json([
                 'message' => 'Invalid assessment token'
             ], 403);
         }
 
-        // Validate if the token has expired
-        $currentTime = now(); // Get the current time
-        $tokenExpiresAt = $assessment->token_expires_at; // Assuming token_expires_at is a datetime field on the assessment model
-
-        if ($currentTime->gt($tokenExpiresAt)) {
+        // Validate token expiration
+        if (now()->gt($assessment->token_expires_at)) {
             return response()->json([
                 'message' => 'The assessment token has expired'
             ], 403);
         }
 
-        // Verify all options belong to the question
+        // Get and validate options
         $options = Option::whereIn('id', $validated['option_ids'])
             ->where('question_id', $question->id)
             ->get();
 
+        // Validate selected options count
+        if ($question->question_type === 'single_choice' && count($validated['option_ids']) > 1) {
+            return response()->json([
+                'message' => 'Only one option can be selected for single choice questions'
+            ], 422);
+        }
+
+        // Validate if all options belong to the question
         if ($options->count() !== count($validated['option_ids'])) {
             return response()->json([
                 'message' => 'Invalid options provided for this question'
             ], 422);
         }
 
-        // Check if answer already exists for this user and question
-        $existingAnswers = Answer::where('user_id', Auth::id())
+        // Check for duplicate answers
+        if (Answer::where('user_id', Auth::id())
             ->where('question_id', $question->id)
-            ->exists();
-
-        if ($existingAnswers) {
+            ->exists()
+        ) {
             return response()->json([
                 'message' => 'You have already answered this question'
             ], 422);
         }
 
-        // Calculate score based on question type and selected options
+        // Calculate score
         $score = $this->apiCalculateScore($question, $options);
 
-        // Create answers for each selected option
+        // Create answers
         $answers = [];
         foreach ($options as $option) {
             $answers[] = Answer::create([

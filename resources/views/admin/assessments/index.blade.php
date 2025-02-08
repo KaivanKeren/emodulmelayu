@@ -123,6 +123,10 @@
         </div>
     </div>
 
+    <div class="mt-6">
+        {{ $assessments->links() }}
+    </div>
+
     <!-- JavaScript for dropdown functionality -->
     <script>
         function toggleModal() {

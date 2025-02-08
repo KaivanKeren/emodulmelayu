@@ -104,6 +104,10 @@
         </div>
     </div>
 
+    <div class="mt-6">
+        {{ $materials->links() }}
+    </div>
+
     <!-- JavaScript for dropdown functionality -->
 <script>
     function toggleModal() {

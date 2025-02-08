@@ -99,7 +99,6 @@
     <div class="mt-6">
         {{ $schools->links() }}
     </div>
-    </div>
 
     <script>
         function toggleModal() {
