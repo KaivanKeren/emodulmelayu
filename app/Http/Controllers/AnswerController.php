@@ -204,12 +204,72 @@ class AnswerController extends Controller
 
     public function exportPdf(Assessment $assessment)
     {
-        $answers = Answer::whereHas('question', function ($query) use ($assessment) {
-            $query->where('assessment_id', $assessment->id);
-        })->with(['user', 'question', 'option'])->get();
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
 
-        $pdf = Pdf::loadView('admin.answers.pdf', compact('answers', 'assessment'));
-        return $pdf->download('Jawaban_Siswa.pdf');
+        // Get total number of questions
+        $totalQuestions = $assessment->questions->count();
+
+        // Get answers with the same calculation logic as show method
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->with(['user', 'question.options', 'option'])
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($userAnswers) use ($totalQuestions) {
+                $user = $userAnswers->first()->user;
+                $questionGroups = $userAnswers->groupBy('question_id');
+
+                $totalScore = 0;
+                foreach ($questionGroups as $questionId => $answers) {
+                    $question = $answers->first()->question;
+                    $selectedOptions = $answers->pluck('option');
+
+                    if ($question->question_type === 'single_choice') {
+                        $isCorrect = $selectedOptions->contains(function ($option) {
+                            return $option->is_correct;
+                        });
+                        $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                    } else {
+                        $correctOptions = $question->options->where('is_correct', true);
+                        $totalCorrectOptions = $correctOptions->count();
+
+                        if ($selectedOptions->count() > $totalCorrectOptions) {
+                            $questionScore = 0;
+                        } else {
+                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                            $baseScore = $correctlySelected / $totalCorrectOptions;
+                            $totalOptions = $question->options->count();
+                            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                        }
+                    }
+
+                    $totalScore += $questionScore;
+                }
+
+                return [
+                    'user' => $user,
+                    'total_score' => round($totalScore, 2),
+                    'answered_questions' => $questionGroups->count(),
+                    'completion_percentage' => round(($questionGroups->count() / $totalQuestions) * 100, 2),
+                    'questions_detail' => $questionGroups->map(function ($answers) {
+                        return [
+                            'question' => $answers->first()->question,
+                            'selected_options' => $answers->pluck('option'),
+                            'score' => $answers->first()->score
+                        ];
+                    })
+                ];
+            });
+
+        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions'));
+        return $pdf->download('Jawaban_Siswa_' . $assessment->title . '.pdf');
     }
 
     public function apiStore(Request $request, Assessment $assessment, Question $question)

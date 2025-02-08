@@ -1,8 +1,8 @@
-@foreach ($replies as $reply)
+@foreach ($replies->sortBy('created_at') as $reply)
     <div class="p-6 bg-gray-50" id="message-{{ $reply->id }}">
         <div class="flex items-start space-x-4">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->name) }}"
-                alt="{{ $reply->user->name }}" class="w-10 h-10 rounded-full ring-2 ring-gray-100">
+            <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->name) }}" alt="{{ $reply->user->name }}"
+                class="w-10 h-10 rounded-full ring-2 ring-gray-100">
 
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">

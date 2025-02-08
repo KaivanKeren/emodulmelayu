@@ -26,7 +26,7 @@
         </div>
 
         <div class="space-y-8" id="messages-container">
-            @foreach ($messages as $message)
+            @foreach ($messages->sortBy('created_at') as $message)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
                     id="message-{{ $message->id }}">
                     <div class="p-6">

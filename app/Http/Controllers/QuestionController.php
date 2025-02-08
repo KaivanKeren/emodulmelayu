@@ -29,13 +29,12 @@ class QuestionController extends Controller
         $request->validate([
             'assessment_id' => 'required|exists:assessments,id',
             'questions' => 'required|array|min:1',
-            'questions.*.question_text' => 'required|string|max:255',
+            'questions.*.question_text' => 'required|string',
             'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
             'questions.*.options' => 'required|array|min:2',
-            'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        // Validasi untuk setiap pertanyaan
+        // Validasi tambahan untuk setiap pertanyaan
         foreach ($request->questions as $index => $question) {
             $validationRules = [];
 
@@ -66,28 +65,20 @@ class QuestionController extends Controller
                 "questions.{$index}.correct_answer.*.distinct" => 'Jawaban yang benar tidak boleh duplikat.',
                 "questions.{$index}.correct_answer.*.min" => 'Indeks jawaban tidak valid.',
                 "questions.{$index}.correct_answer.*.max" => 'Indeks jawaban tidak valid.',
-                "questions.{$index}.image.image" => 'File harus berupa gambar',
-                "questions.{$index}.image.mimes" => 'Format gambar harus jpeg, png, jpg, atau gif',
-                "questions.{$index}.image.max" => 'Ukuran gambar tidak boleh lebih dari 2MB'
             ]);
         }
+
+        Log::info('Memulai proses store pertanyaan', ['request_data' => $request->all()]);
 
         try {
             DB::beginTransaction();
 
             foreach ($request->questions as $questionData) {
-                // Handle image upload
-                $imagePath = null;
-                if (isset($questionData['image']) && $questionData['image']) {
-                    $imagePath = $questionData['image']->store('question-images', 'public');
-                }
-
                 // Membuat pertanyaan
                 $question = Question::create([
                     'content' => $questionData['question_text'],
                     'question_type' => $questionData['question_type'],
                     'assessment_id' => $request->assessment_id,
-                    'image' => $imagePath,
                 ]);
 
                 // Menyiapkan array untuk menyimpan pilihan jawaban
@@ -122,14 +113,13 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Log the full error details
-            Log::error('Question creation error: ' . $e->getMessage());
-            Log::error('Error trace: ' . $e->getTraceAsString());
-
-            // Jika terjadi error, hapus file yang sudah terupload (jika ada)
-            if (isset($imagePath)) {
-                Storage::disk('public')->delete($imagePath);
-            }
+            // Logging tambahan
+            Log::error('Gagal menyimpan pertanyaan.', [
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['_token']),
+                'failed_query' => optional(DB::getQueryLog())
+            ]);
 
             return redirect()
                 ->back()
@@ -137,6 +127,7 @@ class QuestionController extends Controller
                 ->with('error', 'Terjadi kesalahan saat menyimpan pertanyaan. Silakan coba lagi.');
         }
     }
+
 
     // public function show(Question $question)
     // {
