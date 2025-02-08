@@ -10,12 +10,13 @@ use Illuminate\Validation\ValidationException;
 
 class MessageController extends Controller
 {
-    public function index()
+    public function index($discussion)
     {
         try {
             $messages = Message::rootMessages()
+                ->where('discussion_id', $discussion)
                 ->with(['user', 'replies.user', 'replies.replies.user'])
-                ->orderBy('created_at', 'asc')  // Add this line to sort by creation date
+                ->orderBy('created_at', 'asc')  // Optional: add sorting if needed
                 ->get();
 
             return response()->json([
