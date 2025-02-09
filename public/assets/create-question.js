@@ -104,10 +104,18 @@ document.addEventListener("DOMContentLoaded", function () {
         const quill = new Quill(element, config);
 
         quill.on("text-change", function () {
+            let content = quill.root.innerHTML.trim();
+            content = cleanupFormula(content);
+
             if (hiddenInput) {
-                let content = quill.root.innerHTML;
-                content = cleanupFormula(content);
                 hiddenInput.value = content;
+            }
+
+            // Remove validation error when user starts typing
+            const errorMessage = hiddenInput.nextElementSibling;
+            if (errorMessage) {
+                errorMessage.style.display =
+                    content.length === 0 ? "block" : "none";
             }
         });
 
@@ -133,6 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         name="questions[${questionIndex}][content]" 
                         class="quill-content-input"
                         required>
+                    <p class="quill-error text-red-500 text-sm mt-1" style="display: block;">Pertanyaan harus diisi.</p>
                 </div>
 
                 <div class="rounded-md mt-4">
@@ -175,6 +184,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             name="questions[${questionIndex}][options][]" 
                             class="quill-option-input"
                             required>
+                        <p class="quill-error text-red-500 text-sm mt-1" style="display: block;">Jawaban harus diisi.</p>
                     </div>
                     <div class="flex items-center">
                         <input type="${type}" 
