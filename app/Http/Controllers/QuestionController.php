@@ -236,34 +236,15 @@ class QuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $validated = $request->validate([
-            'question_text' => 'required|string|max:255',
+            'question_text' => 'required|string',
             'assessment_id' => 'required|exists:assessments,id',
             'question_type' => 'required|in:single_choice,multiple_choice',
             'options' => 'required|array|min:2',
-            'options.*' => 'required|string|max:255',
+            'options.*' => 'required|string',
             'correct_answer' => $request->input('question_type') === 'single_choice'
                 ? 'required|integer'
                 : 'required|array',
-            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
-        // Handle image update
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($question->image) {
-                Storage::delete($question->image);
-            }
-
-            // Store new image
-            $imagePath = $request->file('image')->store('question-images', 'public');
-            $question->image = $imagePath;
-        } elseif ($request->input('remove_image') === '1') {
-            // Option to remove existing image
-            if ($question->image) {
-                Storage::delete($question->image);
-                $question->image = null;
-            }
-        }
 
         // Update question details
         $question->update([

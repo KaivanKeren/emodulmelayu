@@ -3,6 +3,11 @@
 @section('title', 'Edit Pertanyaan')
 
 @section('content')
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill/dist/quill.snow.css">
+    <link rel="stylesheet" href="/assets/quill.css">
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
@@ -22,67 +27,17 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="assessment_id" value="{{ $question->assessment_id }}">
+                        <input type="hidden" name="question_text" id="question_text_input">
 
                         <!-- Question Text -->
                         <div class="rounded-md">
-                            <label for="question_text"
-                                class="block text-sm font-medium text-gray-700 mb-2">Pertanyaan</label>
-                            <div
-                                class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                <span class="text-gray-400">
-                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
-                                </span>
-                                <input type="text" name="question_text" id="question_text"
-                                    placeholder="Masukkan pertanyaan" value="{{ old('question_text', $question->content) }}"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pertanyaan</label>
+                            <div id="question_editor" class="bg-white">
+                                {!! old('question_text', $question->content) !!}
                             </div>
                             @error('question_text')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        <div class="rounded-md">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Pertanyaan (Opsional)</label>
-                            <div class="relative">
-                                <!-- Image Preview Container -->
-                                @if ($question->image)
-                                    <div id="image-preview" class="mb-3">
-                                        <div class="relative inline-block group">
-                                            <img src="{{ Storage::url($question->image) }}" alt="Gambar Pertanyaan"
-                                                class="max-h-48 rounded-lg border border-gray-200 object-cover">
-                                            <button type="button" id="remove-image"
-                                                class="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-gray-200 text-gray-400 hover:text-red-500 transition-colors">
-                                                <i data-lucide="x" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <!-- File Upload Area -->
-                                <div
-                                    class="border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all duration-200 ease-in-out">
-                                    <div class="flex flex-col items-center justify-center space-y-3">
-                                        <span class="text-gray-400">
-                                            <i data-lucide="image-plus" class="w-10 h-10"></i>
-                                        </span>
-                                        <div class="text-center space-y-2">
-                                            <label class="relative cursor-pointer">
-                                                <span class="text-orange-600 hover:text-orange-700 text-sm font-medium">
-                                                    {{ $question->image ? 'Ganti' : 'Klik untuk upload' }}
-                                                </span>
-                                                <span class="text-gray-500 text-sm"> atau drag and drop</span>
-                                                <input type="file" name="image" accept="image/*"
-                                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    onchange="handleImageUpload(this)">
-                                            </label>
-                                            <p class="text-xs text-gray-500">PNG, JPG, GIF (Maks. 2MB)</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Hidden input to track image removal -->
-                                <input type="hidden" name="remove_image" id="remove_image_input" value="0">
-                            </div>
                         </div>
 
                         <!-- Question Type -->
@@ -123,25 +78,18 @@
                             <div id="options_container" class="space-y-3">
                                 @foreach ($question->options as $index => $option)
                                     <div class="option-group">
+                                        <input type="hidden" name="options[]" class="option-content-input">
                                         <div class="flex items-center gap-3">
                                             <div class="flex-1">
-                                                <div
-                                                    class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                                    <span class="text-gray-400">
-                                                        <i data-lucide="circle" class="w-5 h-5"></i>
-                                                    </span>
-                                                    <input type="text" name="options[]"
-                                                        placeholder="Masukkan pilihan jawaban"
-                                                        value="{{ $option->content }}"
-                                                        class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
+                                                <div class="option-editor bg-white" data-index="{{ $index }}">
+                                                    {!! $option->content !!}
                                                 </div>
                                             </div>
                                             <div class="flex items-center answer-input">
                                                 <input
                                                     type="{{ $question->question_type === 'single_choice' ? 'radio' : 'checkbox' }}"
                                                     name="{{ $question->question_type === 'single_choice' ? 'correct_answer' : 'correct_answer[' . $index . ']' }}"
-                                                    value="{{ $index }}"
-                                                    {{ $option->is_correct ? 'checked' : '' }}
+                                                    value="{{ $index }}" {{ $option->is_correct ? 'checked' : '' }}
                                                     class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
                                                 <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
                                             </div>
@@ -171,158 +119,41 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-mathquill@1.0.2/dist/quill-mathquill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const optionsContainer = document.getElementById('options_container');
             const addOptionButton = document.getElementById('add_option');
             const questionType = document.getElementById('question_type');
-            const removeImageButton = document.getElementById('remove-image');
-            const removeImageInput = document.getElementById('remove_image_input');
-            const imageUploadContainer = document.querySelector('.border-dashed');
-            const fileInput = document.querySelector('input[name="image"]');
-            const imagePreview = document.getElementById('image-preview');
-
             let optionCount = {{ count($question->options) }};
+            let optionEditors = [];
 
-            function initialize() {
-                initializeImageUpload();
-            }
+            // Initialize Quill for question text
+            const questionEditor = new Quill('#question_editor', quillConfigs);
+            const questionTextInput = document.getElementById('question_text_input');
 
-            // Image Upload Functionality
-            function initializeImageUpload() {
-                document.querySelectorAll(".border-dashed").forEach(uploadArea => {
-                    uploadArea.addEventListener("dragenter", handleDragEnter);
-                    uploadArea.addEventListener("dragleave", handleDragLeave);
-                    uploadArea.addEventListener("dragover", handleDragOver);
-                    uploadArea.addEventListener("drop", handleDrop);
+            // Set initial content for question editor
+            questionEditor.on('text-change', function() {
+                questionTextInput.value = questionEditor.root.innerHTML.trim();
+            });
+            questionTextInput.value = questionEditor.root.innerHTML.trim();
+
+            // Initialize Quill for existing options
+            document.querySelectorAll('.option-editor').forEach((element, index) => {
+                const editor = new Quill(element, quillConfigs);
+                const hiddenInput = element.closest('.option-group').querySelector('.option-content-input');
+
+                editor.on('text-change', function() {
+                    hiddenInput.value = editor.root.innerHTML.trim();
                 });
-            }
+                hiddenInput.value = editor.root.innerHTML.trim();
 
-            function handleDragEnter(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.add("border-orange-500", "bg-orange-50");
-            }
-
-            function handleDragLeave(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.remove("border-orange-500", "bg-orange-50");
-            }
-
-            function handleDragOver(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            function handleDrop(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const uploadContainer = document.querySelector('.border-dashed');
-                const uploadArea = e.currentTarget;
-                uploadArea.classList.remove("border-orange-500", "bg-orange-50");
-
-                const fileInput = uploadArea.querySelector('input[type="file"]');
-                const files = e.dataTransfer.files;
-
-                if (files.length) {
-                    fileInput.files = files;
-                    handleImageUpload(fileInput);
-                    uploadContainer.classList.add('hidden');
-                }
-            }
-
-            function handleImageRemoval() {
-                if (imagePreview) {
-                    imagePreview.style.display = 'none';
-                    removeImageInput.value = '1';
-                    fileInput.value = '';
-
-                    if (imageUploadContainer) {
-                        imageUploadContainer.classList.remove('hidden');
-                    }
-                }
-            }
-
-            // Event listener for remove image button
-            if (removeImageButton) {
-                removeImageButton.addEventListener('click', handleImageRemoval);
-            }
-
-
-            @if ($question->image)
-                const uploadContainer = document.querySelector('.border-dashed');
-                removeImageButton?.addEventListener('click', function() {
-                    imagePreview.style.display = 'none';
-                    removeImageInput.value = '1';
-                    fileInput.value = '';
-                });
-                uploadContainer.classList.add('hidden');
-
-                document.getElementById('remove-image')?.addEventListener('click', function() {
-                    const uploadContainer = document.querySelector('.border-dashed');
-
-                    document.getElementById('image-preview').style.display = 'none';
-                    removeImageInput.value = '1';
-                    fileInput.value = '';
-                    uploadContainer.classList.remove('hidden');
-                });
-            @endif
-
-            window.handleImageUpload = function(input) {
-                if (input.files && input.files[0]) {
-                    // Hapus preview yang sudah ada
-                    const existingPreview = document.getElementById('image-preview');
-                    if (existingPreview) {
-                        existingPreview.remove();
-                    }
-
-                    const reader = new FileReader();
-
-                    reader.onload = function(e) {
-                        const previewHtml = `
-                <div id="image-preview" class="mb-3">
-                    <div class="relative inline-block group">
-                        <img src="${e.target.result}" alt="Gambar Pertanyaan"
-                             class="max-h-48 rounded-lg border border-gray-200 object-cover">
-                        <button type="button" id="remove-image" 
-                                class="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border border-gray-200 text-gray-400 hover:text-red-500 transition-colors">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-
-                        // Pastikan hanya ada satu container untuk preview
-                        const uploadContainer = input.closest('.rounded-md');
-                        const existingContainer = uploadContainer.querySelector('#image-preview');
-                        if (existingContainer) {
-                            existingContainer.remove();
-                        }
-
-                        // Sisipkan preview baru
-                        uploadContainer.insertAdjacentHTML('afterbegin', previewHtml);
-                        imageUploadContainer.classList.add('hidden');
-
-                        // Reset removal input
-                        removeImageInput.value = '0';
-
-                        // Rebind remove image button
-                        const newRemoveButton = document.getElementById('remove-image');
-                        if (newRemoveButton) {
-                            newRemoveButton.removeEventListener('click', handleImageRemoval);
-                            newRemoveButton.addEventListener('click', handleImageRemoval);
-                        }
-                    };
-
-                    reader.readAsDataURL(input.files[0]);
-                }
-            }
-
-            // Attach handleImageUpload to file input
-            fileInput.addEventListener('change', function() {
-                handleImageUpload(this);
+                optionEditors.push(editor);
             });
 
             // Function to update input types based on question type
@@ -345,44 +176,109 @@
             // Update on question type change
             questionType.addEventListener('change', updateAnswerInputs);
 
+            // Add new option with Quill editor
             addOptionButton.addEventListener('click', function() {
                 const inputType = questionType.value === 'single_choice' ? 'radio' : 'checkbox';
-                const newOption = `
-                    <div class="option-group">
-                        <div class="flex items-center gap-3">
-                            <div class="flex-1">
-                                <div class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                                    <span class="text-gray-400">
-                                        <i data-lucide="circle" class="w-5 h-5"></i>
-                                    </span>
-                                    <input type="text" name="options[]" 
-                                        placeholder="Masukkan pilihan jawaban"
-                                        class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-                                </div>
-                            </div>
-                            <div class="flex items-center answer-input">
-                                <input type="${inputType}" name="${inputType === 'radio' ? 'correct_answer' : `correct_answer[${optionCount}]`}" 
-                                    value="${optionCount}"
-                                    class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
-                                <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                            </div>
-                            <button type="button" onclick="removeOption(this)" 
-                                class="text-gray-400 hover:text-red-500">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option-group';
+                optionDiv.innerHTML = `
+                    <input type="hidden" name="options[]" class="option-content-input">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <div class="option-editor bg-white" data-index="${optionCount}"></div>
                         </div>
+                        <div class="flex items-center answer-input">
+                            <input type="${inputType}" 
+                                name="${inputType === 'radio' ? 'correct_answer' : `correct_answer[${optionCount}]`}"
+                                value="${optionCount}"
+                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
+                            <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
+                        </div>
+                        <button type="button" onclick="removeOption(this)" class="text-gray-400 hover:text-red-500">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
                     </div>
                 `;
-                optionsContainer.insertAdjacentHTML('beforeend', newOption);
+
+                optionsContainer.appendChild(optionDiv);
+
+                // Initialize Quill for new option
+                const newEditorElement = optionDiv.querySelector('.option-editor');
+                const newEditor = new Quill(newEditorElement, quillConfigs);
+                const hiddenInput = optionDiv.querySelector('.option-content-input');
+
+                newEditor.on('text-change', function() {
+                    hiddenInput.value = newEditor.root.innerHTML.trim();
+                });
+
+                optionEditors.push(newEditor);
                 optionCount++;
                 lucide.createIcons();
             });
-
-            initialize();
         });
 
         function removeOption(button) {
-            button.closest('.option-group').remove();
+            const optionGroup = button.closest('.option-group');
+            if (optionGroup) {
+                // Remove the option group
+                optionGroup.remove();
+
+                // Update all remaining option indices
+                const options = document.querySelectorAll('.option-group');
+                options.forEach((option, index) => {
+                    const input = option.querySelector('.answer-input input');
+                    if (input) {
+                        input.value = index;
+                        if (input.type === 'checkbox') {
+                            input.name = `correct_answer[${index}]`;
+                        }
+                    }
+                });
+            }
         }
+
+        // Quill configuration
+        const quillConfigs = {
+            modules: {
+                toolbar: [
+                    ["bold", "italic", "underline", "strike"],
+                    [{
+                        header: [1, 2, 3, 4, 5, 6, false]
+                    }],
+                    [{
+                        list: "ordered"
+                    }, {
+                        list: "bullet"
+                    }],
+                    [{
+                        script: "sub"
+                    }, {
+                        script: "super"
+                    }],
+                    [{
+                        indent: "-1"
+                    }, {
+                        indent: "+1"
+                    }],
+                    [{
+                        direction: "rtl"
+                    }],
+                    [{
+                        font: []
+                    }],
+                    [{
+                        align: []
+                    }],
+                    ["link", "image", "formula"],
+                    ["clean"],
+                ]
+            },
+            imageResize: {
+                modules: ["Resize", "DisplaySize", "Toolbar"],
+            },
+
+            placeholder: 'Tulis teks...',
+            theme: 'snow'
+        };
     </script>
 @endsection
