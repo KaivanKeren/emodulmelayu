@@ -25,9 +25,6 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Test Store Question');
-
-        // Validasi dasar untuk struktur data
         $request->validate([
             'assessment_id' => 'required|exists:assessments,id',
             'questions' => 'required|array|min:1',
@@ -36,21 +33,9 @@ class QuestionController extends Controller
             'questions.*.options' => 'required|array|min:1',
         ]);
 
-        // Pre-process dan validasi konten
         foreach ($request->questions as $index => $question) {
-            // Validasi konten pertanyaan
             $cleanContent = $this->sanitizeHtml($question['content']);
-            if (empty($cleanContent)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Pertanyaan #" . ($index + 1) . " harus diisi dengan konten yang valid.",
-                    'errors' => [
-                        "questions.{$index}.content" => ["Pertanyaan tidak boleh kosong"]
-                    ]
-                ], 422);
-            }
 
-            // Validasi konten pilihan jawaban
             foreach ($question['options'] as $optionIndex => $optionContent) {
                 $cleanOptionContent = $this->sanitizeHtml($optionContent);
                 if (empty($cleanOptionContent)) {
@@ -64,56 +49,35 @@ class QuestionController extends Controller
                 }
             }
 
-            // Validasi jawaban yang benar
             $validationRules = [];
             if ($question['question_type'] === 'single_choice') {
                 $validationRules["questions.{$index}.correct_answer"] = 'required|numeric|min:0|max:' . (count($question['options']) - 1);
             } else {
                 $validationRules["questions.{$index}.correct_answer"] = 'required|array|min:1';
-                $validationRules["questions.{$index}.correct_answer.*"] = [
-                    'numeric',
-                    'distinct',
-                    'min:0',
-                    'max:' . (count($question['options']) - 1)
-                ];
+                $validationRules["questions.{$index}.correct_answer.*"] = 'numeric|distinct|min:0|max:' . (count($question['options']) - 1);
             }
 
-            $request->validate($validationRules, [
-                "questions.{$index}.correct_answer.required" => 'Pertanyaan #' . ($index + 1) . ' harus memiliki jawaban yang benar.',
-                "questions.{$index}.correct_answer.*.numeric" => 'Jawaban yang benar harus berupa angka.',
-                "questions.{$index}.correct_answer.*.distinct" => 'Jawaban yang benar tidak boleh duplikat.',
-                "questions.{$index}.correct_answer.*.min" => 'Indeks jawaban tidak valid.',
-                "questions.{$index}.correct_answer.*.max" => 'Indeks jawaban tidak valid.',
-            ]);
+            $request->validate($validationRules);
         }
-
-        Log::info('Memulai proses store pertanyaan', ['request_data' => $request->all()]);
 
         try {
             DB::beginTransaction();
 
             foreach ($request->questions as $questionData) {
-                // Clean and sanitize the HTML content
                 $cleanContent = $this->sanitizeHtml($questionData['content']);
 
-                // Membuat pertanyaan
                 $question = Question::create([
                     'content' => $cleanContent,
                     'question_type' => $questionData['question_type'],
                     'assessment_id' => $request->assessment_id,
                 ]);
 
-                // Menyiapkan array untuk menyimpan pilihan jawaban
                 $options = [];
                 foreach ($questionData['options'] as $index => $optionContent) {
                     $cleanOptionContent = $this->sanitizeHtml($optionContent);
-                    $isCorrect = false;
-
-                    if ($questionData['question_type'] === 'single_choice') {
-                        $isCorrect = $index == $questionData['correct_answer'];
-                    } else {
-                        $isCorrect = in_array(strval($index), (array)$questionData['correct_answer']);
-                    }
+                    $isCorrect = $questionData['question_type'] === 'single_choice' ?
+                        $index == $questionData['correct_answer'] :
+                        in_array(strval($index), (array) $questionData['correct_answer']);
 
                     $options[] = [
                         'question_id' => $question->id,
@@ -124,7 +88,6 @@ class QuestionController extends Controller
                     ];
                 }
 
-                // Bulk insert untuk options
                 Option::insert($options);
             }
 
@@ -136,20 +99,12 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Gagal menyimpan pertanyaan.', [
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString(),
-                'request_data' => $request->except(['_token']),
-                'failed_query' => optional(DB::getQueryLog())
-            ]);
-
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan pertanyaan. Silakan coba lagi.'
+                'message' => 'Terjadi kesalahan saat menyimpan pertanyaan.',
             ], 500);
         }
     }
-
 
     private function sanitizeHtml($content)
     {
@@ -157,22 +112,6 @@ class QuestionController extends Controller
             return '';
         }
 
-        // Simpan formula dalam array sementara
-        $formulas = [];
-        $placeholder = 'FORMULA_PLACEHOLDER_';
-
-        // Extract formula tags dan simpan
-        $content = preg_replace_callback(
-            '/<span class="ql-formula"[^>]*data-value="([^"]*)"[^>]*>.*?<\/span>/i',
-            function ($matches) use (&$formulas, $placeholder) {
-                $index = count($formulas);
-                $formulas[] = $matches[0]; // Simpan seluruh tag formula
-                return $placeholder . $index;
-            },
-            $content
-        );
-
-        // Daftar tag HTML yang diizinkan
         $allowedTags = [
             'p',
             'br',
@@ -191,40 +130,27 @@ class QuestionController extends Controller
             'li',
             'sub',
             'sup',
-            'img',
             'a',
             'span',
-            'div'
+            'div',
+            'img'
         ];
 
-        // Bersihkan konten HTML
-        $cleanContent = strip_tags($content, '<' . implode('><', $allowedTags) . '>');
+        // Mengizinkan img dengan atribut src base64
+        $cleanContent = preg_replace_callback(
+            '/<img[^>]+src=[\'\"](data:image\/[^;]+;base64,[^\'\"]+)[\'\"][^>]*>/i',
+            function ($matches) {
+                return '<p><img src="' . $matches[1] . '"></p>';
+            },
+            $content
+        );
 
-        // Hapus spasi berlebih dan karakter whitespace
-        $cleanContent = trim($cleanContent);
+        // Bersihkan HTML dari tag yang tidak diizinkan
+        $cleanContent = strip_tags($cleanContent, '<' . implode('><', $allowedTags) . '>');
 
-        // Hapus tag HTML kosong (contoh: <p></p>)
-        $cleanContent = preg_replace('/<[^\/>]*>(\s*)<\/[^>]*>/', '', $cleanContent);
-
-        // Hapus tag HTML yang hanya berisi spasi
-        $cleanContent = preg_replace('/<[^>]*>(\s+)<\/[^>]*>/', '', $cleanContent);
-
-        // Ubah multiple newlines menjadi satu newline
-        $cleanContent = preg_replace('/(\R){2,}/', "\n", $cleanContent);
-
-        // Kembalikan formula ke konten
-        foreach ($formulas as $index => $formula) {
-            $cleanContent = str_replace($placeholder . $index, $formula, $cleanContent);
-        }
-
-        // Pastikan konten tidak hanya berisi tag HTML kosong
-        $textContent = trim(strip_tags(str_replace($formulas, [''], $cleanContent)));
-        if (empty($textContent) && empty($formulas)) {
-            return '';
-        }
-
-        return $cleanContent;
+        return trim($cleanContent);
     }
+
 
     public function edit(Question $question)
     {

@@ -3,50 +3,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const addQuestionButton = document.getElementById("add_question");
     let questionCount = 0;
 
-    function imageHandler() {
-        const input = document.createElement("input");
-        input.setAttribute("type", "file");
-        input.setAttribute("accept", "image/*");
-        input.click();
-
-        input.onchange = async () => {
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append("image", file);
-
-            try {
-                // Add CSRF token to the request
-                const csrfToken = document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content");
-
-                const response = await fetch(
-                    "/admin/assessments/upload-image",
-                    {
-                        method: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": csrfToken,
-                        },
-                        body: formData,
-                    }
-                );
-
-                const result = await response.json();
-
-                if (result.url) {
-                    const range = this.quill.getSelection(true);
-                    this.quill.insertEmbed(range.index, "image", result.url);
-                } else {
-                    console.error("Upload failed:", result.error);
-                    alert("Image upload failed. Please try again.");
-                }
-            } catch (error) {
-                console.error("Upload error:", error);
-                alert("An error occurred while uploading the image.");
-            }
-        };
-    }
-
     // Enhanced Quill configuration with image handler
     const quillConfigs = {
         modules: {
@@ -63,9 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     ["link", "image", "formula"],
                     ["clean"],
                 ],
-                handlers: {
-                    image: imageHandler,
-                },
             },
             imageResize: {
                 modules: ["Resize", "DisplaySize", "Toolbar"],
@@ -74,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
         theme: "snow",
     };
 
-    // Initialize Quill Editor with proper configuration
     // Initialize Quill Editor with proper configuration
     function initializeQuillEditor(elementId, placeholder, hiddenInput) {
         const element = document.querySelector(elementId);
