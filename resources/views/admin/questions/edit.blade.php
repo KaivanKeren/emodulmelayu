@@ -130,8 +130,17 @@
             const optionsContainer = document.getElementById('options_container');
             const addOptionButton = document.getElementById('add_option');
             const questionType = document.getElementById('question_type');
+            const form = document.querySelector('form');
             let optionCount = {{ count($question->options) }};
             let optionEditors = [];
+
+            // Add error message elements
+            const questionEditorContainer = document.getElementById('question_editor').parentElement;
+            const questionErrorMsg = document.createElement('p');
+            questionErrorMsg.className = 'quill-error text-red-500 text-sm mt-1';
+            questionErrorMsg.textContent = 'Pertanyaan harus diisi.';
+            questionErrorMsg.style.display = 'none';
+            questionEditorContainer.appendChild(questionErrorMsg);
 
             // Initialize Quill for question text
             const questionEditor = new Quill('#question_editor', quillConfigs);
@@ -140,21 +149,47 @@
             // Set initial content for question editor
             questionEditor.on('text-change', function() {
                 questionTextInput.value = questionEditor.root.innerHTML.trim();
+                validateQuestionContent();
             });
             questionTextInput.value = questionEditor.root.innerHTML.trim();
+
+            // Validate question content
+            function validateQuestionContent() {
+                const content = questionEditor.getText().trim();
+                questionErrorMsg.style.display = content === '' ? 'block' : 'none';
+                return content !== '';
+            }
 
             // Initialize Quill for existing options
             document.querySelectorAll('.option-editor').forEach((element, index) => {
                 const editor = new Quill(element, quillConfigs);
                 const hiddenInput = element.closest('.option-group').querySelector('.option-content-input');
 
+                // Add error message for each option
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'quill-error text-red-500 text-sm mt-1';
+                errorMsg.textContent = 'Jawaban harus diisi.';
+                errorMsg.style.display = 'none';
+                element.parentElement.appendChild(errorMsg);
+
                 editor.on('text-change', function() {
                     hiddenInput.value = editor.root.innerHTML.trim();
+                    validateOptionContent(editor, errorMsg);
                 });
                 hiddenInput.value = editor.root.innerHTML.trim();
 
-                optionEditors.push(editor);
+                optionEditors.push({
+                    editor,
+                    errorMsg
+                });
             });
+
+            // Validate option content
+            function validateOptionContent(editor, errorMsg) {
+                const content = editor.getText().trim();
+                errorMsg.style.display = content === '' ? 'block' : 'none';
+                return content !== '';
+            }
 
             // Function to update input types based on question type
             function updateAnswerInputs() {
@@ -182,23 +217,23 @@
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'option-group';
                 optionDiv.innerHTML = `
-                    <input type="hidden" name="options[]" class="option-content-input">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1">
-                            <div class="option-editor bg-white" data-index="${optionCount}"></div>
-                        </div>
-                        <div class="flex items-center answer-input">
-                            <input type="${inputType}" 
-                                name="${inputType === 'radio' ? 'correct_answer' : `correct_answer[${optionCount}]`}"
-                                value="${optionCount}"
-                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
-                            <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
-                        </div>
-                        <button type="button" onclick="removeOption(this)" class="text-gray-400 hover:text-red-500">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                `;
+            <input type="hidden" name="options[]" class="option-content-input">
+            <div class="flex items-center gap-3">
+                <div class="flex-1">
+                    <div class="option-editor bg-white" data-index="${optionCount}"></div>
+                </div>
+                <div class="flex items-center answer-input">
+                    <input type="${inputType}" 
+                        name="${inputType === 'radio' ? 'correct_answer' : `correct_answer[${optionCount}]`}"
+                        value="${optionCount}"
+                        class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300">
+                    <label class="ml-2 text-sm text-gray-700">Jawaban Benar</label>
+                </div>
+                <button type="button" onclick="removeOption(this)" class="text-gray-400 hover:text-red-500">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        `;
 
                 optionsContainer.appendChild(optionDiv);
 
@@ -207,13 +242,48 @@
                 const newEditor = new Quill(newEditorElement, quillConfigs);
                 const hiddenInput = optionDiv.querySelector('.option-content-input');
 
+                // Add error message for new option
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'quill-error text-red-500 text-sm mt-1';
+                errorMsg.textContent = 'Jawaban harus diisi.';
+                errorMsg.style.display = 'none';
+                newEditorElement.parentElement.appendChild(errorMsg);
+
                 newEditor.on('text-change', function() {
                     hiddenInput.value = newEditor.root.innerHTML.trim();
+                    validateOptionContent(newEditor, errorMsg);
                 });
 
-                optionEditors.push(newEditor);
+                optionEditors.push({
+                    editor: newEditor,
+                    errorMsg
+                });
                 optionCount++;
                 lucide.createIcons();
+            });
+
+            // Form submission validation
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+
+                // Validate question
+                if (!validateQuestionContent()) {
+                    isValid = false;
+                }
+
+                // Validate all options
+                optionEditors.forEach(({
+                    editor,
+                    errorMsg
+                }) => {
+                    if (!validateOptionContent(editor, errorMsg)) {
+                        isValid = false;
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                }
             });
         });
 
@@ -276,7 +346,6 @@
             imageResize: {
                 modules: ["Resize", "DisplaySize", "Toolbar"],
             },
-
             placeholder: 'Tulis teks...',
             theme: 'snow'
         };

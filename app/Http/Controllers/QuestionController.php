@@ -161,58 +161,99 @@ class QuestionController extends Controller
 
     public function update(Request $request, Question $question)
     {
+        // Sanitize the HTML content first
+        $questionText = $this->sanitizeHtml($request->input('question_text'));
+        $options = array_map(function ($option) {
+            return $this->sanitizeHtml($option);
+        }, $request->input('options', []));
+
+        // Check if content is empty after sanitization
+        if (empty(trim(strip_tags($questionText)))) {
+            return back()
+                ->withInput()
+                ->withErrors(['question_text' => 'Pertanyaan tidak boleh kosong.']);
+        }
+
+        // Check if any option is empty after sanitization
+        foreach ($options as $index => $option) {
+            if (empty(trim(strip_tags($option)))) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['options.' . $index => 'Jawaban tidak boleh kosong.']);
+            }
+        }
+
+        // Validate the request
         $validated = $request->validate([
-            'question_text' => 'required|string',
             'assessment_id' => 'required|exists:assessments,id',
             'question_type' => 'required|in:single_choice,multiple_choice',
             'options' => 'required|array|min:2',
-            'options.*' => 'required|string',
-            'correct_answer' => $request->input('question_type') === 'single_choice'
-                ? 'required|integer'
-                : 'required|array',
+            'correct_answer' => function ($attribute, $value, $fail) use ($request) {
+                if ($request->input('question_type') === 'single_choice') {
+                    if (!is_numeric($value)) {
+                        $fail('Pilih salah satu jawaban yang benar.');
+                    }
+                } else {
+                    if (!is_array($value) || empty($value)) {
+                        $fail('Pilih setidaknya satu jawaban yang benar.');
+                    }
+                }
+            },
         ]);
 
-        // Update question details
-        $question->update([
-            'content' => $validated['question_text'],
-            'assessment_id' => $validated['assessment_id'],
-            'question_type' => $validated['question_type']
-        ]);
+        // Begin transaction
+        DB::beginTransaction();
 
-        // Get correct answers
-        $correctAnswers = [];
-        if ($validated['question_type'] === 'single_choice') {
-            $correctAnswers = [(int) $request->input('correct_answer')];
-        } else {
-            // For multiple choice, get all checked options
-            $correctAnswers = $request->input('correct_answer', []);
-        }
+        try {
+            // Update question details
+            $question->update([
+                'content' => $questionText,
+                'assessment_id' => $validated['assessment_id'],
+                'question_type' => $validated['question_type']
+            ]);
 
-        // Delete existing options
-        $question->options()->delete();
-
-        // Create new options with correct answers
-        foreach ($validated['options'] as $index => $optionContent) {
-            $isCorrect = false;
-
+            // Get correct answers
+            $correctAnswers = [];
             if ($validated['question_type'] === 'single_choice') {
-                $isCorrect = $index === $correctAnswers[0];
+                $correctAnswers = [(int) $request->input('correct_answer')];
             } else {
-                // For multiple choice, check if the index is in the correct answers array
-                $isCorrect = in_array($index, array_keys($correctAnswers));
+                $correctAnswers = array_keys($request->input('correct_answer', []));
             }
 
-            $question->options()->create([
-                'content' => $optionContent,
-                'is_correct' => $isCorrect
-            ]);
+            // Validate that at least one correct answer is selected
+            if (empty($correctAnswers)) {
+                throw new ValidationException(validator([], [], [
+                    'correct_answer' => 'Pilih minimal satu jawaban yang benar.'
+                ]));
+            }
+
+            // Delete existing options
+            $question->options()->delete();
+
+            // Create new options with correct answers
+            foreach ($options as $index => $optionContent) {
+                $isCorrect = $validated['question_type'] === 'single_choice'
+                    ? $index === $correctAnswers[0]
+                    : in_array($index, $correctAnswers);
+
+                $question->options()->create([
+                    'content' => $optionContent,
+                    'is_correct' => $isCorrect
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('assessments.show', $question->assessment_id)
+                ->with('success', 'Pertanyaan berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Terjadi kesalahan saat memperbarui pertanyaan. Silakan coba lagi.']);
         }
-
-        // Save the question with potential image update
-        $question->save();
-
-        return redirect()->route('assessments.show', $question->assessment_id)
-            ->with('success', 'Pertanyaan berhasil diperbarui.');
     }
 
     public function destroy(Question $question)
