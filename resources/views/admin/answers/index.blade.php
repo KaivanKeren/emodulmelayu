@@ -14,15 +14,32 @@
                         Total Pertanyaan: {{ $totalQuestions }}
                     </p>
                 </div>
-                <a href="{{ route('answers.export', ['assessment' => $assessment->id]) }}"
-                    class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Export PDF
-                </a>
+                <div class="flex items-center space-x-4">
+                    <!-- Countdown and Refresh Button -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Refresh dalam: <span id="countdown"
+                                class="font-medium">30</span>s</span>
+                        <button onclick="manualRefresh()"
+                            class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <!-- Export Button -->
+                    <a href="{{ route('answers.export', ['assessment' => $assessment->id]) }}"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export PDF
+                    </a>
+                </div>
             </div>
 
             <div class="mt-8">
@@ -98,4 +115,33 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            let countdownTime = 30;
+            let countdownInterval;
+
+            function startCountdown() {
+                countdownTime = 30;
+                document.getElementById('countdown').textContent = countdownTime;
+
+                clearInterval(countdownInterval);
+                countdownInterval = setInterval(() => {
+                    countdownTime--;
+                    document.getElementById('countdown').textContent = countdownTime;
+
+                    if (countdownTime <= 0) {
+                        window.location.reload();
+                    }
+                }, 1000);
+            }
+
+            function manualRefresh() {
+                window.location.reload();
+            }
+
+            // Start the countdown when the page loads
+            document.addEventListener('DOMContentLoaded', startCountdown);
+        </script>
+    @endpush
 @endsection
