@@ -8,7 +8,7 @@
             <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
                 <div class="p-8">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">Buat Assessment Baru</h2>
+                        <h2 class="text-2xl font-bold text-gray-900">Tambahkan Data Sekolah</h2>
                     </div>
 
                     <form action="{{ route('schools.store') }}" method="POST" class="space-y-6">
@@ -58,7 +58,7 @@
                             </a>
                             <button type="submit"
                                 class="px-6 py-2.5 rounded-full text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                                Buat Assessment
+                                Tambah Data Sekolah
                             </button>
                         </div>
                     </form>
