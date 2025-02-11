@@ -21,7 +21,6 @@
                 @endauth
             </div>
 
-
             @if (session('success'))
                 <div class="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
                     {{ session('success') }}
@@ -41,7 +40,9 @@
                                         </a>
                                         <p class="mt-1 text-sm text-gray-500">
                                             Oleh {{ $discussion->user->name }} •
-                                            {{ $discussion->created_at->diffForHumans() }}
+                                            {{ $discussion->created_at->diffForHumans() }} •
+                                            <span class="text-gray-700 font-semibold">{{ $discussion->participant_count }}
+                                                partisipan</span>
                                         </p>
                                     </div>
                                     @can('update', $discussion)

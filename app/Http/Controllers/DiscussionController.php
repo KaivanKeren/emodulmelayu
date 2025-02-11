@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DiscussionController extends Controller
 {
@@ -15,6 +16,9 @@ class DiscussionController extends Controller
     public function index()
     {
         $discussions = Discussion::with('user')
+            ->withCount(['messages as participant_count' => function ($query) {
+                $query->select(DB::raw('count(distinct user_id)'));
+            }])
             ->latest()
             ->paginate(10);
         $pendingUsers = User::where('status', 'Pending')->count();
@@ -50,12 +54,11 @@ class DiscussionController extends Controller
             ->with(['user', 'replies.user', 'replies.replies.user'])
             ->where('discussion_id', $discussion->id)
             ->get();
+
         $pendingUsers = User::where('status', 'Pending')->count();
 
-
-        return view('admin.discussion.show', compact('discussion', 'messages', 'pendingUsers'));
+        return view('admin.discussion.show', compact('discussion', 'messages', 'participants', 'pendingUsers', 'participantCount'));
     }
-
 
     public function edit(Discussion $discussion)
     {
@@ -94,7 +97,11 @@ class DiscussionController extends Controller
 
     public function apiIndex()
     {
-        $discussions = Discussion::with('user')->get();
+        $discussions = Discussion::with('user')
+            ->withCount(['messages as participant_count' => function ($query) {
+                $query->select(DB::raw('count(distinct user_id)'));
+            }])
+            ->get();
 
         return response()->json([
             'code' => 200,
@@ -110,9 +117,7 @@ class DiscussionController extends Controller
             'content' => 'required|string',
         ]);
 
-        // Menambahkan user_id dari user yang sedang login
         $validated['user_id'] = auth()->id();
-
         $discussion = Discussion::create($validated);
 
         return response()->json([
@@ -137,7 +142,6 @@ class DiscussionController extends Controller
     {
         $discussion = Discussion::findOrFail($id);
 
-        // Cek apakah user yang login adalah pemilik diskusi
         if ($discussion->user_id !== auth()->id()) {
             return response()->json([
                 'code' => 403,
@@ -163,7 +167,6 @@ class DiscussionController extends Controller
     {
         $discussion = Discussion::findOrFail($id);
 
-        // Cek apakah user yang login adalah pemilik diskusi
         if ($discussion->user_id !== auth()->id()) {
             return response()->json([
                 'code' => 403,
