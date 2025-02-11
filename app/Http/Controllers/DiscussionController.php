@@ -57,7 +57,7 @@ class DiscussionController extends Controller
 
         $pendingUsers = User::where('status', 'Pending')->count();
 
-        return view('admin.discussion.show', compact('discussion', 'messages', 'participants', 'pendingUsers', 'participantCount'));
+        return view('admin.discussion.show', compact('discussion', 'messages', 'pendingUsers'));
     }
 
     public function edit(Discussion $discussion)
