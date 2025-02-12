@@ -137,4 +137,36 @@
             }
         });
     });
+
+    function truncateText(text, maxLength) {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength) + '...';
+        }
+        return text;
+    }
+
+    // After the page loads, truncate content in the table
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all title and description cells
+        const titleCells = document.querySelectorAll('td:nth-child(1)');
+        const descriptionCells = document.querySelectorAll('td:nth-child(2)');
+
+        // Truncate titles to 30 characters
+        titleCells.forEach(cell => {
+            const originalText = cell.textContent;
+            cell.textContent = truncateText(originalText, 30);
+
+            // Add title attribute to show full text on hover
+            cell.title = originalText;
+        });
+
+        // Truncate descriptions to 50 characters
+        descriptionCells.forEach(cell => {
+            const originalText = cell.textContent;
+            cell.textContent = truncateText(originalText, 50);
+
+            // Add title attribute to show full text on hover
+            cell.title = originalText;
+        });
+    });
 </script>@endsection

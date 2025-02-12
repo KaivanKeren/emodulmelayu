@@ -63,7 +63,10 @@
                                         class="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                                         <textarea name="content" required id="content" rows="8"
                                             class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
-                                            placeholder="Tuliskan isi diskusi di sini...">{{ old('content', $discussion->content) }}</textarea>
+                                            placeholder="Tuliskan isi diskusi di sini..." maxlength="255">{{ old('content', $discussion->content) }}</textarea>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <span id="charCount" class="text-sm text-gray-500">0/255 karakter</span>
                                     </div>
                                     @error('content')
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -86,4 +89,50 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function initializeCharCounter() {
+            const textarea = document.getElementById('content');
+            const charCount = document.getElementById('charCount');
+            const maxLength = 255; // Define max length constant
+
+            function updateCharCount() {
+                const currentLength = textarea.value.length;
+                const remaining = maxLength - currentLength;
+
+                // Update counter text
+                charCount.textContent = `${currentLength}/${maxLength} karakter`;
+
+                // Update visual feedback
+                if (currentLength >= maxLength) {
+                    charCount.className = 'text-sm text-red-500 font-medium';
+                    textarea.classList.add('border-red-500');
+                } else if (currentLength >= maxLength * 0.9) {
+                    charCount.className = 'text-sm text-orange-500';
+                    textarea.classList.remove('border-red-500');
+                } else {
+                    charCount.className = 'text-sm text-gray-500';
+                    textarea.classList.remove('border-red-500');
+                }
+            }
+
+            // Add event listeners
+            textarea.addEventListener('input', updateCharCount);
+            textarea.addEventListener('keydown', (e) => {
+                const currentLength = textarea.value.length;
+
+                // Allow deletion even at max length
+                if (currentLength >= maxLength &&
+                    !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Initialize counter on page load
+            updateCharCount();
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeCharCounter);
+    </script>
 @endsection

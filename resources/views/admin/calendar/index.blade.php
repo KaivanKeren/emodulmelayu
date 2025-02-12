@@ -183,6 +183,9 @@
                             <textarea id="content" name="content" rows="4"
                                 class="block w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 transition-colors duration-200"
                                 placeholder="Tambahkan deskripsi event"></textarea>
+                            <div class="flex justify-end mt-1">
+                                <span id="charCount" class="text-sm text-gray-500">0/255 karakter</span>
+                            </div>
                         </div>
                     </div>
 
@@ -302,6 +305,48 @@
             const deleteButton = document.getElementById('deleteButton');
             const form = document.getElementById('eventForm');
 
+            function initializeCharCounter() {
+                const textarea = document.getElementById('content');
+                const charCount = document.getElementById('charCount');
+                const maxLength = 255; // Define max length constant
+
+                function updateCharCount() {
+                    const currentLength = textarea.value.length;
+                    const remaining = maxLength - currentLength;
+
+                    // Update counter text
+                    charCount.textContent = `${currentLength}/${maxLength} karakter`;
+
+                    // Update visual feedback
+                    if (currentLength >= maxLength) {
+                        charCount.className = 'text-sm text-red-500 font-medium';
+                        textarea.classList.add('border-red-500');
+                    } else if (currentLength >= maxLength * 0.9) {
+                        charCount.className = 'text-sm text-orange-500';
+                        textarea.classList.remove('border-red-500');
+                    } else {
+                        charCount.className = 'text-sm text-gray-500';
+                        textarea.classList.remove('border-red-500');
+                    }
+                }
+
+                // Add event listeners
+                textarea.addEventListener('input', updateCharCount);
+                textarea.addEventListener('keydown', (e) => {
+                    const currentLength = textarea.value.length;
+
+                    // Allow deletion even at max length
+                    if (currentLength >= maxLength &&
+                        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e
+                            .key)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Initialize counter
+                updateCharCount();
+            }
+
             // Reset form
             form.reset();
             document.getElementById('eventDate').value = date;
@@ -329,6 +374,9 @@
                     document.getElementById('content').value = eventData.content || '';
                     deleteButton.classList.remove('hidden');
                     currentEventId = eventData.id;
+
+                    // Initialize char counter after setting content
+                    initializeCharCounter();
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Gagal memuat detail event. Silakan coba lagi.');
@@ -340,6 +388,9 @@
                 document.getElementById('eventId').value = '';
                 deleteButton.classList.add('hidden');
                 currentEventId = null;
+
+                // Initialize char counter for new event
+                initializeCharCounter();
             }
 
             modal.classList.remove('hidden');

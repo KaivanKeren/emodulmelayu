@@ -47,8 +47,14 @@
                         <!-- Description -->
                         <div class="rounded-md">
                             <div class="flex flex-col">
-                                <textarea name="description" required id="description" rows="4" placeholder="Deskripsi Material"
-                                    class="block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500">{{ old('description', $material->description) }}</textarea>
+                                <textarea name="description" required id="description" rows="4" placeholder="Deskripsi Material" maxlength="255"
+                                    class="block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                                    onkeyup="countChar(this)">{{ old('description', $material->description) }}</textarea>
+                                <div class="flex justify-end mt-1">
+                                    <span id="charCount" class="text-sm text-gray-500">
+                                        0/255 karakter
+                                    </span>
+                                </div>
                             </div>
                             @error('description')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -132,6 +138,50 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <script>
+        function initializeCharCounter() {
+            const textarea = document.getElementById('description');
+            const charCount = document.getElementById('charCount');
+            const maxLength = 255; // Define max length constant
+
+            function updateCharCount() {
+                const currentLength = textarea.value.length;
+                const remaining = maxLength - currentLength;
+
+                // Update counter text
+                charCount.textContent = `${currentLength}/${maxLength} karakter`;
+
+                // Update visual feedback
+                if (currentLength >= maxLength) {
+                    charCount.className = 'text-sm text-red-500 font-medium';
+                    textarea.classList.add('border-red-500');
+                } else if (currentLength >= maxLength * 0.9) {
+                    charCount.className = 'text-sm text-orange-500';
+                    textarea.classList.remove('border-red-500');
+                } else {
+                    charCount.className = 'text-sm text-gray-500';
+                    textarea.classList.remove('border-red-500');
+                }
+            }
+
+            // Add event listeners
+            textarea.addEventListener('input', updateCharCount);
+            textarea.addEventListener('keydown', (e) => {
+                const currentLength = textarea.value.length;
+
+                // Allow deletion even at max length
+                if (currentLength >= maxLength &&
+                    !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Initialize counter on page load
+            updateCharCount();
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeCharCounter);
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('materialForm');
             const progressDiv = document.getElementById('uploadProgress');
