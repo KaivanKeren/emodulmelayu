@@ -262,7 +262,6 @@ class AssessmentController extends Controller
             'questions.*.options.*.content' => 'required',
             'questions.*.options.*.is_correct' => 'required|boolean',
             'questions.*.image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-
         ]);
 
         $assessment = Assessment::create([

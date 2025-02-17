@@ -12,7 +12,7 @@
                         <img src="{{ Auth::user()->profile_photo_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) }}"
                             alt="{{ Auth::user()->name }}"
                             class="h-8 w-8 rounded-full object-cover border border-gray-200">
-                        <div class="flex flex-col">
+                        <div class="hidden sm:flex flex-col">
                             <span class="text-left text-sm font-medium text-gray-700">
                                 {{ Auth::user()->name }}
                             </span>
