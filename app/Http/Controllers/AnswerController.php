@@ -176,7 +176,6 @@ class AnswerController extends Controller
                             'question_id' => $answers->first()->question_id,
                             'question_type' => $answers->first()->question->question_type,
                             'selected_options' => $answers->pluck('option.id')->toArray(),
-                            'score' => $answers->first()->score ?? 0
                         ];
                     })
                 ];
