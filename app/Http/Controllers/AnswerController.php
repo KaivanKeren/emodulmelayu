@@ -10,6 +10,7 @@ use App\Http\Resources\AnswerResource;
 use App\Models\Assessment;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class AnswerController extends Controller
@@ -95,6 +96,109 @@ class AnswerController extends Controller
             });
 
         return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
+    }
+
+    public function showApi(Assessment $assessment): JsonResponse
+    {
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
+
+        // Get total number of questions for score calculation
+        $totalQuestions = $assessment->questions->count();
+
+        // Get answers grouped by user with calculated scores
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->with(['user', 'question.options', 'option'])
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($userAnswers) use ($totalQuestions) {
+                $user = $userAnswers->first()->user;
+
+                // Group answers by question to properly calculate scores
+                $questionGroups = $userAnswers->groupBy('question_id');
+
+                $totalScore = 0;
+                foreach ($questionGroups as $questionId => $answers) {
+                    $question = $answers->first()->question;
+                    $selectedOptions = $answers->pluck('option');
+
+                    if ($question->question_type === 'single_choice') {
+                        // For single choice questions
+                        $isCorrect = $selectedOptions->contains(function ($option) {
+                            return $option->is_correct;
+                        });
+                        $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                    } else {
+                        // For multiple choice questions
+                        $correctOptions = $question->options->where('is_correct', true);
+                        $totalCorrectOptions = $correctOptions->count();
+
+                        if ($selectedOptions->count() > $totalCorrectOptions) {
+                            $questionScore = 0;
+                        } else {
+                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                            // Calculate base score
+                            $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                            // Calculate penalty
+                            $totalOptions = $question->options->count();
+                            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                            // Calculate final question score
+                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                        }
+                    }
+
+                    $totalScore += $questionScore;
+                }
+
+                // Get answered questions count
+                $answeredQuestions = $questionGroups->count();
+
+                return [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ],
+                    'total_score' => round($totalScore, 2),
+                    'answered_questions' => $answeredQuestions,
+                    'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
+                    'questions_detail' => $questionGroups->map(function ($answers) {
+                        return [
+                            'question_id' => $answers->first()->question_id,
+                            'question_type' => $answers->first()->question->question_type,
+                            'selected_options' => $answers->pluck('option.id')->toArray(),
+                            'score' => $answers->first()->score ?? 0
+                        ];
+                    })
+                ];
+            })->values();
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'All answers retrieved successfully',
+            'data' => [
+                'assessment' => [
+                    'id' => $assessment->id,
+                    'title' => $assessment->title,
+                    'description' => $assessment->description,
+                    'total_questions' => $totalQuestions,
+                ],
+                'respondents' => $respondents,
+                'stats' => [
+                    'pending_users' => $pendingUsers,
+                    'total_respondents' => $respondents->count(),
+                ]
+            ]
+        ]);
     }
 
     public function detail(Assessment $assessment, User $user)
@@ -351,58 +455,6 @@ class AnswerController extends Controller
         ]);
     }
 
-    private function apiCalculateScore(Question $question, $selectedOptions)
-    {
-        $correctOptions = Option::where('question_id', $question->id)
-            ->where('is_correct', true)
-            ->get();
-
-        $selectedCorrectOptions = $selectedOptions->filter(function ($option) {
-            return $option->is_correct;
-        });
-
-        // Get total questions in the assessment for score normalization
-        $totalQuestions = Question::where('assessment_id', $question->assessment_id)->count();
-        $scorePerQuestion = 100 / $totalQuestions;
-
-        if ($question->question_type === 'single_choice') {
-            // For single choice, it's either full score or zero
-            return ($selectedOptions->count() === 1 && $selectedCorrectOptions->count() === 1)
-                ? $scorePerQuestion
-                : 0;
-        } else {
-            // For multiple choice
-            $totalCorrectOptions = $correctOptions->count();
-            $totalOptions = Option::where('question_id', $question->id)->count();
-
-            // Calculate weights
-            $weightPerCorrectOption = 1 / $totalCorrectOptions;
-
-            // Calculate score components
-            $correctlySelected = $selectedCorrectOptions->count();
-            $incorrectlySelected = $selectedOptions->count() - $correctlySelected;
-
-            // Validate if user selected more options than possible correct answers
-            if ($selectedOptions->count() > $totalCorrectOptions) {
-                return 0; // Zero score if selected more than possible correct answers
-            }
-
-            // Calculate base score from correct selections
-            $baseScore = ($correctlySelected * $weightPerCorrectOption);
-
-            // Apply penalties for incorrect selections
-            // Penalty is proportional to the total number of options
-            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
-            $penalties = $incorrectlySelected * $penaltyPerWrong;
-
-            // Calculate final score
-            $finalScore = max(0, $baseScore - $penalties);
-
-            // Normalize to question's portion of total score
-            return $finalScore * $scorePerQuestion;
-        }
-    }
-
     public function apiIndex(Request $request, Assessment $assessment, Question $question)
     {
         // Validate token
@@ -510,42 +562,6 @@ class AnswerController extends Controller
         return response()->json([
             'message' => 'Answer deleted successfully',
             'deleted_count' => $deleted
-        ]);
-    }
-
-    public function apiGetResults(Request $request, Assessment $assessment, Question $question)
-    {
-        // Validate token
-        $validated = $request->validate([
-            'token' => 'required|string'
-        ]);
-
-        if ($validated['token'] !== $assessment->token) {
-            return response()->json([
-                'message' => 'Invalid assessment token'
-            ], 403);
-        }
-
-        if ($question->assessment_id !== $assessment->id) {
-            return response()->json([
-                'message' => 'Question does not belong to this assessment'
-            ], 404);
-        }
-
-        $answers = Answer::where('question_id', $question->id)
-            ->where('user_id', Auth::id())
-            ->with(['option', 'question'])
-            ->get();
-
-        $correctOptions = Option::where('question_id', $question->id)
-            ->where('is_correct', true)
-            ->get();
-
-        return response()->json([
-            'answers' => AnswerResource::collection($answers),
-            'score' => $answers->first() ? $answers->first()->score : 0,
-            'correct_options' => $correctOptions,
-            'question_type' => $question->question_type
         ]);
     }
 }

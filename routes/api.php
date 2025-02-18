@@ -47,7 +47,7 @@ Route::middleware('api')->group(function () {
             Route::put('/{assessment}', [AssessmentController::class, 'apiUpdate']);
             Route::delete('/{assessment}', [AssessmentController::class, 'apiDestroy']);
 
-            Route::get('{assessment}/results', [AssessmentController::class, 'apiGetAllResults']);
+            Route::get('{assessment}/results', [AnswerController::class, 'showApi']);
 
             Route::get('{assessment}/questions/', [QuestionController::class, 'apiIndex']);
             Route::post('{assessment}/questions/', [QuestionController::class, 'apiStore']);
@@ -60,7 +60,6 @@ Route::middleware('api')->group(function () {
             Route::get('{assessment}/questions/{question}/answers/{answer}', [AnswerController::class, 'apiShow']);
             Route::put('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiUpdate']);
             Route::delete('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiDestroy']);
-            Route::get('{assessment}/questions/{question}/results', [AnswerController::class, 'apiGetResults']);
         });
 
         Route::prefix('schools')->group(function () {
