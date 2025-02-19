@@ -12,7 +12,6 @@
     <div class="container mx-auto px-4 h-screen flex items-center justify-center">
         <div class="text-center">
             <div class="mb-8">
-                <img src="/api/placeholder/400/300" alt="Ilustrasi Akses Ditolak" class="mx-auto mb-4" />
                 <div class="inline-block border-4 border-orange-600 p-8 rounded-lg bg-white shadow-xl">
                     <h1 class="text-6xl font-bold text-orange-600 mb-4">401</h1>
                     <div class="h-1 w-32 bg-orange-600 mx-auto mb-6"></div>

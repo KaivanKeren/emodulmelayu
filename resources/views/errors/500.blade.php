@@ -12,7 +12,6 @@
     <div class="container mx-auto px-4 h-screen flex items-center justify-center">
         <div class="text-center">
             <div class="mb-8">
-                <img src="/api/placeholder/400/300" alt="Ilustrasi Kesalahan Server" class="mx-auto mb-4" />
                 <div class="inline-block border-4 border-orange-600 p-8 rounded-lg bg-white shadow-xl">
                     <h1 class="text-6xl font-bold text-orange-600 mb-4">500</h1>
                     <div class="h-1 w-32 bg-orange-600 mx-auto mb-6"></div>
@@ -23,9 +22,9 @@
                         Mohon tunggu sejenak atau kembali ke halaman utama.
                     </p>
                     <div class="space-y-4">
-                        <a href="/"
+                        <a href="/admin/dashboard"
                             class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
-                            Kembali ke Beranda
+                            Kembali ke Dashboard
                         </a>
                         <p class="text-sm text-gray-500 mt-4">
                             Tim kami sedang bekerja untuk memperbaiki masalah ini
@@ -58,10 +57,6 @@
         <div class="h-2 bg-yellow-500"></div>
     </div>
 
-    <!-- Animasi Loading (Optional) -->
-    <div class="fixed top-4 right-4">
-        <div class="animate-spin rounded-full h-8 w-8 border-4 border-orange-600 border-t-transparent"></div>
-    </div>
 </body>
 
 </html>
