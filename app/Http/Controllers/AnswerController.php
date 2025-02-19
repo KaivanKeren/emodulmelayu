@@ -29,10 +29,10 @@ class AnswerController extends Controller
         $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
         })
-            ->with(['user', 'question.options', 'option'])
+            ->with(relations: ['user', 'user.school', 'question.options', 'option'])
             ->get()
             ->groupBy('user_id')
-            ->map(function ($userAnswers) use ($totalQuestions) {
+            ->map(function ($userAnswers) use ($totalQuestions): array {
                 $user = $userAnswers->first()->user;
 
                 // Group answers by question to properly calculate scores
@@ -81,6 +81,7 @@ class AnswerController extends Controller
 
                 return [
                     'user' => $user,
+                    'school' => $user->school ? $user->school->name : 'No School',
                     'total_score' => round($totalScore, 2),
                     'answered_questions' => $answeredQuestions,
                     'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
@@ -100,9 +101,6 @@ class AnswerController extends Controller
 
     public function showApi(Assessment $assessment): JsonResponse
     {
-        $pendingUsers = User::where('status', 'Pending')->count();
-
-        // Load assessment with questions and options
         $assessment->load(['questions.options']);
 
         // Get total number of questions for score calculation
@@ -112,7 +110,7 @@ class AnswerController extends Controller
         $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
         })
-            ->with(['user', 'question.options', 'option'])
+            ->with(['user', 'user.school', 'question.options', 'option'])
             ->get()
             ->groupBy('user_id')
             ->map(function ($userAnswers) use ($totalQuestions) {
@@ -167,6 +165,7 @@ class AnswerController extends Controller
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
+                        'school' => $user->school ? $user->school->name : 'No School',
                     ],
                     'total_score' => round($totalScore, 2),
                     'answered_questions' => $answeredQuestions,
@@ -193,7 +192,6 @@ class AnswerController extends Controller
                 ],
                 'respondents' => $respondents,
                 'stats' => [
-                    'pending_users' => $pendingUsers,
                     'total_respondents' => $respondents->count(),
                 ]
             ]
