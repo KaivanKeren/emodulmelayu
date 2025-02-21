@@ -17,14 +17,23 @@
 
 <body class="bg-gray-50">
     <div class="min-h-screen flex">
-        <!-- Sidebar -->
-        @include('components.sidebar')
+        <!-- Sidebar - Fixed on large screens -->
+        <div class="hidden lg:block fixed inset-y-0 left-0 w-64">
+            @include('components.sidebar')
+        </div>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-8">
-            @include('components.topbar')
-            @yield('content')
-            @stack('scripts')
+        <!-- Mobile Sidebar -->
+        <div class="lg:hidden">
+            @include('components.sidebar')
+        </div>
+
+        <!-- Main Content - With offset for sidebar -->
+        <main class="flex-1 lg:ml-64">
+            <div class="p-8">
+                @include('components.topbar')
+                @yield('content')
+                @stack('scripts')
+            </div>
         </main>
     </div>
 </body>
