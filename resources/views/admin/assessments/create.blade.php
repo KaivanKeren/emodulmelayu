@@ -74,8 +74,6 @@
                                         class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
                                         <option value="Belum Terbuka">Belum Terbuka</option>
                                         <option value="Terbuka">Terbuka</option>
-                                        <option value="Terjawab">Terjawab</option>
-                                        <option value="Selesai">Selesai</option>
                                     </select>
                                 </div>
                                 @error('status')

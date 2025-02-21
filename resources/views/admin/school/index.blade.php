@@ -4,14 +4,14 @@
 
 @section('content')
     <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
             <h2 class="text-lg font-semibold">Manajemen Sekolah</h2>
             <div class="flex space-x-3">
-                <button onclick="toggleModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <button onclick="toggleModal()" class="px-3 md:px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
                 <a href="{{ route('schools.create') }}">
-                    <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+                    <button class="px-3 md:px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
                         Tambah Sekolah
                     </button>
                 </a>
