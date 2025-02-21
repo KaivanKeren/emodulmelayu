@@ -33,29 +33,47 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+
+        /* Responsive calendar styles */
+        @media (max-width: 640px) {
+            .calendar-cell {
+                min-height: 80px !important;
+            }
+
+            .event-title {
+                font-size: 0.65rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-day-header {
+                font-size: 0.75rem;
+                padding: 0.5rem 0;
+            }
+        }
     </style>
 
-    <div class="w-full max-w-6xl mx-auto bg-white p-6 shadow-2xl rounded-2xl">
+    <div class="w-full max-w-6xl mx-auto bg-white p-3 sm:p-6 shadow-2xl rounded-2xl">
         <!-- Header Section -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 space-y-4 sm:space-y-0">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-4 sm:space-y-0">
             <!-- Previous Month Button -->
             <button onclick="navigate(-1)"
-                class="group px-4 py-2 text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2">
-                <svg class="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
+                class="group px-3 sm:px-4 py-2 text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
                 <span>Sebelumnya</span>
             </button>
 
             <!-- Month/Year Selection -->
-            <div class="text-center">
-                <h1 class="text-4xl font-bold text-gray-800 mb-4 tracking-tight">
+            <div class="text-center w-full sm:w-auto px-2">
+                <h1 class="text-2xl sm:text-4xl font-bold text-gray-800 mb-2 sm:mb-4 tracking-tight">
                     {{ $tanggalSaatIni->locale('id')->translatedFormat('F Y') }}
                 </h1>
-                <div class="flex space-x-4">
+                <div class="flex space-x-2 sm:space-x-4">
                     <select id="bulan"
-                        class="form-select block w-full pl-4 pr-10 py-2.5 text-base border-2 border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-xl bg-white transition-colors duration-200"
+                        class="form-select block w-full pl-2 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 text-sm sm:text-base border-2 border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-xl bg-white transition-colors duration-200"
                         onchange="updateKalender()">
                         @foreach (range(1, 12) as $m)
                             <option value="{{ $m }}" {{ $tanggalSaatIni->month == $m ? 'selected' : '' }}>
@@ -65,7 +83,7 @@
                     </select>
 
                     <select id="tahun"
-                        class="form-select block w-full pl-4 pr-10 py-2.5 text-base border-2 border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-xl bg-white transition-colors duration-200"
+                        class="form-select block w-full pl-2 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 text-sm sm:text-base border-2 border-gray-200 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-xl bg-white transition-colors duration-200"
                         onchange="updateKalender()">
                         @foreach (range($tanggalSaatIni->year - 10, $tanggalSaatIni->year + 10) as $y)
                             <option value="{{ $y }}" {{ $tanggalSaatIni->year == $y ? 'selected' : '' }}>
@@ -78,10 +96,10 @@
 
             <!-- Next Month Button -->
             <button onclick="navigate(1)"
-                class="group px-4 py-2 text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2">
+                class="group px-3 sm:px-4 py-2 text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base">
                 <span>Berikutnya</span>
-                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-200" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-200"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </button>
@@ -89,36 +107,44 @@
 
         <!-- Calendar Grid -->
         <div class="bg-white rounded-2xl overflow-hidden shadow-xl">
-            <!-- Days Header -->
+            <!-- Days Header with dynamic day names -->
             <div class="grid grid-cols-7 bg-gradient-to-r from-orange-50 to-orange-100">
-                @foreach (['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $hari)
-                    <div class="py-4 text-center text-sm font-semibold text-gray-700">
-                        {{ $hari }}
+                @php
+                    $fullDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    $shortDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+                @endphp
+
+                @foreach ($fullDays as $index => $hari)
+                    <div class="calendar-day-header py-2 sm:py-4 text-center text-sm font-semibold text-gray-700">
+                        <span class="hidden sm:inline">{{ $hari }}</span>
+                        <span class="sm:hidden">{{ $shortDays[$index] }}</span>
                     </div>
                 @endforeach
             </div>
+
 
             <!-- Calendar Days -->
             <div class="grid grid-cols-7 gap-px bg-gray-200">
                 @foreach ($kalender as $minggu)
                     @foreach ($minggu as $hari)
-                        <div class="min-h-[120px] bg-white relative group calendar-cell">
+                        <div class="min-h-[100px] sm:min-h-[120px] bg-white relative group calendar-cell">
                             @if ($hari)
                                 <button
                                     onclick="openEventModal('{{ $tanggalSaatIni->year }}-{{ str_pad($tanggalSaatIni->month, 2, '0', STR_PAD_LEFT) }}-{{ str_pad($hari, 2, '0', STR_PAD_LEFT) }}')"
-                                    class="w-full h-full flex flex-col hover:bg-orange-50 rounded-lg p-3 transition-colors duration-300
-                                    {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
-                                        ? 'bg-orange-50'
-                                        : '' }}">
+                                    class="w-full h-full flex flex-col hover:bg-orange-50 rounded-lg p-1 sm:p-3 transition-colors duration-300
+                                {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
+                                    ? 'bg-orange-50'
+                                    : '' }}">
                                     <span
-                                        class="text-sm font-medium inline-flex items-center justify-center w-8 h-8 
-                                        {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
-                                            ? 'text-white bg-orange-500 rounded-full shadow-lg'
-                                            : 'text-gray-700' }}">
+                                        class="text-xs sm:text-sm font-medium inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 
+                                    {{ $tanggalSaatIni->year == now()->year && $tanggalSaatIni->month == now()->month && $hari == now()->day
+                                        ? 'text-white bg-orange-500 rounded-full shadow-lg'
+                                        : 'text-gray-700' }}">
                                         {{ $hari }}
                                     </span>
                                     <!-- Event List -->
-                                    <div class="mt-2 space-y-1.5 max-h-20 overflow-y-auto custom-scrollbar">
+                                    <div
+                                        class="mt-1 sm:mt-2 space-y-1 max-h-16 sm:max-h-20 overflow-y-auto custom-scrollbar">
                                         @php
                                             $dateKey = sprintf(
                                                 '%s-%s-%s',
@@ -132,7 +158,7 @@
                                             @foreach ($events[$dateKey] as $event)
                                                 <div class="group/event relative">
                                                     <div onclick="openEventModal('{{ $dateKey }}', { id: {{ $event->id }}, title: '{{ addslashes($event->title) }}', content: '{{ addslashes($event->content) }}' })"
-                                                        class="px-2.5 py-1.5 text-xs bg-orange-100 text-orange-800 rounded-lg truncate hover:bg-orange-200 cursor-pointer transition-colors duration-200 shadow-sm">
+                                                        class="event-title px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-xs bg-orange-100 text-orange-800 rounded-lg truncate hover:bg-orange-200 cursor-pointer transition-colors duration-200 shadow-sm">
                                                         {{ $event->title }}
                                                     </div>
                                                 </div>
