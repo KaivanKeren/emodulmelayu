@@ -296,8 +296,8 @@ class AnswerController extends Controller
             'answered_questions' => $answeredQuestions,
             'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
             'total_score' => round($totalScore, 2),
-            'assessment_started_at' => $userAnswers->flatten()->min('created_at'),
-            'assessment_completed_at' => $userAnswers->flatten()->max('created_at'),
+            'assessment_started_at' => $userAnswers->flatten()->min('created_at') ?? null,
+            'assessment_completed_at' => $userAnswers->flatten()->max('created_at') ?? null,
         ];
 
         return view('admin.answers.detail', compact('assessment', 'user', 'questionsDetail', 'summary', 'pendingUsers'));
