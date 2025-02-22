@@ -82,6 +82,24 @@
                             </div>
                         </div>
 
+                        <!-- Timer -->
+                        <div class="rounded-md">
+                            <label for="timer" class="block text-sm font-medium text-gray-700 my-2">
+                                Waktu Timer
+                            </label>
+                            <div
+                                class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                <span class="text-gray-400">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                </span>
+                                <input type="time" name="timer" id="timer" step="1" required
+                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
+                            </div>
+                            @error('timer')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Questions Section -->
                         <h3 class="text-lg font-medium text-gray-900">Pertanyaan</h3>
 

@@ -61,15 +61,26 @@
                                     <option value="Terbuka"
                                         {{ old('status', $assessment->status) == 'Terbuka' ? 'selected' : '' }}>Terbuka
                                     </option>
-                                    <option value="Terjawab"
-                                        {{ old('status', $assessment->status) == 'Terjawab' ? 'selected' : '' }}>Terjawab
-                                    </option>
-                                    <option value="Selesai"
-                                        {{ old('status', $assessment->status) == 'Selesai' ? 'selected' : '' }}>Selesai
-                                    </option>
                                 </select>
                             </div>
                             @error('status')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Timer --}}
+                        <div class="rounded-md">
+                            <div
+                                class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                                <span class="text-gray-400">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                </span>
+                                <input type="time" name="timer" id="timer" step="1" required
+                                    value="{{ old('timer', $assessment->timer) }}"
+                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
+
+                            </div>
+                            @error('timer')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

@@ -22,10 +22,11 @@
 
             <!-- Main Content Card -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                <!-- Assessment Info Section -->
-                <div class="p-6 border-b border-gray-100">
+                <div class="p-6 space-y-8">
+                    {{-- Assessment Basic Info --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
+                        {{-- Left Column --}}
+                        <div class="space-y-6">
                             <div>
                                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</label>
                                 <p class="mt-1 text-lg font-medium text-gray-900">{{ $assessment->title }}</p>
@@ -34,71 +35,109 @@
                                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</label>
                                 <p class="mt-1 text-lg font-medium text-gray-900">{{ $assessment->category }}</p>
                             </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu
+                                    Pengerjaan</label>
+                                @if ($assessment->timer === null)
+                                    <p class="mt-1 text-lg font-medium text-gray-900">Tidak ada batas waktu</p>
+                                @else
+                                    <p class="mt-1 text-lg font-medium text-gray-900">
+                                        @php
+                                            try {
+                                                $time = new DateTime($assessment->timer);
+                                                $hours = $time->format('H');
+                                                $minutes = $time->format('i');
+                                                $seconds = $time->format('s');
+
+                                                $output = [];
+                                                if ($hours > 0) {
+                                                    $output[] = $hours . ' jam';
+                                                }
+                                                if ($minutes > 0) {
+                                                    $output[] = $minutes . ' menit';
+                                                }
+                                                if ($seconds > 0) {
+                                                    $output[] = $seconds . ' detik';
+                                                }
+
+                                                echo empty($output) ? '0 detik' : implode(' ', $output);
+                                            } catch (Exception $e) {
+                                                echo 'Waktu tidak valid';
+                                            }
+                                        @endphp
+                                    </p>
+                                @endif
+                            </div>
                         </div>
-                        <div class="space-y-4">
+
+                        {{-- Right Column --}}
+                        <div class="space-y-6">
                             <div>
                                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</label>
                                 <div class="mt-1">
                                     <span
                                         class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                    @if ($assessment->status === 'Selesai') bg-green-100 text-green-800
-                                    @elseif($assessment->status === 'Terjawab') bg-blue-100 text-blue-800
-                                    @elseif($assessment->status === 'Terbuka') bg-yellow-100 text-yellow-800
-                                    @else bg-gray-100 text-gray-800 @endif">
+                                        @if ($assessment->status === 'Selesai') bg-green-100 text-green-800
+                                        @elseif($assessment->status === 'Terjawab') bg-blue-100 text-blue-800
+                                        @elseif($assessment->status === 'Terbuka') bg-yellow-100 text-yellow-800
+                                        @else bg-gray-100 text-gray-800 @endif">
                                         {{ ucfirst($assessment->status) }}
                                     </span>
                                 </div>
                             </div>
 
                             @if ($assessment->status === 'Terbuka')
-                                <div>
-                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Token</label>
-                                    <div class="mt-2 flex items-center gap-4">
-                                        @if ($assessment->token && $assessment->token_expires_at && now()->lt($assessment->token_expires_at))
-                                            <div class="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200 relative">
-                                                <div
-                                                    class="font-mono text-lg text-gray-900 flex items-center justify-between">
-                                                    <span id="assessmentToken">{{ $assessment->token }}</span>
-                                                    <button onclick="copyToken()"
-                                                        class="ml-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                                                        title="Salin Token">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                        </svg>
-                                                    </button>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label
+                                            class="text-xs font-medium text-gray-500 uppercase tracking-wider">Token</label>
+                                        <div class="mt-2">
+                                            @if ($assessment->token && $assessment->token_expires_at && now()->lt($assessment->token_expires_at))
+                                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
+                                                    <div
+                                                        class="font-mono text-lg text-gray-900 flex items-center justify-between">
+                                                        <span id="assessmentToken">{{ $assessment->token }}</span>
+                                                        <button onclick="copyToken()"
+                                                            class="text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                                                            title="Salin Token">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 mt-2">
+                                                        Berlaku hingga pukul:
+                                                        {{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->format('H:i') }}
+                                                        ({{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->diffForHumans() }})
+                                                    </div>
+                                                    <div id="copySuccessMessage"
+                                                        class="hidden absolute top-full left-0 mt-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                                        Token berhasil disalin
+                                                    </div>
                                                 </div>
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    Berlaku hingga pukul:
-                                                    {{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->format('H:i') }}
-                                                    ({{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->diffForHumans() }})
-                                                </div>
-
-                                                <!-- Optional: Add a hidden success message -->
-                                                <div id="copySuccessMessage"
-                                                    class="hidden absolute top-full left-0 mt-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                                    Token berhasil disalin
-                                                </div>
-                                            </div>
-                                        @else
-                                            <span class="text-sm text-gray-500">Token tidak tersedia atau sudah
-                                                kedaluwarsa</span>
-                                        @endif
+                                            @else
+                                                <span class="text-sm text-gray-500">Token tidak tersedia atau sudah
+                                                    kedaluwarsa</span>
+                                            @endif
+                                        </div>
                                     </div>
+
+                                    <form action="{{ route('assessments.regenerate-token', $assessment) }}" method="POST"
+                                        class="mt-4">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 shadow-sm transition-colors">
+                                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                                            Generate Token Baru
+                                        </button>
+                                    </form>
                                 </div>
-                                <form action="{{ route('assessments.regenerate-token', $assessment) }}" method="POST">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 shadow-sm transition-colors">
-                                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
-                                        Generate Token Baru
-                                    </button>
-                                </form>
+                            @endif
                         </div>
                     </div>
-                    @endif
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class Assessment extends Model
 {
-    protected $fillable = ['title', 'category', 'status', 'token', 'token_expires_at'];
+    protected $fillable = ['title', 'category', 'status', 'token', 'token_expires_at', 'timer'];
 
     public function questions()
     {

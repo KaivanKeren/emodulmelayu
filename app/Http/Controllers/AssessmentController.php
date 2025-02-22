@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssessmentRequest;
 use App\Http\Resources\AnswerResource;
 use App\Http\Resources\AssessmentResource;
 use App\Models\Answer;
@@ -58,36 +59,10 @@ class AssessmentController extends Controller
         return view('admin.assessments.create', compact('pendingUsers'));
     }
 
-    public function store(Request $request)
+    public function store(AssessmentRequest $request)
     {
         try {
-            $validated = $request->validate([
-                'title' => 'required|max:255',
-                'category' => 'required|max:255',
-                'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
-                'questions' => 'required|array|min:1',
-                'questions.*.content' => 'required|string',
-                'questions.*.question_type' => 'required|in:single_choice,multiple_choice',
-                'questions.*.options' => 'required|array|min:1',
-                'questions.*.options.*' => 'required|string',
-                'questions.*.correct_answer' => 'required_if:questions.*.question_type,single_choice',
-                'questions.*.correct_answer.*' => 'required_if:questions.*.question_type,multiple_choice',
-            ], [
-                'title.required' => 'Judul assessment wajib diisi',
-                'title.max' => 'Judul tidak boleh lebih dari 255 karakter',
-                'category.required' => 'Kategori assessment wajib diisi',
-                'status.required' => 'Status assessment wajib diisi',
-                'status.in' => 'Status yang dipilih tidak valid',
-                'questions.required' => 'Assessment harus memiliki minimal satu pertanyaan',
-                'questions.*.content.required' => 'Teks pertanyaan wajib diisi',
-                'questions.*.question_type.required' => 'Tipe pertanyaan wajib dipilih',
-                'questions.*.question_type.in' => 'Tipe pertanyaan tidak valid',
-                'questions.*.options.required' => 'Setiap pertanyaan harus memiliki pilihan jawaban',
-                'questions.*.options.min' => 'Setiap pertanyaan harus memiliki minimal satu pilihan jawaban',
-                'questions.*.options.*.required' => 'Teks pilihan jawaban wajib diisi',
-                'questions.*.correct_answer.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda',
-                'questions.*.correct_answer.*.required_if' => 'Pilihan jawaban benar wajib dipilih untuk pertanyaan pilihan ganda kompleks',
-            ]);
+            $validated = $request->validated();
 
             DB::beginTransaction();
 
@@ -96,7 +71,6 @@ class AssessmentController extends Controller
                 'token_expires_at' => null
             ];
 
-            // Generate token only if status is 'Terbuka'
             if ($validated['status'] === 'Terbuka') {
                 $tokenData = [
                     'token' => substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6),
@@ -108,14 +82,12 @@ class AssessmentController extends Controller
                 'title' => $validated['title'],
                 'category' => $validated['category'],
                 'status' => $validated['status'],
+                'timer' => $validated['timer'],
                 'token' => $tokenData['token'],
                 'token_expires_at' => $tokenData['token_expires_at']
             ]);
 
             foreach ($validated['questions'] as $questionData) {
-
-                $imagePath = null;
-
                 $question = $assessment->questions()->create([
                     'content' => $questionData['content'],
                     'question_type' => $questionData['question_type'],
@@ -137,14 +109,8 @@ class AssessmentController extends Controller
 
             return redirect()->route('assessments.index')
                 ->with('success', 'Assessment berhasil dibuat.');
-        } catch (ValidationException $e) {
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput()
-                ->with('error', 'Mohon periksa kembali data yang dimasukkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -211,7 +177,8 @@ class AssessmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             'category' => 'required|max:255',
-            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai'
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
+            'timer' => 'nullable'
         ]);
 
         // Jika status berubah menjadi Terbuka, generate token
