@@ -200,74 +200,96 @@ class AnswerController extends Controller
 
     public function detail(Assessment $assessment, User $user)
     {
-        // Load assessment with questions and options
+        // Load assessment with questions and options in a single query
         $assessment->load(['questions.options']);
 
+        // Get pending users count
         $pendingUsers = User::where('status', 'Pending')->count();
 
-        // Get user's answers for this assessment
-        $userAnswers = Answer::whereHas('question', function ($query) use ($assessment) {
-            $query->where('assessment_id', $assessment->id);
-        })
+        // Get user's answers for this assessment - optimized query
+        $userAnswers = Answer::with(['question.options', 'option'])
+            ->whereHas('question', function ($query) use ($assessment) {
+                $query->where('assessment_id', $assessment->id);
+            })
             ->where('user_id', $user->id)
-            ->with(['question.options', 'option'])
             ->get()
             ->groupBy('question_id');
 
         // Get total number of questions for score calculation
         $totalQuestions = $assessment->questions->count();
 
-        // Calculate total score using the same logic as show function
-        $totalScore = 0;
-        foreach ($userAnswers as $questionId => $answers) {
-            $question = $answers->first()->question;
-            $selectedOptions = $answers->pluck('option');
-
-            if ($question->question_type === 'single_choice') {
-                // For single choice questions
-                $isCorrect = $selectedOptions->contains(function ($option) {
-                    return $option->is_correct;
-                });
-                $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
-            } else {
-                // For multiple choice questions
-                $correctOptions = $question->options->where('is_correct', true);
-                $totalCorrectOptions = $correctOptions->count();
-
-                if ($selectedOptions->count() > $totalCorrectOptions) {
-                    $questionScore = 0;
-                } else {
-                    $correctlySelected = $selectedOptions->where('is_correct', true)->count();
-                    $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
-
-                    // Calculate base score
-                    $baseScore = $correctlySelected / $totalCorrectOptions;
-
-                    // Calculate penalty
-                    $totalOptions = $question->options->count();
-                    $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
-                    $penalty = $incorrectlySelected * $penaltyPerWrong;
-
-                    // Calculate final question score
-                    $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
-                }
-            }
-
-            $totalScore += $questionScore;
+        if ($totalQuestions === 0) {
+            return back()->with('error', 'This assessment has no questions.');
         }
 
-        // Prepare detailed answer data
-        $questionsDetail = $assessment->questions->map(function ($question) use ($userAnswers) {
-            $answers = $userAnswers->get($question->id);
+        // Track the total score separately
+        $totalScore = 0;
+        $questionScores = [];
+
+        // First pass: Calculate all question scores and store them
+        foreach ($assessment->questions as $question) {
+            $questionId = $question->id;
+            $answers = $userAnswers->get($questionId);
+            $questionScore = 0;
+
+            // Calculate score if user has answered this question
+            if ($answers && $answers->isNotEmpty()) {
+                $selectedOptions = $answers->pluck('option');
+
+                if ($question->question_type === 'single_choice') {
+                    // For single choice questions
+                    $isCorrect = $selectedOptions->contains(function ($option) {
+                        return $option->is_correct;
+                    });
+                    $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                } else {
+                    // For multiple choice questions
+                    $correctOptions = $question->options->where('is_correct', true);
+                    $totalCorrectOptions = $correctOptions->count();
+
+                    if ($totalCorrectOptions > 0 && $selectedOptions->isNotEmpty()) {
+                        if ($selectedOptions->count() > $totalCorrectOptions) {
+                            $questionScore = 0;
+                        } else {
+                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                            // Calculate base score
+                            $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                            // Calculate penalty (avoid division by zero)
+                            $totalOptions = $question->options->count();
+                            $nonCorrectOptions = $totalOptions - $totalCorrectOptions;
+                            $penaltyPerWrong = ($nonCorrectOptions > 0) ? (1 / $nonCorrectOptions) : 0;
+                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                            // Calculate final question score
+                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                        }
+                    }
+                }
+
+                // Add to total score
+                $totalScore += $questionScore;
+            }
+
+            // Store the score for this question
+            $questionScores[$questionId] = round($questionScore, 2);
+        }
+
+        // Second pass: Prepare detailed view data
+        $questionsDetail = $assessment->questions->map(function ($question) use ($userAnswers, $questionScores) {
+            $questionId = $question->id;
+            $answers = $userAnswers->get($questionId);
 
             return [
                 'question' => [
-                    'id' => $question->id,
+                    'id' => $questionId,
                     'content' => $question->content,
                     'type' => $question->question_type,
                 ],
-                'is_answered' => !is_null($answers),
-                'user_answers' => $answers ? [
+                'is_answered' => !is_null($answers) && $answers->isNotEmpty(),
+                'user_answers' => ($answers && $answers->isNotEmpty()) ? [
                     'selected_options' => $answers->map(function ($answer) {
                         return [
                             'option_id' => $answer->option->id,
@@ -275,7 +297,7 @@ class AnswerController extends Controller
                             'is_correct' => $answer->option->is_correct,
                         ];
                     }),
-                    'score' => $answers->first()->score,
+                    'score' => $questionScores[$questionId],
                     'submitted_at' => $answers->first()->created_at->format('Y-m-d H:i:s'),
                 ] : null,
                 'all_options' => $question->options->map(function ($option) {
@@ -288,17 +310,30 @@ class AnswerController extends Controller
             ];
         });
 
-        // Calculate summary statistics
-        $answeredQuestions = $userAnswers->count();
+        // Calculate summary statistics safely
+        $answeredQuestions = $questionsDetail->where('is_answered', true)->count();
+        $startedAt = null;
+        $completedAt = null;
+
+        if ($userAnswers->isNotEmpty()) {
+            $allAnswers = $userAnswers->flatten();
+            $startedAt = $allAnswers->min('created_at');
+            $completedAt = $allAnswers->max('created_at');
+        }
 
         $summary = [
             'total_questions' => $totalQuestions,
             'answered_questions' => $answeredQuestions,
-            'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
+            'completion_percentage' => $totalQuestions > 0 ? round(($answeredQuestions / $totalQuestions) * 100, 2) : 0,
             'total_score' => round($totalScore, 2),
-            'assessment_started_at' => $userAnswers->flatten()->min('created_at') ?? null,
-            'assessment_completed_at' => $userAnswers->flatten()->max('created_at') ?? null,
+            'assessment_started_at' => $startedAt,
+            'assessment_completed_at' => $completedAt,
         ];
+
+        // Import Carbon in the controller for date handling
+        if (!class_exists('Carbon\Carbon')) {
+            class_alias('Illuminate\Support\Carbon', 'Carbon\Carbon');
+        }
 
         return view('admin.answers.detail', compact('assessment', 'user', 'questionsDetail', 'summary', 'pendingUsers'));
     }
