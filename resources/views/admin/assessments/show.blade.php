@@ -151,7 +151,7 @@
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="flex items-center gap-2">
-                           <i data-lucide="circle-help" class="h-5 w-5 text-gray-400"></i>
+                            <i data-lucide="circle-help" class="h-5 w-5 text-gray-400"></i>
                             <p class="text-sm text-gray-600">Total: <span
                                     class="font-medium">{{ $assessment->questions->count() }}</span> pertanyaan</p>
                         </div>
@@ -282,6 +282,57 @@
             // Initialize all toggle states to hidden
             let toggleStates = {};
             let allQuestionsToggleState = false;
+
+            const viewers = document.querySelectorAll('.ql-viewer');
+
+            viewers.forEach(viewer => {
+                // Find all links in the viewer
+                const links = viewer.querySelectorAll('a[href*="drive.google.com/file"]');
+
+                links.forEach(link => {
+                    const url = link.getAttribute('href');
+
+                    // Check if it's a Google Drive file link
+                    if (url.includes('drive.google.com/file')) {
+                        try {
+                            // Extract the file ID from the Google Drive URL
+                            const fileIdMatch = url.match(/\/d\/([^\/]+)/);
+
+                            if (fileIdMatch && fileIdMatch[1]) {
+                                const fileId = fileIdMatch[1];
+
+                                const thumbnailUrl =
+                                    `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+
+                                // Create an image with the thumbnail URL
+                                const img = document.createElement('img');
+                                img.src = thumbnailUrl;
+                                img.alt = 'Google Drive Image';
+                                img.className = 'rounded-lg max-w-full my-2';
+                                img.style.maxHeight = '400px';
+
+                                // For higher quality on click, keep the original link
+                                link.innerHTML = '';
+                                link.appendChild(img);
+
+                                // Optional: Add a preview icon to indicate it's clickable
+                                const iconOverlay = document.createElement('div');
+                                iconOverlay.className =
+                                    'absolute top-0 right-0 bg-gray-800 bg-opacity-50 p-1 rounded-bl-lg';
+                                iconOverlay.innerHTML =
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path></svg>';
+
+                                // Make the link position relative for the overlay
+                                link.style.position = 'relative';
+                                link.style.display = 'inline-block';
+                                // link.appendChild(iconOverlay);
+                            }
+                        } catch (error) {
+                            console.error('Error processing Google Drive link:', error);
+                        }
+                    }
+                });
+            });
 
             window.toggleCorrectAnswers = function(questionId) {
                 const correctIcons = document.querySelectorAll(`.correct-icon-${questionId}`);

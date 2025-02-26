@@ -339,12 +339,9 @@
                     [{
                         align: []
                     }],
-                    ["link", "image", "formula"],
+                    ["link", "formula"],
                     ["clean"],
                 ]
-            },
-            imageResize: {
-                modules: ["Resize", "DisplaySize", "Toolbar"],
             },
             placeholder: 'Tulis teks...',
             theme: 'snow'
