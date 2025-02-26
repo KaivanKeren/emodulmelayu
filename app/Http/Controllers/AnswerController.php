@@ -298,7 +298,7 @@ class AnswerController extends Controller
                         ];
                     }),
                     'score' => $questionScores[$questionId],
-                    'submitted_at' => $answers->first()->created_at->format('Y-m-d H:i:s'),
+                    'submitted_at' => optional($answers->first())->created_at?->format('Y-m-d H:i:s'),
                 ] : null,
                 'all_options' => $question->options->map(function ($option) {
                     return [
