@@ -466,9 +466,6 @@ class AnswerController extends Controller
             ], 422);
         }
 
-        // Calculate score
-        $score = $this->apiCalculateScore($question, $options);
-
         // Create answers
         $answers = [];
         foreach ($options as $option) {
@@ -476,13 +473,11 @@ class AnswerController extends Controller
                 'question_id' => $question->id,
                 'option_id' => $option->id,
                 'user_id' => Auth::id(),
-                'score' => $score
             ]);
         }
 
         return response()->json([
             'message' => 'Answer submitted successfully',
-            'score' => $score,
             'data' => AnswerResource::collection(collect($answers))
         ]);
     }
