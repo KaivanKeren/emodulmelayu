@@ -51,7 +51,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [AssessmentController::class, 'create'])->name('assessments.create');
             Route::get('/edit/{assessment}', [AssessmentController::class, 'edit'])->name('assessments.edit');
             Route::post('/', [AssessmentController::class, 'store'])->name('assessments.store');
-            Route::post('/upload-image', [AssessmentController::class, 'upload'])->name('image.qeustion.store');
             Route::get('/{assessment}/answers', [AnswerController::class, 'show'])->name('answers.show');
             Route::get('/{assessment}/answers/export', [AnswerController::class, 'exportPDF'])->name('answers.export');
             Route::get('/{assessment}/answers/{user}', [AnswerController::class, 'detail'])->name('answers.detail');

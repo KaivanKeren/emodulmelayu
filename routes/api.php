@@ -54,8 +54,9 @@ Route::middleware('api')->group(function () {
             Route::get('{assessment}/questions/{question}', [QuestionController::class, 'apiShow']);
             Route::put('{assessment}/questions/{question}', [QuestionController::class, 'apiUpdate']);
             Route::delete('{assessment}/questions/{question}', [QuestionController::class, 'apiDestroy']);
-
-            Route::post('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiStore']);
+            Route::post('{assessment}/submit', [AnswerController::class, 'apiStore']);
+            Route::post('{assessment}/start', [AnswerController::class, 'startAssessment']);
+            Route::post('{assessment}/finish', [AnswerController::class, 'finishAssessment']);
             Route::get('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiIndex']);
             Route::get('{assessment}/questions/{question}/answers/{answer}', [AnswerController::class, 'apiShow']);
             Route::put('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiUpdate']);

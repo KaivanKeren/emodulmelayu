@@ -12,6 +12,9 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AnswerController extends Controller
 {
@@ -346,7 +349,11 @@ class AnswerController extends Controller
         // Get total number of questions
         $totalQuestions = $assessment->questions->count();
 
-        // Get answers with the same calculation logic as show method
+        if ($totalQuestions === 0) {
+            return back()->with('error', 'This assessment has no questions.');
+        }
+
+        // Get answers with the same calculation logic as detail method
         $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
         })
@@ -357,36 +364,54 @@ class AnswerController extends Controller
                 $user = $userAnswers->first()->user;
                 $questionGroups = $userAnswers->groupBy('question_id');
 
+                // Track the total score separately
                 $totalScore = 0;
+                $questionScores = [];
+
+                // First pass: Calculate all question scores and store them
                 foreach ($questionGroups as $questionId => $answers) {
                     $question = $answers->first()->question;
                     $selectedOptions = $answers->pluck('option');
+                    $questionScore = 0;
 
                     if ($question->question_type === 'single_choice') {
+                        // For single choice questions
                         $isCorrect = $selectedOptions->contains(function ($option) {
                             return $option->is_correct;
                         });
                         $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
                     } else {
+                        // For multiple choice questions
                         $correctOptions = $question->options->where('is_correct', true);
                         $totalCorrectOptions = $correctOptions->count();
 
-                        if ($selectedOptions->count() > $totalCorrectOptions) {
-                            $questionScore = 0;
-                        } else {
-                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
-                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+                        if ($totalCorrectOptions > 0 && $selectedOptions->isNotEmpty()) {
+                            if ($selectedOptions->count() > $totalCorrectOptions) {
+                                $questionScore = 0;
+                            } else {
+                                $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                                $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
 
-                            $baseScore = $correctlySelected / $totalCorrectOptions;
-                            $totalOptions = $question->options->count();
-                            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
-                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+                                // Calculate base score
+                                $baseScore = $correctlySelected / $totalCorrectOptions;
 
-                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                                // Calculate penalty (avoid division by zero)
+                                $totalOptions = $question->options->count();
+                                $nonCorrectOptions = $totalOptions - $totalCorrectOptions;
+                                $penaltyPerWrong = ($nonCorrectOptions > 0) ? (1 / $nonCorrectOptions) : 0;
+                                $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                                // Calculate final question score
+                                $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                            }
                         }
                     }
 
+                    // Add to total score
                     $totalScore += $questionScore;
+
+                    // Store the score for this question
+                    $questionScores[$questionId] = round($questionScore, 2);
                 }
 
                 return [
@@ -394,11 +419,12 @@ class AnswerController extends Controller
                     'total_score' => round($totalScore, 2),
                     'answered_questions' => $questionGroups->count(),
                     'completion_percentage' => round(($questionGroups->count() / $totalQuestions) * 100, 2),
-                    'questions_detail' => $questionGroups->map(function ($answers) {
+                    'questions_detail' => $questionGroups->map(function ($answers) use ($questionScores) {
+                        $questionId = $answers->first()->question->id;
                         return [
                             'question' => $answers->first()->question,
                             'selected_options' => $answers->pluck('option'),
-                            'score' => $answers->first()->score
+                            'score' => $questionScores[$questionId] // Use the calculated score from above
                         ];
                     })
                 ];
@@ -408,78 +434,316 @@ class AnswerController extends Controller
         return $pdf->download('Jawaban_Siswa_' . $assessment->title . '.pdf');
     }
 
-    public function apiStore(Request $request, Assessment $assessment, Question $question)
+    public function startAssessment(Request $request, Assessment $assessment)
     {
-        if ($question->assessment_id !== $assessment->id) {
-            return response()->json([
-                'message' => 'Question does not belong to this assessment'
-            ], 404);
-        }
-
-        // Validate token and inputs
+        // Validasi token
         $validated = $request->validate([
             'token' => 'required|string',
-            'option_ids' => 'required|array',
-            'option_ids.*' => 'required|exists:options,id'
         ]);
 
-        // Check token validity
+        // Periksa kevalidan token
         if ($validated['token'] !== $assessment->token) {
+            Log::warning('Invalid assessment token', [
+                'provided' => $validated['token'],
+                'expected' => $assessment->token
+            ]);
             return response()->json([
                 'message' => 'Invalid assessment token'
             ], 403);
         }
 
-        // Validate token expiration
+        // Validasi kedaluwarsa token
         if (now()->gt($assessment->token_expires_at)) {
+            Log::warning('Token expired', [
+                'expires_at' => $assessment->token_expires_at,
+                'current_time' => now()
+            ]);
             return response()->json([
                 'message' => 'The assessment token has expired'
             ], 403);
         }
 
-        // Get and validate options
-        $options = Option::whereIn('id', $validated['option_ids'])
-            ->where('question_id', $question->id)
-            ->get();
+        try {
+            // Penanganan nilai timer yang lebih baik
+            $assessmentDurationMinutes = 0;
+            $assessmentDurationFormatted = '00:00:00';
 
-        // Validate selected options count
-        if ($question->question_type === 'single_choice' && count($validated['option_ids']) > 1) {
+            if (!empty($assessment->timer)) {
+                // Periksa apakah timer dalam format H:i:s
+                if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $assessment->timer)) {
+                    // Timer dalam format H:i:s
+                    $parts = explode(':', $assessment->timer);
+                    $assessmentDurationMinutes = (intval($parts[0]) * 60) + intval($parts[1]);
+                    $assessmentDurationFormatted = $assessment->timer;
+                } else {
+                    // Coba konversi ke integer
+                    $assessmentDurationMinutes = intval($assessment->timer);
+
+                    // Format untuk ditampilkan
+                    $hours = floor($assessmentDurationMinutes / 60);
+                    $minutes = $assessmentDurationMinutes % 60;
+                    $assessmentDurationFormatted = sprintf('%02d:%02d:00', $hours, $minutes);
+                }
+            }
+
+            // Set session untuk assessment ini dengan waktu kedaluwarsa
+            $sessionKey = 'assessment_' . $assessment->id;
+            $expiryTime = now()->addMinutes($assessmentDurationMinutes);
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $sessionData = [
+                'user_id' => $userId,
+                'assessment_id' => $assessment->id,
+                'started_at' => now(),
+                'expires_at' => $expiryTime
+            ];
+
+            // Simpan data sesi ke cache dengan waktu kedaluwarsa yang tepat
+            $cacheDuration = $assessmentDurationMinutes > 0 ? $assessmentDurationMinutes * 60 : 60; // minimal 1 menit
+            Cache::put($sessionKey, $sessionData, $cacheDuration);
+
+            // Ambil pertanyaan untuk assessment ini
+            $questions = Question::where('assessment_id', $assessment->id)
+                ->with('options:id,question_id,content')
+                ->get(['id', 'content', 'question_type', 'assessment_id']);
+
             return response()->json([
-                'message' => 'Only one option can be selected for single choice questions'
-            ], 422);
-        }
-
-        // Validate if all options belong to the question
-        if ($options->count() !== count($validated['option_ids'])) {
-            return response()->json([
-                'message' => 'Invalid options provided for this question'
-            ], 422);
-        }
-
-        // Check for duplicate answers
-        if (Answer::where('user_id', Auth::id())
-            ->where('question_id', $question->id)
-            ->exists()
-        ) {
-            return response()->json([
-                'message' => 'You have already answered this question'
-            ], 422);
-        }
-
-        // Create answers
-        $answers = [];
-        foreach ($options as $option) {
-            $answers[] = Answer::create([
-                'question_id' => $question->id,
-                'option_id' => $option->id,
-                'user_id' => Auth::id(),
+                'message' => 'Assessment session started successfully',
+                'expires_at' => $expiryTime,
+                'timer' => $assessmentDurationFormatted,
+                'questions' => $questions
             ]);
-        }
+        } catch (\Exception $e) {
+            // Log exception yang terjadi
+            Log::error('Exception in startAssessment', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
 
-        return response()->json([
-            'message' => 'Answer submitted successfully',
-            'data' => AnswerResource::collection(collect($answers))
-        ]);
+            return response()->json([
+                'message' => 'Error starting assessment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function apiStore(Request $request, Assessment $assessment): JsonResponse
+    {
+        try {
+            // Periksa apakah sesi assessment ada
+            $sessionKey = 'assessment_' . $assessment->id;
+            $session = Cache::get($sessionKey);
+
+            if (!$session) {
+                return response()->json([
+                    'message' => 'No active assessment session found. Please start the assessment first.'
+                ], 403);
+            }
+
+            // Periksa apakah sesi sudah kedaluwarsa
+            if (now()->gt($session['expires_at'])) {
+                Cache::forget($sessionKey);
+                return response()->json([
+                    'message' => 'Your assessment session has expired'
+                ], 403);
+            }
+
+            // Validasi inputs
+            $validated = $request->validate([
+                'answers' => 'required|array',
+                'answers.*.question_id' => 'required|exists:questions,id',
+                'answers.*.option_ids' => 'required|array',
+                'answers.*.option_ids.*' => 'required|exists:options,id'
+            ]);
+
+            // Gunakan transaksi untuk memastikan integritas data
+            $result = DB::transaction(function () use ($validated, $assessment) {
+                $savedAnswers = [];
+                $errors = [];
+                $userId = Auth::id();
+
+                // Verifikasi bahwa user terotentikasi
+                if (!$userId) {
+                    throw new \Exception('User not authenticated');
+                }
+
+                // Proses setiap jawaban
+                foreach ($validated['answers'] as $answerData) {
+                    $questionId = $answerData['question_id'];
+                    $optionIds = $answerData['option_ids'];
+
+                    // Verifikasi pertanyaan milik assessment
+                    $question = Question::where('id', $questionId)
+                        ->where('assessment_id', $assessment->id)
+                        ->first();
+
+                    if (!$question) {
+                        $errors[] = "Question {$questionId} does not belong to this assessment";
+                        continue;
+                    }
+
+                    // Periksa jawaban ganda
+                    if (Answer::where('user_id', $userId)
+                        ->where('question_id', $questionId)
+                        ->exists()
+                    ) {
+                        $errors[] = "You have already answered question {$questionId}";
+                        continue;
+                    }
+
+                    // Validasi jumlah opsi yang dipilih untuk pilihan tunggal
+                    if ($question->question_type === 'single_choice' && count($optionIds) > 1) {
+                        $errors[] = "Only one option can be selected for single choice question {$questionId}";
+                        continue;
+                    }
+
+                    // Dapatkan dan validasi opsi
+                    $options = Option::whereIn('id', $optionIds)
+                        ->where('question_id', $questionId)
+                        ->get();
+
+                    // Validasi apakah semua opsi milik pertanyaan
+                    if ($options->count() !== count($optionIds)) {
+                        $errors[] = "Invalid options provided for question {$questionId}";
+                        continue;
+                    }
+
+                    // Buat jawaban untuk pertanyaan ini
+                    foreach ($options as $option) {
+                        $answer = Answer::create([
+                            'question_id' => $questionId,
+                            'option_id' => $option->id,
+                            'user_id' => $userId,
+                        ]);
+
+                        $savedAnswers[] = $answer;
+                    }
+                }
+
+                return ['savedAnswers' => $savedAnswers, 'errors' => $errors];
+            });
+
+            // Return hasil
+            $response = [
+                'message' => count($result['savedAnswers']) > 0 ? 'Answers submitted successfully' : 'No answers were submitted',
+                'data' => AnswerResource::collection(collect($result['savedAnswers']))
+            ];
+
+            if (count($result['errors']) > 0) {
+                $response['errors'] = $result['errors'];
+            }
+
+            return response()->json($response);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database errors
+            Log::error('Database exception in apiStore', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
+
+            return response()->json([
+                'message' => 'Database error occurred'
+            ], 500);
+        } catch (\Exception $e) {
+            // Handle all other exceptions
+            Log::error('Exception in apiStore', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while processing your request'
+            ], 500);
+        }
+    }
+
+    public function finishAssessment(Assessment $assessment): JsonResponse
+    {
+        try {
+            $sessionKey = 'assessment_' . $assessment->id;
+            $userId = Auth::id();
+
+            // Verify user is authenticated
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            // Verify session exists
+            if (!Cache::has($sessionKey)) {
+                return response()->json([
+                    'message' => 'No active assessment session found'
+                ], 404);
+            }
+
+            // Clear the session
+            Cache::forget($sessionKey);
+
+            // Get all questions for this assessment
+            $assessmentQuestions = Question::where('assessment_id', $assessment->id)->pluck('id');
+
+            if ($assessmentQuestions->isEmpty()) {
+                return response()->json([
+                    'message' => 'Assessment completed',
+                    'questions_answered' => 0,
+                    'total_questions' => 0,
+                    'completion_percentage' => 0
+                ]);
+            }
+
+            // Get count of questions answered
+            $answeredCount = Answer::where('user_id', $userId)
+                ->whereIn('question_id', $assessmentQuestions)
+                ->distinct('question_id')
+                ->count('question_id');
+
+            $totalQuestions = $assessmentQuestions->count();
+
+            return response()->json([
+                'message' => 'Assessment completed',
+                'questions_answered' => $answeredCount,
+                'total_questions' => $totalQuestions,
+                'completion_percentage' => $totalQuestions > 0 ?
+                    round(($answeredCount / $totalQuestions) * 100, 1) : 0
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database errors
+            Log::error('Database exception in finishAssessment', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
+
+            return response()->json([
+                'message' => 'Database error occurred when finishing assessment'
+            ], 500);
+        } catch (\Exception $e) {
+            // Handle all other exceptions
+            Log::error('Exception in finishAssessment', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while finishing the assessment'
+            ], 500);
+        }
     }
 
     public function apiIndex(Request $request, Assessment $assessment, Question $question)
