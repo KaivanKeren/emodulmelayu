@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\AnswerResource;
 use App\Models\Assessment;
 use App\Models\User;
+use App\Models\UserAssessment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -728,12 +729,17 @@ class AnswerController extends Controller
 
             $totalQuestions = $assessmentQuestions->count();
 
-            return response()->json([
-                'message' => 'Assessment completed',
-                'questions_answered' => $answeredCount,
+            $userAssessment = UserAssessment::create([
+                'user_id' => $userId,
+                'assessment_id' => $assessment->id,
                 'total_questions' => $totalQuestions,
-                'completion_percentage' => $totalQuestions > 0 ?
-                    round(($answeredCount / $totalQuestions) * 100, 1) : 0
+                'question_answered' => $answeredCount
+            ]);
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Assessment completed',
+                'data' => $userAssessment
             ]);
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database errors
@@ -813,60 +819,5 @@ class AnswerController extends Controller
         }
 
         return new AnswerResource($answer->load('option'));
-    }
-
-    public function apiUpdate(Request $request, Assessment $assessment, Question $question)
-    {
-        // Validate token
-        $validated = $request->validate([
-            'token' => 'required|string'
-        ]);
-
-        if ($validated['token'] !== $assessment->token) {
-            return response()->json([
-                'message' => 'Invalid assessment token'
-            ], 403);
-        }
-
-        if ($question->assessment_id !== $assessment->id) {
-            return response()->json([
-                'message' => 'Question does not belong to this assessment'
-            ], 404);
-        }
-
-        Answer::where('question_id', $question->id)
-            ->where('user_id', Auth::id())
-            ->delete();
-
-        return $this->apiStore($request, $assessment, $question);
-    }
-
-    public function apiDestroy(Request $request, Assessment $assessment, Question $question)
-    {
-        // Validate token
-        $validated = $request->validate([
-            'token' => 'required|string'
-        ]);
-
-        if ($validated['token'] !== $assessment->token) {
-            return response()->json([
-                'message' => 'Invalid assessment token'
-            ], 403);
-        }
-
-        if ($question->assessment_id !== $assessment->id) {
-            return response()->json([
-                'message' => 'Question does not belong to this assessment'
-            ], 404);
-        }
-
-        $deleted = Answer::where('question_id', $question->id)
-            ->where('user_id', Auth::id())
-            ->delete();
-
-        return response()->json([
-            'message' => 'Answer deleted successfully',
-            'deleted_count' => $deleted
-        ]);
     }
 }

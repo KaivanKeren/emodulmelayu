@@ -8,6 +8,7 @@ use App\Http\Resources\AssessmentResource;
 use App\Models\Answer;
 use App\Models\Assessment;
 use App\Models\User;
+use App\Models\UserAssessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -209,10 +210,35 @@ class AssessmentController extends Controller
     // API Methods
     public function apiIndex()
     {
+        $userId = Auth::id();
+        $assessments = Assessment::latest()->get();
+        $userAssessments = UserAssessment::where('user_id', $userId)->get();
+
+        if ($userId) {
+            return response()->json([
+                'code' => 200,
+                'message' => 'Assessment retrieved successfully',
+                'data' => $assessments->map(function ($assessment) use ($userAssessments) {
+                    return [
+                        'id' => $assessment->id,
+                        'title' => $assessment->title,
+                        'category' => $assessment->category,
+                        'status' => $assessment->status,
+                        'token' => $assessment->token,
+                        'created_at' => $assessment->created_at,
+                        'updated_at' => $assessment->updated_at,
+                        'token_expires_at' => $assessment->token_expires_at,
+                        'timer' => $assessment->timer,
+                        'done' => $userAssessments->contains('assessment_id', $assessment->id) ? 1 : 0,
+                    ];
+                })
+            ]);
+        }
+
         return response()->json([
             'code' => 200,
             'message' => 'Assessment retrieved successfully',
-            'data' => Assessment::latest()->get()
+            'data' => $assessments
         ]);
     }
 
