@@ -463,6 +463,27 @@ class AnswerController extends Controller
             ], 403);
         }
 
+        // Get authenticated user
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        // Check if user has already answered questions in this assessment
+        $hasCompleted = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->where('user_id', $userId)
+            ->exists();
+
+        if ($hasCompleted) {
+            return response()->json([
+                'message' => 'You have already completed this assessment'
+            ], 403);
+        }
+
         try {
             // Penanganan nilai timer yang lebih baik
             $assessmentDurationMinutes = 0;
@@ -489,13 +510,6 @@ class AnswerController extends Controller
             // Set session untuk assessment ini dengan waktu kedaluwarsa
             $sessionKey = 'assessment_' . $assessment->id;
             $expiryTime = now()->addMinutes($assessmentDurationMinutes);
-            $userId = Auth::id();
-
-            if (!$userId) {
-                return response()->json([
-                    'message' => 'User not authenticated'
-                ], 401);
-            }
 
             $sessionData = [
                 'user_id' => $userId,
