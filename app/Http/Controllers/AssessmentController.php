@@ -7,11 +7,15 @@ use App\Http\Resources\AnswerResource;
 use App\Http\Resources\AssessmentResource;
 use App\Models\Answer;
 use App\Models\Assessment;
+use App\Models\Question;
 use App\Models\User;
 use App\Models\UserAssessment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -371,40 +375,116 @@ class AssessmentController extends Controller
         ]);
     }
 
-    public function apiGetAllResults(Assessment $assessment)
+    public function startAssessment(Request $request, Assessment $assessment)
     {
-        // Ambil semua pertanyaan terkait dengan assessment
-        $questions = $assessment->questions()->with('options')->get();
-
-        // Data untuk hasil semua pertanyaan
-        $results = $questions->map(function ($question) {
-            // Ambil jawaban pengguna untuk setiap pertanyaan
-            $answers = Answer::where('question_id', $question->id)
-                ->where('user_id', Auth::id())
-                ->with(['option', 'question'])
-                ->get();
-
-            // Ambil opsi yang benar untuk setiap pertanyaan
-            $correctOptions = $question->options->where('is_correct', true);
-
-            // Format data hasil
-            return [
-                'question_id' => $question->id,
-                'question_type' => $question->question_type,
-                'answers' => AnswerResource::collection($answers),
-                'score' => $answers->first() ? $answers->first()->score : 0,
-                'correct_options' => $correctOptions,
-            ];
-        });
-
-        // Hitung total score
-        $totalScore = $results->sum('score');
-
-        // Kembalikan respons JSON
-        return response()->json([
-            'assessment_id' => $assessment->id,
-            'results' => $results,
-            'total_score' => $totalScore
+        // Validasi token
+        $validated = $request->validate([
+            'token' => 'required|string',
         ]);
+
+        // Periksa kevalidan token
+        if ($validated['token'] !== $assessment->token) {
+            Log::warning('Invalid assessment token', [
+                'provided' => $validated['token'],
+                'expected' => $assessment->token
+            ]);
+            return response()->json([
+                'message' => 'Invalid assessment token'
+            ], 403);
+        }
+
+        // Validasi kedaluwarsa token
+        if (now()->gt($assessment->token_expires_at)) {
+            Log::warning('Token expired', [
+                'expires_at' => $assessment->token_expires_at,
+                'current_time' => now()
+            ]);
+            return response()->json([
+                'message' => 'The assessment token has expired'
+            ], 403);
+        }
+
+        // Get authenticated user
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        // Check if user has already answered questions in this assessment
+        $hasCompleted = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->where('user_id', $userId)
+            ->exists();
+
+        if ($hasCompleted) {
+            return response()->json([
+                'message' => 'You have already completed this assessment'
+            ], 403);
+        }
+
+        try {
+            // Penanganan nilai timer yang lebih baik
+            $assessmentDurationMinutes = 0;
+            $assessmentDurationFormatted = '00:00:00';
+
+            if (!empty($assessment->timer)) {
+                // Periksa apakah timer dalam format H:i:s
+                if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $assessment->timer)) {
+                    // Timer dalam format H:i:s
+                    $parts = explode(':', $assessment->timer);
+                    $assessmentDurationMinutes = (intval($parts[0]) * 60) + intval($parts[1]);
+                    $assessmentDurationFormatted = $assessment->timer;
+                } else {
+                    // Coba konversi ke integer
+                    $assessmentDurationMinutes = intval($assessment->timer);
+
+                    // Format untuk ditampilkan
+                    $hours = floor($assessmentDurationMinutes / 60);
+                    $minutes = $assessmentDurationMinutes % 60;
+                    $assessmentDurationFormatted = sprintf('%02d:%02d:00', $hours, $minutes);
+                }
+            }
+
+            // Set session untuk assessment ini dengan waktu kedaluwarsa
+            $sessionKey = 'assessment_' . $assessment->id . '_user_' . $userId;
+            $expiryTime = now()->addMinutes($assessmentDurationMinutes);
+
+            $sessionData = [
+                'user_id' => $userId,
+                'assessment_id' => $assessment->id,
+                'started_at' => now(),
+                'expires_at' => $expiryTime
+            ];
+
+            // Simpan data sesi ke cache dengan waktu kedaluwarsa yang tepat
+            $cacheDuration = $assessmentDurationMinutes > 0 ? $assessmentDurationMinutes * 60 : 60; // minimal 1 menit
+            Cache::put($sessionKey, $sessionData, $cacheDuration);
+
+            // Ambil pertanyaan untuk assessment ini
+            $questions = Question::where('assessment_id', $assessment->id)
+                ->with('options:id,question_id,content')
+                ->get(['id', 'content', 'question_type', 'assessment_id']);
+
+            return response()->json([
+                'message' => 'Assessment session started successfully',
+                'expires_at' => $expiryTime,
+                'timer' => $assessmentDurationFormatted,
+                'questions' => $questions
+            ]);
+        } catch (\Exception $e) {
+            // Log exception yang terjadi
+            Log::error('Exception in startAssessment', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'assessment_id' => $assessment->id
+            ]);
+
+            return response()->json([
+                'message' => 'Error starting assessment: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
