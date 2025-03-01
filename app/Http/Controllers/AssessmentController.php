@@ -388,7 +388,7 @@ class AssessmentController extends Controller
                 'provided' => $validated['token'],
                 'expected' => $assessment->token
             ]);
-            return response()->json([
+            return response()->json( [
                 'message' => 'Invalid assessment token'
             ], 403);
         }
@@ -429,6 +429,7 @@ class AssessmentController extends Controller
             // Penanganan nilai timer yang lebih baik
             $assessmentDurationMinutes = 0;
             $assessmentDurationFormatted = '00:00:00';
+            $autoSaveBufferMinutes = rand(3, 5); 
 
             if (!empty($assessment->timer)) {
                 // Periksa apakah timer dalam format H:i:s
@@ -450,17 +451,24 @@ class AssessmentController extends Controller
 
             // Set session untuk assessment ini dengan waktu kedaluwarsa
             $sessionKey = 'assessment_' . $assessment->id . '_user_' . $userId;
-            $expiryTime = now()->addMinutes($assessmentDurationMinutes);
+
+            // Waktu pengerjaan untuk ditampilkan ke user dan untuk validasi di UI
+            $assessmentExpiryTime = now()->addMinutes($assessmentDurationMinutes);
+
+            // Waktu session server diperpanjang untuk mengakomodasi auto-save
+            $sessionExpiryTime = now()->addMinutes($assessmentDurationMinutes + $autoSaveBufferMinutes);
 
             $sessionData = [
                 'user_id' => $userId,
                 'assessment_id' => $assessment->id,
                 'started_at' => now(),
-                'expires_at' => $expiryTime
+                'assessment_expires_at' => $assessmentExpiryTime, // Waktu untuk timer UI
+                'session_expires_at' => $sessionExpiryTime        // Waktu sebenarnya untuk session
             ];
 
-            // Simpan data sesi ke cache dengan waktu kedaluwarsa yang tepat
-            $cacheDuration = $assessmentDurationMinutes > 0 ? $assessmentDurationMinutes * 60 : 60; // minimal 1 menit
+            // Simpan data sesi ke cache dengan waktu kedaluwarsa yang tepat (termasuk buffer)
+            $cacheDuration = $assessmentDurationMinutes > 0 ?
+                ($assessmentDurationMinutes + $autoSaveBufferMinutes) * 60 : (1 + $autoSaveBufferMinutes) * 60; // minimal 1 menit + buffer
             Cache::put($sessionKey, $sessionData, $cacheDuration);
 
             // Ambil pertanyaan untuk assessment ini
@@ -470,7 +478,7 @@ class AssessmentController extends Controller
 
             return response()->json([
                 'message' => 'Assessment session started successfully',
-                'expires_at' => $expiryTime,
+                'expires_at' => $assessmentExpiryTime, // Waktu yang ditampilkan ke user
                 'timer' => $assessmentDurationFormatted,
                 'questions' => $questions
             ]);

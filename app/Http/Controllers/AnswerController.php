@@ -439,7 +439,7 @@ class AnswerController extends Controller
     {
         try {
             $userId = Auth::id();
-            $sessionKey = 'assessment_' . $assessment->id . '_user_' . $userId; // Include user_id in sessionKey
+            $sessionKey = 'assessment_' . $assessment->id . '_user_' . $userId;
             $session = Cache::get($sessionKey);
 
             // Verify user is authenticated
@@ -455,12 +455,30 @@ class AnswerController extends Controller
                 ], 403);
             }
 
-            // Check if session has expired
-            if (now()->gt($session['expires_at'])) {
+            // Periksa apakah session telah berakhir berdasarkan waktu session yang diperpanjang
+            if (now()->gt($session['session_expires_at'])) {
                 Cache::forget($sessionKey);
                 return response()->json([
                     'message' => 'Your assessment session has expired'
                 ], 403);
+            }
+
+            // Periksa jika ini adalah auto-save setelah waktu pengerjaan berakhir
+            $isPostDeadlineAutoSave = false;
+            if (isset($session['assessment_expires_at']) && now()->gt($session['assessment_expires_at'])) {
+                // Flag untuk menandai ini adalah auto-save setelah waktu pengerjaan berakhir
+                $isPostDeadlineAutoSave = true;
+
+                // Periksa jika permintaan eksplisit menandai ini sebagai auto-save
+                $isAutoSave = $request->input('is_auto_save', false);
+
+                // Jika bukan auto-save eksplisit dan sudah melewati batas waktu pengerjaan
+                if (!$isAutoSave) {
+                    return response()->json([
+                        'message' => 'Assessment time has expired. Only auto-save is allowed.',
+                        'code' => 'TIME_EXPIRED'
+                    ], 403);
+                }
             }
 
             // Validate inputs
@@ -468,11 +486,12 @@ class AnswerController extends Controller
                 'answers' => 'required|array',
                 'answers.*.question_id' => 'required|exists:questions,id',
                 'answers.*.option_ids' => 'required|array',
-                'answers.*.option_ids.*' => 'required|exists:options,id'
+                'answers.*.option_ids.*' => 'required|exists:options,id',
+                'is_auto_save' => 'sometimes|boolean'
             ]);
 
             // Use transaction to ensure data integrity
-            $result = DB::transaction(function () use ($validated, $assessment) {
+            $result = DB::transaction(function () use ($validated, $assessment, $isPostDeadlineAutoSave) {
                 $savedAnswers = [];
                 $errors = [];
                 $userId = Auth::id();
@@ -497,14 +516,10 @@ class AnswerController extends Controller
                         continue;
                     }
 
-                    // Check for duplicate answers
-                    if (Answer::where('user_id', $userId)
+                    // Hapus jawaban yang sudah ada untuk pertanyaan ini
+                    Answer::where('user_id', $userId)
                         ->where('question_id', $questionId)
-                        ->exists()
-                    ) {
-                        $errors[] = "You have already answered question {$questionId}";
-                        continue;
-                    }
+                        ->delete();
 
                     // Validate number of options selected for single choice
                     if ($question->question_type === 'single_choice' && count($optionIds) > 1) {
@@ -538,9 +553,6 @@ class AnswerController extends Controller
                 return ['savedAnswers' => $savedAnswers, 'errors' => $errors];
             });
 
-            // Clear the session after storing answers
-            Cache::forget($sessionKey);
-
             // Get all questions for this assessment
             $assessmentQuestions = Question::where('assessment_id', $assessment->id)->pluck('id');
             $totalQuestions = $assessmentQuestions->count();
@@ -554,21 +566,39 @@ class AnswerController extends Controller
                     ->count('question_id');
             }
 
-            // Create UserAssessment record
-            $userAssessment = UserAssessment::create([
-                'user_id' => $userId,
-                'assessment_id' => $assessment->id,
-                'total_questions' => $totalQuestions,
-                'question_answered' => $answeredCount
-            ]);
+            // Check apakah sudah ada UserAssessment record
+            $userAssessment = UserAssessment::where('user_id', $userId)
+                ->where('assessment_id', $assessment->id)
+                ->first();
+
+            // Jika belum ada, buat baru, jika sudah ada, update
+            if (!$userAssessment) {
+                $userAssessment = UserAssessment::create([
+                    'user_id' => $userId,
+                    'assessment_id' => $assessment->id,
+                    'total_questions' => $totalQuestions,
+                    'question_answered' => $answeredCount
+                ]);
+            } else {
+                $userAssessment->update([
+                    'total_questions' => $totalQuestions,
+                    'question_answered' => $answeredCount
+                ]);
+            }
+
+            // Jika ini bukan auto-save atau submit terakhir, hapus session
+            if (!$request->input('is_auto_save', false)) {
+                Cache::forget($sessionKey);
+            }
 
             // Prepare response
             $response = [
                 'code' => 200,
-                'message' => count($result['savedAnswers']) > 0 ? 'Answers submitted and assessment completed successfully' : 'No answers were submitted',
+                'message' => count($result['savedAnswers']) > 0 ? 'Answers submitted successfully' : 'No answers were submitted',
                 'data' => [
                     'answers' => AnswerResource::collection(collect($result['savedAnswers'])),
-                    'assessment_summary' => $userAssessment
+                    'assessment_summary' => $userAssessment,
+                    'is_auto_save' => $request->input('is_auto_save', false)
                 ]
             ];
 
@@ -607,7 +637,7 @@ class AnswerController extends Controller
             ], 500);
         }
     }
-
+    
     public function apiIndex(Request $request, Assessment $assessment, Question $question)
     {
         // Validate token
