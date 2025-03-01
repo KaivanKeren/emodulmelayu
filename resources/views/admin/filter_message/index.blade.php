@@ -89,7 +89,7 @@
                         <div class="mt-2">
                             <input type="text" name="word" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Enter word to filter">
+                                placeholder="Masukkan kata yang ingin difilter">
                         </div>
 
                         <div class="mt-4 flex justify-end space-x-3">
