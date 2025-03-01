@@ -45,7 +45,7 @@
                                         <button type="submit"
                                             onclick="return confirm('Are you sure you want to delete this word?')"
                                             class="text-red-600 hover:text-red-900 font-medium">
-                                            Delete
+                                            Hapus
                                         </button>
                                     </form>
                                 </td>
@@ -53,7 +53,7 @@
                         @empty
                             <tr>
                                 <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No filtered words found.
+                                    Tidak ada kata yang difilter.
                                 </td>
                             </tr>
                         @endforelse
@@ -74,7 +74,7 @@
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
                 <div class="flex flex-col">
                     <div class="flex justify-between items-center pb-3">
-                        <p class="text-lg font-semibold">Add New Filtered Word</p>
+                        <p class="text-lg font-semibold">Tambahkan kata yang difilter</p>
                         <button onclick="document.getElementById('addWordModal').classList.add('hidden')"
                             class="text-gray-400 hover:text-gray-500">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@
                         <div class="mt-4 flex justify-end space-x-3">
                             <button type="button" onclick="document.getElementById('addWordModal').classList.add('hidden')"
                                 class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 transition-colors">
-                                Cancel
+                                Kembali
                             </button>
                             <button type="submit"
                                 class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
