@@ -104,11 +104,22 @@
                                         <span
                                             class="text-sm text-gray-500">{{ $respondent['completion_percentage'] }}%</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td class="px-6 py-4 flex gap-3 whitespace-nowrap text-sm text-gray-500">
                                         <a href="{{ route('answers.detail', ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
                                             class="text-blue-500 hover:text-blue-700 text-sm font-medium">
-                                            Lihat Detail
+                                            Detail
                                         </a>
+                                        <form
+                                            action="{{ route('answers.delete', parameters: ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('Are you sure you want to delete all answers for this user? They will be able to retake the assessment.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                                Reset
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach

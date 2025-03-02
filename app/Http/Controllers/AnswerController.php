@@ -103,6 +103,22 @@ class AnswerController extends Controller
         return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
     }
 
+    public function deleteUserAnswers(Assessment $assessment, $user)
+    {
+        try {
+            // Find all answers by this user for this assessment
+            $deletedCount = Answer::whereHas('question', function ($query) use ($assessment) {
+                $query->where('assessment_id', $assessment->id);
+            })->where('user_id', $user)->delete();
+
+            return redirect()->route('answers.show', $assessment)
+                ->with('success', "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.");
+        } catch (\Exception $e) {
+            return redirect()->route('answers.show', $assessment)
+                ->with('error', 'Failed to delete answers: ' . $e->getMessage());
+        }
+    }
+
     public function showApi(Assessment $assessment): JsonResponse
     {
         $assessment->load(['questions.options']);
@@ -635,7 +651,7 @@ class AnswerController extends Controller
             ], 500);
         }
     }
-    
+
     public function apiIndex(Request $request, Assessment $assessment, Question $question)
     {
         // Validate token

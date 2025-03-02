@@ -54,11 +54,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/{assessment}/answers', [AnswerController::class, 'show'])->name('answers.show');
             Route::get('/{assessment}/answers/export', [AnswerController::class, 'exportPDF'])->name('answers.export');
             Route::get('/{assessment}/answers/{user}', [AnswerController::class, 'detail'])->name('answers.detail');
+            Route::delete('/{assessment}/users/{user}/answers', [AnswerController::class, 'deleteUserAnswers'])->name('answers.delete');
             Route::get('/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show');
             Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
             Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
             Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])
-            ->name('assessments.regenerate-token');
+                ->name('assessments.regenerate-token');
             Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
             Route::get('/questions/{question}', [QuestionController::class, 'edit'])->name('questions.edit');
@@ -75,7 +76,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
         });
-        
+
         Route::prefix('discussions')->group(function () {
             Route::get('/', [DiscussionController::class, 'index'])->name('discussions.index');
             Route::get('/create', [DiscussionController::class, 'create'])->name('discussions.create');
@@ -87,7 +88,6 @@ Route::middleware('auth')->group(function () {
 
             Route::post('/{discussion}/messages', [MessageController::class, 'store'])->name('discussions.messages.store');
             Route::delete('/{discussion}/messages/{message}', [MessageController::class, 'destroy'])->name('discussions.messages.destroy');
-
         });
 
         Route::get('/filter-message', [FilterMessageController::class, 'index'])->name('filter-message.index');
