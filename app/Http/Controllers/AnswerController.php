@@ -19,8 +19,20 @@ use Illuminate\Support\Facades\Log;
 
 class AnswerController extends Controller
 {
-    public function show(Assessment $assessment)
+    public function show(Request $request, Assessment $assessment)
     {
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['name', 'email', 'school', 'total_score', 'answered_questions', 'completion_percentage'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+
         $pendingUsers = User::where('status', 'Pending')->count();
 
         // Load assessment with questions and options
@@ -99,6 +111,13 @@ class AnswerController extends Controller
                     })
                 ];
             });
+
+        // Apply sorting to the respondents collection
+        if ($sort === 'name') {
+            $respondents = $respondents->sortBy(function ($respondent) {
+                return $respondent['user']->name;
+            }, SORT_REGULAR, $direction === 'desc');
+        }
 
         return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
     }

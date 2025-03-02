@@ -8,9 +8,20 @@ use Illuminate\Http\Request;
 
 class FilterMessageController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $filterWords = FilterMessage::latest()
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['word', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+        $filterWords = FilterMessage::orderBy($sort, $direction)
             ->paginate(10);
 
         $pendingUsers = User::where('status', 'Pending')->count();

@@ -25,9 +25,23 @@ class SchoolController extends Controller
     /**
      * Display a listing of the schools (Web).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $schools = School::paginate(10);
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['name', 'address', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+
+        $schools = School::orderBy($sort, $direction)
+            ->paginate(10);
+
         $pendingUsers = User::where('status', 'Pending')->count();
         return view('admin.school.index', compact('schools', 'pendingUsers'));
     }

@@ -26,7 +26,20 @@
             <table class="w-full">
                 <thead>
                     <tr class="text-left text-gray-500 text-sm">
-                        <th class="pb-4">Nama</th>
+                        <th class="pb-4">
+                            <div class="flex items-center">
+                                Nama
+                                <a href="{{ route('users.index', ['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                    class="ml-1">
+                                    @if (request('sort') == 'name')
+                                        <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                            class="w-4 h-4"></i>
+                                    @else
+                                        <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>
+                                    @endif
+                                </a>
+                            </div>
+                        </th>
                         <th class="pb-4">Email</th>
                         <th class="pb-4">Role</th>
                         <th class="pb-4">Sekolah</th>
@@ -134,9 +147,9 @@
                         <select type="text" id="school" name="school"
                             class="w-full mt-1 px-3 py-2 border rounded-lg shadow-sm focus:ring focus:ring-blue-300">
                             <option value="">Semua</option>
-                        @foreach ($schools as $school)
-                            <option value="{{ $school->name }}">{{ $school->name }}</option>
-                        @endforeach
+                            @foreach ($schools as $school)
+                                <option value="{{ $school->name }}">{{ $school->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-4">

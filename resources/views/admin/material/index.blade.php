@@ -20,7 +20,20 @@
         <table class="w-full">
             <thead>
                 <tr class="text-left text-gray-500 text-sm">
-                    <th class="pb-4">Judul</th>
+                    <th class="pb-4">
+                        <div class="flex items
+                        -center">
+                            Judul
+                            <a href="{{ route('materials.index', ['sort' => 'title', 'direction' => request('sort') == 'title' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                class="ml-1">
+                                @if (request('sort') == 'title')
+                                    <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                        class="w-4 h-4"></i>
+                                @else
+                                    <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>
+                                @endif
+                            </a>
+                    </th>
                     <th class="pb-4">Deskripsi</th>
                     <th class="pb-4">Assets</th>
                     <th class="pb-4">Author</th>

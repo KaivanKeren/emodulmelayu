@@ -49,7 +49,14 @@
                             <tr>
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nama Siswa
+                                    <div class="flex items-center space-x-1">
+                                        <span>Nama</span>
+                                        <a href="{{ route('answers.show', ['assessment' => $assessment->id, 'sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                            class="text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="{{ request('sort') == 'name' ? (request('direction') == 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-down' }}"
+                                                class="w-4 h-4"></i>
+                                        </a>
+                                    </div>
                                 </th>
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

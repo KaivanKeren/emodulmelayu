@@ -7,7 +7,8 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-6">
             <h2 class="text-lg font-semibold">Manajemen Sekolah</h2>
             <div class="flex space-x-3">
-                <button onclick="toggleModal()" class="px-3 md:px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <button onclick="toggleModal()"
+                    class="px-3 md:px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
                 <a href="{{ route('schools.create') }}">
@@ -20,7 +21,20 @@
         <table class="w-full">
             <thead>
                 <tr class="text-left text-gray-500 text-sm">
-                    <th class="pb-4">Nama Sekolah</th>
+                    <th class="pb-4">
+                        <div class="flex items-center">
+                            Nama Sekolah
+                            <a href="{{ route('schools.index', ['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                class="ml-1">
+                                @if (request('sort') == 'name')
+                                    <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                        class="w-4 h-4"></i>
+                                @else
+                                    <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>
+                                @endif
+                            </a>
+                        </div>
+                    </th>
                     <th class="pb-4">Alamat</th>
                     <th class="pb-4">Tanggal Dibuat</th>
                     <th class="pb-4">Aksi</th>

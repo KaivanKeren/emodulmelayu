@@ -23,9 +23,23 @@ use Illuminate\Validation\ValidationException;
 class AssessmentController extends Controller
 {
     // Web CRUD Methods
-    public function index()
+    public function index(Request $request)
     {
-        $assessments = Assessment::latest()->paginate(10);
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['title', 'category', 'created_at', 'status'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+
+        $assessments = Assessment::orderBy($sort, $direction)
+            ->paginate(10);
+
         $pendingUsers = User::where('status', 'Pending')->count();
         return view('admin.assessments.index', compact('assessments', 'pendingUsers'));
     }
@@ -388,7 +402,7 @@ class AssessmentController extends Controller
                 'provided' => $validated['token'],
                 'expected' => $assessment->token
             ]);
-            return response()->json( [
+            return response()->json([
                 'message' => 'Invalid assessment token'
             ], 403);
         }
@@ -429,7 +443,7 @@ class AssessmentController extends Controller
             // Penanganan nilai timer yang lebih baik
             $assessmentDurationMinutes = 0;
             $assessmentDurationFormatted = '00:00:00';
-            $autoSaveBufferMinutes = rand(3, 5); 
+            $autoSaveBufferMinutes = rand(3, 5);
 
             if (!empty($assessment->timer)) {
                 // Periksa apakah timer dalam format H:i:s
