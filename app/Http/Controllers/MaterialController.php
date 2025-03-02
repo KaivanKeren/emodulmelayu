@@ -22,7 +22,7 @@ class MaterialController extends Controller
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['title', 'created_at'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'title';
         }
 
         // Validate direction parameter

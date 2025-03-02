@@ -29,10 +29,10 @@
                         <th class="pb-4">
                             <div class="flex items-center">
                                 Nama
-                                <a href="{{ route('users.index', ['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                <a href="{{ route('users.index', ['sort' => 'name', 'direction' => (request('sort') == 'name' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'desc' : 'asc']) }}"
                                     class="ml-1">
-                                    @if (request('sort') == 'name')
-                                        <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                    @if (request('sort') == 'name' || (!request('sort') && !request('direction')))
+                                        <i data-lucide="{{ (request('sort') == 'name' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'arrow-up' : 'arrow-down' }}"
                                             class="w-4 h-4"></i>
                                     @else
                                         <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>

@@ -22,16 +22,16 @@ class AnswerController extends Controller
     public function show(Request $request, Assessment $assessment)
     {
         $sort = $request->input('sort', 'created_at'); // Default sort by created_at
-        $direction = $request->input('direction', 'desc'); // Default direction desc
+        $direction = $request->input('direction', 'asc'); // Default direction desc
 
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['name', 'email', 'school', 'total_score', 'answered_questions', 'completion_percentage'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'name';
         }
 
         // Validate direction parameter
-        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'asc';
 
         $pendingUsers = User::where('status', 'Pending')->count();
 

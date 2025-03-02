@@ -23,10 +23,10 @@
                     <th class="pb-4">
                         <div class="flex items-center">
                             Judul
-                            <a href="{{ route('assessments.index', ['sort' => 'title', 'direction' => request('sort') == 'title' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                            <a href="{{ route('assessments.index', ['sort' => 'title', 'direction' => (request('sort') == 'title' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'desc' : 'asc']) }}"
                                 class="ml-1">
-                                @if (request('sort') == 'title')
-                                    <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                @if (request('sort') == 'title' || (!request('sort') && !request('direction')))
+                                    <i data-lucide="{{ (request('sort') == 'title' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'arrow-up' : 'arrow-down' }}"
                                         class="w-4 h-4"></i>
                                 @else
                                     <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>

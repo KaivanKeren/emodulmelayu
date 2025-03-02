@@ -29,7 +29,7 @@ class DiscussionController extends Controller
             }
         } else {
             // Default sorting (probably by created_at desc)
-            $query->latest();
+            $query->orderBy('title', 'asc');
         }
         
         $discussions = $query->paginate(10);

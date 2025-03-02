@@ -27,17 +27,17 @@ class SchoolController extends Controller
      */
     public function index(Request $request)
     {
-        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
-        $direction = $request->input('direction', 'desc'); // Default direction desc
+        $sort = $request->input('sort', 'name'); // Changed default to name
+        $direction = $request->input('direction', 'asc');
 
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['name', 'address', 'created_at'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'name'; // Changed default to name
         }
 
         // Validate direction parameter
-        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'asc';
 
         $schools = School::orderBy($sort, $direction)
             ->paginate(10);
