@@ -50,7 +50,7 @@ class AuthController extends Controller
                 } else {
                     auth()->logout();
                     return redirect()->route('login')
-                        ->with('error', 'Akses Ditolak. Hanya admin yang bisa login.');
+                        ->with('error', 'Akses Ditolak. Hanya admin dan guru yang bisa login.');
                 }
             }
         }
