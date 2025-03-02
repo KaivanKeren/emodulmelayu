@@ -24,10 +24,10 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div class="flex items-center">
                                     Kata yang Difilter
-                                    <a href="{{ route('filter-message.index', ['sort' => 'word', 'direction' => request('sort') == 'word' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                    <a href="{{ route('filter-message.index', ['sort' => 'word', 'direction' => (request('sort') == 'word' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'desc' : 'asc']) }}"
                                         class="ml-1">
-                                        @if (request('sort') == 'word')
-                                            <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
+                                        @if (request('sort') == 'word' || (!request('sort') && !request('direction')))
+                                            <i data-lucide="{{ (request('sort') == 'word' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'arrow-up' : 'arrow-down' }}"
                                                 class="w-4 h-4"></i>
                                         @else
                                             <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>
