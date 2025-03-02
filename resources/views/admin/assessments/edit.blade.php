@@ -77,8 +77,9 @@
                                 </span>
                                 <input type="time" name="timer" id="timer" step="1" required
                                     value="{{ old('timer', $assessment->timer) }}"
-                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none">
-
+                                    class="block w-full pl-2 bg-transparent border-0 focus:ring-0 focus:outline-none"
+                                    placeholder="00:00:00">
+                                <input type="hidden" id="timer_format" name="timer_format" value="24">
                             </div>
                             @error('timer')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -99,4 +100,45 @@
                 </div>
             </div>
         </div>
+
+        <style>
+            /* Force 24-hour time format across devices */
+            input[type="time"]::-webkit-datetime-edit-ampm-field {
+                display: none;
+            }
+
+            /* Additional CSS to ensure consistent display */
+            input[type="time"] {
+                font-family: monospace;
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get the time input element
+                var timeInput = document.getElementById('timer');
+
+                // Set the pattern attribute for 24-hour format
+                timeInput.setAttribute('pattern', '[0-9]{2}:[0-9]{2}:[0-9]{2}');
+
+                // Force 24-hour display when user interacts with the input
+                timeInput.addEventListener('click', function() {
+                    if (!this.value) {
+                        this.value = '00:00:00';
+                    }
+                });
+
+                // Format the time to ensure it's in 24-hour format
+                timeInput.addEventListener('change', function() {
+                    // Ensure the value is in HH:MM:SS format
+                    let timeValue = this.value;
+
+                    // If seconds are not specified, add them
+                    if (timeValue.split(':').length < 3) {
+                        timeValue += ':00';
+                        this.value = timeValue;
+                    }
+                });
+            });
+        </script>
     @endsection
