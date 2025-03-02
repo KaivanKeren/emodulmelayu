@@ -45,6 +45,8 @@ class AuthController extends Controller
                 // Redirect berdasarkan role pengguna
                 if (auth()->user()->role === 'Admin') {
                     return redirect()->route('adminDashboard');
+                } elseif (auth()->user()->role === 'Guru') {
+                    return redirect()->route('teacherDashboard');
                 } else {
                     auth()->logout();
                     return redirect()->route('login')

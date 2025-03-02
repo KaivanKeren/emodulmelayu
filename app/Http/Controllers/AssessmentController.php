@@ -72,6 +72,34 @@ class AssessmentController extends Controller
         return view('admin.assessments.index', compact('assessments', 'filters', 'pendingUsers'));
     }
 
+    public function teacherFilter(Request $request)
+    {
+        // Retrieve filters from request
+        $filters = $request->only(['title', 'category', 'status']);
+
+        // Build query with optional filters
+        $query = Assessment::query();
+
+        if (!empty($filters['title'])) {
+            $query->where('title', 'like', '%' . $filters['title'] . '%');
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Get users with pagination
+        $assessments = $query->paginate(10);
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        // Return view with assessments and filters
+        return view('teacher.dasboard', compact('assessments', 'filters', 'pendingUsers'));
+    }
+
     public function create()
     {
         $pendingUsers = User::where('status', 'Pending')->count();
@@ -169,7 +197,6 @@ class AssessmentController extends Controller
         }
     }
 
-
     public function regenerateToken(Assessment $assessment)
     {
         if ($assessment->status !== 'Terbuka') {
@@ -189,6 +216,12 @@ class AssessmentController extends Controller
     {
         $pendingUsers = User::where('status', 'Pending')->count();
         return view('admin.assessments.edit', compact('assessment', 'pendingUsers'));
+    }
+
+    public function teacherEdit(Assessment $assessment)
+    {
+        $pendingUsers = User::where('status', 'Pending')->count();
+        return view('teacher.edit', compact('assessment', 'pendingUsers'));
     }
 
     public function update(Request $request, Assessment $assessment)
@@ -215,6 +248,30 @@ class AssessmentController extends Controller
         $assessment->update($validated);
 
         return redirect()->route('assessments.index')
+            ->with('success', 'Assessment berhasil diperbarui');
+    }
+
+    public function teacherUpdate(Request $request, Assessment $assessment)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:Belum Terbuka,Terbuka,Terjawab,Selesai',
+        ]);
+
+        // Jika status berubah menjadi Terbuka, generate token
+        if ($validated['status'] === 'Terbuka' && $assessment->status !== 'Terbuka') {
+            $validated['token'] = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
+            $validated['token_expires_at'] = now()->addMinutes(30);
+        }
+
+        // Jika status berubah dari Terbuka ke status lain, hapus token
+        if ($validated['status'] !== 'Terbuka' && $assessment->status === 'Terbuka') {
+            $validated['token'] = null;
+            $validated['token_expires_at'] = null;
+        }
+
+        $assessment->update($validated);
+
+        return redirect()->route('teacherDashboard')
             ->with('success', 'Assessment berhasil diperbarui');
     }
 
@@ -340,7 +397,7 @@ class AssessmentController extends Controller
             ->select('user_id')
             ->distinct()
             ->get()
-            ->map(function ($answer) {
+            ->map(function (Answer $answer) {
                 return $answer->user->name;
             });
 
@@ -350,6 +407,36 @@ class AssessmentController extends Controller
             'assessment' => $assessment,
             'respondents' => str_replace(['[', ']', '"'], '', $respondents)
         ], compact('pendingUsers', 'respondentCount'));
+    }
+
+    public function teacherShow(Assessment $assessment)
+    {
+        $pendingUsers = User::where('status', 'Pending')->count();
+
+        // Load relationships
+        $assessment->load(['questions.options']);
+
+        // Get unique users who answered this assessment and belong to the same school
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->whereHas('user', function ($query) {
+                $query->where('school_id', Auth::user()->school_id);
+            })
+            ->with('user')
+            ->select('user_id')
+            ->distinct()
+            ->get()
+            ->map(function (Answer $answer) {
+                return $answer->user->school_id;
+            });
+
+        $respondentCount = $respondents->count();
+
+        return view('teacher.show', [
+            'assessment' => $assessment,
+            'respondents' => $respondents
+        ], compact('respondentCount'));
     }
 
     public function apiShow(Assessment $assessment)

@@ -13,6 +13,8 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\TeacherMiddleware;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,7 +26,26 @@ Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'postLogin'])->name('postLogin');
 
 Route::middleware('auth')->group(function () {
-    Route::prefix('admin')->group(function () {
+    // Teacher routes
+    Route::prefix('guru')->middleware(TeacherMiddleware::class)->group(function () {
+
+        Route::get('/search', [DashboardController::class, 'search'])->name('teacher.search');
+        Route::get('/assessments/filter', [AssessmentController::class, 'filter'])->name('teacher.assessments.filter');
+
+        Route::prefix('assessments')->group(function () {
+            Route::get('/', [DashboardController::class, 'teacherDashboard'])->name('teacherDashboard');
+            Route::get('/{assessment}', [AssessmentController::class, 'teacherShow'])->name('teacher.assessments.show');
+            Route::get('/edit/{assessment}', [AssessmentController::class, 'teacherEdit'])->name('teacher.assessments.edit');
+            Route::put('/{assessment}', [AssessmentController::class, 'teacherUpdate'])->name('teacher.assessments.update');
+            Route::get('/{assessment}/answers', [AnswerController::class, 'teacherShow'])->name('teacher.answers.show');
+            Route::get('/{assessment}/answers/{user}', [AnswerController::class, 'detail'])->name('teacher.answers.detail');
+
+            Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])->name('teacher.assessments.regenerate-token');
+        });
+    });
+
+    // Admin routes
+    Route::prefix('admin')->middleware(AdminMiddleware::class)->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('adminDashboard');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
         Route::get('/filter', [DashboardController::class, 'filter'])->name('users.filter');

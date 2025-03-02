@@ -1,6 +1,4 @@
-@extends('layouts.admin')
-
-@section('title', 'Assessment')
+@extends('layouts.teacher')
 
 @section('content')
     <div class="flex-1 bg-white rounded-xl shadow-sm p-6">
@@ -10,11 +8,6 @@
                 <button onclick="toggleModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                     Filter
                 </button>
-                <a href="{{ route('assessments.create') }}">
-                    <button class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600">
-                        Tambah Assessment
-                    </button>
-                </a>
             </div>
         </div>
         <table class="w-full">
@@ -23,7 +16,7 @@
                     <th class="pb-4">
                         <div class="flex items-center">
                             Judul
-                            <a href="{{ route('assessments.index', ['sort' => 'title', 'direction' => request('sort') == 'title' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                            <a href="{{ route('teacherDashboard', ['sort' => 'title', 'direction' => request('sort') == 'title' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
                                 class="ml-1">
                                 @if (request('sort') == 'title')
                                     <i data-lucide="{{ request('direction') == 'asc' ? 'arrow-up' : 'arrow-down' }}"
@@ -65,33 +58,16 @@
                             <div id="dropdown-{{ $assessment->id }}"
                                 class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                                 <div class="py-1">
-                                    <a href="{{ route('assessments.show', ['assessment' => $assessment->id]) }}"
+                                    <a href="{{ route('teacher.assessments.show', ['assessment' => $assessment->id]) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                                         Lihat Detail
                                     </a>
-                                    <a href="{{ route('questions.create', ['assessment' => $assessment->id]) }}"
-                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
-                                        Tambah Pertanyaan
-                                    </a>
-                                    <a href="{{ route('assessments.edit', ['assessment' => $assessment->id]) }}"
+                                    <a href="{{ route('teacher.assessments.edit', ['assessment' => $assessment->id]) }}"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
                                         Edit Assessment
                                     </a>
-                                    <form action="{{ route('assessments.destroy', ['assessment' => $assessment->id]) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus assessment ini?');"
-                                        class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                            <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
-                                            Hapus
-                                        </button>
-                                    </form>
                                 </div>
                             </div>
                         </td>
@@ -103,7 +79,7 @@
         <div id="filterModal" class="fixed inset-0 z-50 hidden bg-gray-800 bg-opacity-50 flex items-center justify-center">
             <div class="bg-white rounded-lg shadow-lg w-96 p-6">
                 <h3 class="text-lg font-semibold mb-4">Filter Assessment</h3>
-                <form action="{{ route('assessments.filter') }}" method="GET">
+                <form action="{{ route('teacher.assessments.filter') }}" method="GET">
                     <div class="mb-4">
                         <label for="title" class="block text-sm font-medium text-gray-700">Judul</label>
                         <input type="text" id="title" name="title"

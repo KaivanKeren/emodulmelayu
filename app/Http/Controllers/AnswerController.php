@@ -122,6 +122,124 @@ class AnswerController extends Controller
         return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
     }
 
+    public function teacherShow(Request $request, Assessment $assessment)
+    {
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Get the current teacher's school
+        $teacherSchool = auth()->user()->school;
+
+        // If teacher doesn't have a school assigned, return an error or empty list
+        if (!$teacherSchool) {
+            return view('teacher.answers.index', [
+                'assessment' => $assessment,
+                'respondents' => collect(),
+                'totalQuestions' => 0,
+                'error' => 'You need to be assigned to a school to view respondents.'
+            ]);
+        }
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['name', 'email', 'school', 'total_score', 'answered_questions', 'completion_percentage'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
+
+        // Get total number of questions for score calculation
+        $totalQuestions = $assessment->questions->count();
+
+        // Get answers grouped by user with calculated scores
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->with(relations: ['user', 'user.school', 'question.options', 'option'])
+            // Only get answers from users in the same school as the teacher
+            ->whereHas('user', function ($query) use ($teacherSchool) {
+                $query->where('school_id', $teacherSchool->id);
+            })
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($userAnswers) use ($totalQuestions): array {
+                $user = $userAnswers->first()->user;
+
+                // Group answers by question to properly calculate scores
+                $questionGroups = $userAnswers->groupBy('question_id');
+
+                $totalScore = 0;
+                foreach ($questionGroups as $questionId => $answers) {
+                    $question = $answers->first()->question;
+                    $selectedOptions = $answers->pluck('option');
+
+                    if ($question->question_type === 'single_choice') {
+                        // For single choice questions
+                        $isCorrect = $selectedOptions->contains(function ($option) {
+                            return $option->is_correct;
+                        });
+                        $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                    } else {
+                        // For multiple choice questions
+                        $correctOptions = $question->options->where('is_correct', true);
+                        $totalCorrectOptions = $correctOptions->count();
+
+                        if ($selectedOptions->count() > $totalCorrectOptions) {
+                            $questionScore = 0;
+                        } else {
+                            $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                            $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                            // Calculate base score
+                            $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                            // Calculate penalty
+                            $totalOptions = $question->options->count();
+                            $penaltyPerWrong = 1 / ($totalOptions - $totalCorrectOptions);
+                            $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                            // Calculate final question score
+                            $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                        }
+                    }
+
+                    $totalScore += $questionScore;
+                }
+
+                // Get answered questions count
+                $answeredQuestions = $questionGroups->count();
+
+                return [
+                    'user' => $user,
+                    'school' => $user->school ? $user->school->name : 'No School',
+                    'total_score' => round($totalScore, 2),
+                    'answered_questions' => $answeredQuestions,
+                    'completion_percentage' => round(($answeredQuestions / $totalQuestions) * 100, 2),
+                    'questions_detail' => $questionGroups->map(function ($answers) {
+                        return [
+                            'question_id' => $answers->first()->question_id,
+                            'question_type' => $answers->first()->question->question_type,
+                            'selected_options' => $answers->pluck('option.id')->toArray(),
+                            'score' => $answers->first()->score
+                        ];
+                    })
+                ];
+            });
+
+        // Apply sorting to the respondents collection
+        if ($sort === 'name') {
+            $respondents = $respondents->sortBy(function ($respondent) {
+                return $respondent['user']->name;
+            }, SORT_REGULAR, $direction === 'desc');
+        }
+
+        return view('teacher.answers.index', compact('assessment', 'respondents', 'totalQuestions'));
+    }
+
     public function deleteUserAnswers(Assessment $assessment, $user)
     {
         try {

@@ -26,6 +26,26 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact('users', 'total_users', 'materials', 'assessments', 'discussions', 'pendingUsers', 'schools'));
     }
 
+    public function teacherDashboard(Request $request)
+    {
+        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $direction = $request->input('direction', 'desc'); // Default direction desc
+
+        // Validate sort parameter to prevent SQL injection
+        $allowedSorts = ['title', 'category', 'created_at', 'status'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+
+        // Validate direction parameter
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+
+        $assessments = Assessment::orderBy($sort, $direction)
+            ->paginate(10);
+
+        return view('teacher.dashboard', compact('assessments'));
+    }
+
     public function filter(Request $request)
     {
         $filters = $request->only(['name', 'role', 'school', 'status']);
