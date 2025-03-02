@@ -272,6 +272,38 @@ class AnswerController extends Controller
         }
     }
 
+    public function apiTeacherDeleteUserAnswers(Assessment $assessment, $user)
+    {
+        try {
+            $teacher = auth()->user(); // Asumsikan guru yang login
+
+            // Pastikan user dan teacher berasal dari sekolah yang sama
+            $student = User::where('id', $user)->where('school_id', $teacher->school_id)->first();
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: The user is not from the same school as the teacher.'
+                ], 403);
+            }
+
+            // Find and delete answers
+            $deletedCount = Answer::whereHas('question', function ($query) use ($assessment) {
+                $query->where('assessment_id', $assessment->id);
+            })->where('user_id', $user)->delete();
+
+            return response()->json([
+                'code' => 200,
+                'message' => "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.",
+                'deleted_count' => $deletedCount
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete answers: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function showApi(Assessment $assessment): JsonResponse
     {
         $assessment->load(['questions.options']);

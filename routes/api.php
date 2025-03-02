@@ -60,6 +60,9 @@ Route::middleware('api')->group(function () {
             Route::get('{assessment}/questions/{question}/answers/{answer}', [AnswerController::class, 'apiShow']);
             Route::put('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiUpdate']);
             Route::delete('{assessment}/questions/{question}/answers', [AnswerController::class, 'apiDestroy']);
+
+            Route::delete('{assessment}/users/{user}/answers', [AnswerController::class, 'apiTeacherDeleteUserAnswers']);
+
         });
 
         Route::prefix('schools')->group(function () {
