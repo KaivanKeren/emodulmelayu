@@ -321,7 +321,7 @@ class AnswerController extends Controller
 
         if ($userAnswers->isNotEmpty()) {
             $allAnswers = $userAnswers->flatten();
-            $startedAt = $allAnswers->min('created_at');
+            $startedAt = $allAnswers->min(callback: 'created_at');
             $completedAt = $allAnswers->max('created_at');
         }
 
@@ -330,8 +330,6 @@ class AnswerController extends Controller
             'answered_questions' => $answeredQuestions,
             'completion_percentage' => $totalQuestions > 0 ? round(($answeredQuestions / $totalQuestions) * 100, 2) : 0,
             'total_score' => round($totalScore, 2),
-            'assessment_started_at' => $startedAt,
-            'assessment_completed_at' => $completedAt,
         ];
 
         // Import Carbon in the controller for date handling

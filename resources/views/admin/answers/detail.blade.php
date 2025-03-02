@@ -27,7 +27,7 @@
             <!-- Summary Card -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Ringkasan Assessment</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="p-4 bg-blue-50 rounded-lg">
                         <p class="text-sm text-blue-600 font-medium">Total Nilai</p>
                         <p class="text-2xl font-bold text-blue-800">{{ $summary['total_score'] ?? 0 }}%</p>
@@ -40,16 +40,6 @@
                         <p class="text-sm text-purple-600 font-medium">Pertanyaan Dijawab</p>
                         <p class="text-2xl font-bold text-purple-800">
                             {{ $summary['answered_questions'] ?? 0 }}/{{ $summary['total_questions'] ?? 0 }}</p>
-                    </div>
-                    <div class="p-4 bg-orange-50 rounded-lg">
-                        <p class="text-sm text-orange-600 font-medium">Waktu Diperlukan</p>
-                        <p class="text-2xl font-bold text-orange-800">
-                            @if (isset($summary['assessment_completed_at']) && isset($summary['assessment_started_at']))
-                                {{ \Carbon\Carbon::parse($summary['assessment_started_at'])->diffForHumans(\Carbon\Carbon::parse($summary['assessment_completed_at']), true) }}
-                            @else
-                                Dalam Proses
-                            @endif
-                        </p>
                     </div>
                 </div>
             </div>
