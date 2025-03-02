@@ -27,7 +27,23 @@
                 </div>
             @endif
 
-            <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
+            <div class="mt-4 flex justify-end">
+                <div class="inline-flex rounded-md shadow-sm">
+                    <a href="{{ route('discussions.index', ['sort' => 'title', 'direction' => request('direction') == 'asc' && request('sort') == 'title' ? 'desc' : 'asc']) }}"
+                        class="px-3 py-2 text-sm font-medium rounded-md {{ request('sort') == 'title' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700' }} border border-gray-300 hover:bg-gray-50">
+                        Urutkan berdasarkan Judul
+                        @if (request('sort') == 'title')
+                            @if (request('direction') == 'asc')
+                                <span class="ml-1">↑</span>
+                            @else
+                                <span class="ml-1">↓</span>
+                            @endif
+                        @endif
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-2 bg-white shadow overflow-hidden sm:rounded-md">
                 <ul class="divide-y divide-gray-200">
                     @foreach ($discussions as $discussion)
                         <li class="border-b border-gray-200 last:border-b-0">
@@ -80,7 +96,7 @@
             </div>
 
             <div class="mt-4">
-                {{ $discussions->links() }}
+                {{ $discussions->appends(request()->query())->links() }}
             </div>
         </div>
     </div>

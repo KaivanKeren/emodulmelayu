@@ -13,14 +13,26 @@ class DiscussionController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $discussions = Discussion::with('user')
-            ->withCount(['messages as participant_count' => function ($query) {
-                $query->select(DB::raw('count(distinct user_id)'));
-            }])
-            ->latest()
-            ->paginate(10);
+        $query = Discussion::with('user')
+        ->withCount(['messages as participant_count' => function ($query) {
+            $query->select(DB::raw('count(distinct user_id)'));
+        }]);
+    
+        // Handle sorting
+        if ($request->has('sort')) {
+            $direction = $request->input('direction', 'asc');
+            
+            if ($request->input('sort') === 'title') {
+                $query->orderBy('title', $direction);
+            }
+        } else {
+            // Default sorting (probably by created_at desc)
+            $query->latest();
+        }
+        
+        $discussions = $query->paginate(10);
         $pendingUsers = User::where('status', 'Pending')->count();
 
         return view('admin.discussion.index', compact('discussions', 'pendingUsers'));
