@@ -111,7 +111,8 @@
                                                     <div class="text-xs text-gray-500 mt-2">
                                                         Berlaku hingga pukul:
                                                         <span id="expires-at">
-                                                            {{ $assessment->token_expires_at->setTimezone('Asia/Jakarta')->format('H:i') }}
+                                                            {{ $assessment->token_expires_at ? $assessment->token_expires_at->setTimezone('Asia/Jakarta')->format('H:i') : '-' }}
+
                                                         </span>
                                                         (<span id="countdown"></span>)
                                                     </div>
@@ -412,26 +413,32 @@
             };
 
             const countdownElement = document.getElementById("countdown");
-            const expiresAt = new Date("{{ $assessment->token_expires_at->setTimezone('Asia/Jakarta') }}")
-            .getTime();
+            const expiresAtString =
+                "{{ $assessment->token_expires_at ? $assessment->token_expires_at->setTimezone('Asia/Jakarta') : '' }}";
+            const expiresAt = expiresAtString ? new Date(expiresAtString).getTime() : null;
 
-            function updateCountdown() {
-                const now = new Date().getTime();
-                const timeLeft = expiresAt - now;
+            if (expiresAt) {
+                function updateCountdown() {
+                    const now = new Date().getTime();
+                    const timeLeft = expiresAt - now;
 
-                if (timeLeft > 0) {
-                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                    countdownElement.innerText = `${hours}j ${minutes}m ${seconds}d`;
-                } else {
-                    countdownElement.innerText = "Waktu habis";
-                    clearInterval(interval);
+                    if (timeLeft > 0) {
+                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                        countdownElement.innerText = `${hours}j ${minutes}m ${seconds}d`;
+                    } else {
+                        countdownElement.innerText = "Waktu habis";
+                        clearInterval(interval);
+                    }
                 }
+
+                updateCountdown(); // Jalankan pertama kali
+                const interval = setInterval(updateCountdown, 1000);
+            } else {
+                countdownElement.innerText = "-";
             }
 
-            updateCountdown(); // Panggil pertama kali agar langsung muncul
-            const interval = setInterval(updateCountdown, 1000);
         });
 
         function copyToken() {
