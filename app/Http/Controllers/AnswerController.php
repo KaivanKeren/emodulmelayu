@@ -125,7 +125,7 @@ class AnswerController extends Controller
     public function teacherShow(Request $request, Assessment $assessment)
     {
         $sort = $request->input('sort', 'created_at'); // Default sort by created_at
-        $direction = $request->input('direction', 'desc'); // Default direction desc
+        $direction = $request->input('direction', 'asc'); // Default direction desc
 
         // Get the current teacher's school
         $teacherSchool = auth()->user()->school;
@@ -143,11 +143,11 @@ class AnswerController extends Controller
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['name', 'email', 'school', 'total_score', 'answered_questions', 'completion_percentage'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'name';
         }
 
         // Validate direction parameter
-        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'asc';
 
         // Load assessment with questions and options
         $assessment->load(['questions.options']);
@@ -249,6 +249,22 @@ class AnswerController extends Controller
             })->where('user_id', $user)->delete();
 
             return redirect()->route('answers.show', $assessment)
+                ->with('success', "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.");
+        } catch (\Exception $e) {
+            return redirect()->route('answers.show', $assessment)
+                ->with('error', 'Failed to delete answers: ' . $e->getMessage());
+        }
+    }
+
+    public function teacherDeleteUserAnswers(Assessment $assessment, $user)
+    {
+        try {
+            // Find all answers by this user for this assessment
+            $deletedCount = Answer::whereHas('question', function ($query) use ($assessment) {
+                $query->where('assessment_id', $assessment->id);
+            })->where('user_id', $user)->delete();
+
+            return redirect()->route('teacher.answers.show', $assessment)
                 ->with('success', "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.");
         } catch (\Exception $e) {
             return redirect()->route('answers.show', $assessment)

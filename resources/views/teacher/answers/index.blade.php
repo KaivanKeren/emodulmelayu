@@ -41,14 +41,10 @@
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     <div class="flex items-center space-x-1">
                                         <span>Nama</span>
-                                        <a href="{{ route('answers.show', ['assessment' => $assessment->id, 'sort' => 'name', 'direction' => (request('sort') == 'name' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'desc' : 'asc']) }}"
-                                            class="text-gray-400">
-                                            @if (request('sort') == 'name' || (!request('sort') && !request('direction')))
-                                                <i data-lucide="{{ (request('sort') == 'name' && request('direction') == 'asc') || (!request('sort') && !request('direction')) ? 'arrow-up' : 'arrow-down' }}"
-                                                    class="w-4 h-4"></i>
-                                            @else
-                                                <i data-lucide="arrow-down" class="w-4 h-4 text-gray-300"></i>
-                                            @endif
+                                        <a href="{{ route('teacher.answers.show', ['assessment' => $assessment->id, 'sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                            class="text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="{{ request('sort') == 'name' ? (request('direction') == 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-down' }}"
+                                                class="w-4 h-4"></i>
                                         </a>
                                     </div>
                                 </th>
@@ -67,6 +63,10 @@
                                 <th scope="col"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Penyelesaian
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Aksi
                                 </th>
                             </tr>
                         </thead>
@@ -100,6 +100,19 @@
                                         </div>
                                         <span
                                             class="text-sm text-gray-500">{{ $respondent['completion_percentage'] }}%</span>
+                                    </td>
+                                    <td class="px-6 py-4 flex gap-3 whitespace-nowrap text-sm text-gray-500">
+                                        <form
+                                            action="{{ route('teacher.answers.delete', parameters: ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('Are you sure you want to delete all answers for this user? They will be able to retake the assessment.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                                Reset
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach

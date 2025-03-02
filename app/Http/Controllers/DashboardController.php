@@ -28,18 +28,18 @@ class DashboardController extends Controller
 
     public function teacherDashboard(Request $request)
     {
-        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
-        $direction = $request->input('direction', 'desc'); // Default direction desc
+        $sort = $request->input('sort', 'title'); // Changed default to title
+        $direction = $request->input('direction', 'asc');
 
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['title', 'category', 'created_at', 'status'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'title'; // Changed default to title
         }
 
         // Validate direction parameter
-        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
-
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'asc';
+        
         $assessments = Assessment::orderBy($sort, $direction)
             ->paginate(10);
 
