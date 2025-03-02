@@ -10,7 +10,7 @@ class FilterMessageController extends Controller
 {
     public function index(Request $request)
     {
-        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
+        $sort = $request->input('sort', 'word'); // Default sort by created_at
         $direction = $request->input('direction', 'asc'); // Default direction desc
 
         // Validate sort parameter to prevent SQL injection
