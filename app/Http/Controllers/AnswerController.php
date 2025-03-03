@@ -648,6 +648,110 @@ class AnswerController extends Controller
         return $pdf->download('Jawaban_Siswa_' . $assessment->title . '.pdf');
     }
 
+    public function teacherExportPdf(Assessment $assessment)
+    {
+        // Load assessment with questions and options
+        $assessment->load(['questions.options']);
+
+        // Get total number of questions
+        $totalQuestions = $assessment->questions->count();
+
+        if ($totalQuestions === 0) {
+            return back()->with('error', 'This assessment has no questions.');
+        }
+
+        // Get current user's school_id
+        $currentUserSchoolId = auth()->user()->school_id;
+
+        // Get answers with the same calculation logic as detail method
+        // But filter by users with the same school_id as the current user
+        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+            $query->where('assessment_id', $assessment->id);
+        })
+            ->whereHas('user', function ($query) use ($currentUserSchoolId) {
+                $query->where('school_id', $currentUserSchoolId);
+            })
+            ->with(['user', 'question.options', 'option'])
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($userAnswers) use ($totalQuestions) {
+                $user = $userAnswers->first()->user;
+                $questionGroups = $userAnswers->groupBy('question_id');
+
+                // Track the total score separately
+                $totalScore = 0;
+                $questionScores = [];
+
+                // First pass: Calculate all question scores and store them
+                foreach ($questionGroups as $questionId => $answers) {
+                    $question = $answers->first()->question;
+                    $selectedOptions = $answers->pluck('option');
+                    $questionScore = 0;
+
+                    if ($question->question_type === 'single_choice') {
+                        // For single choice questions
+                        $isCorrect = $selectedOptions->contains(function ($option) {
+                            return $option->is_correct;
+                        });
+                        $questionScore = $isCorrect ? (100 / $totalQuestions) : 0;
+                    } else {
+                        // For multiple choice questions
+                        $correctOptions = $question->options->where('is_correct', true);
+                        $totalCorrectOptions = $correctOptions->count();
+
+                        if ($totalCorrectOptions > 0 && $selectedOptions->isNotEmpty()) {
+                            if ($selectedOptions->count() > $totalCorrectOptions) {
+                                $questionScore = 0;
+                            } else {
+                                $correctlySelected = $selectedOptions->where('is_correct', true)->count();
+                                $incorrectlySelected = $selectedOptions->where('is_correct', false)->count();
+
+                                // Calculate base score
+                                $baseScore = $correctlySelected / $totalCorrectOptions;
+
+                                // Calculate penalty (avoid division by zero)
+                                $totalOptions = $question->options->count();
+                                $nonCorrectOptions = $totalOptions - $totalCorrectOptions;
+                                $penaltyPerWrong = ($nonCorrectOptions > 0) ? (1 / $nonCorrectOptions) : 0;
+                                $penalty = $incorrectlySelected * $penaltyPerWrong;
+
+                                // Calculate final question score
+                                $questionScore = max(0, $baseScore - $penalty) * (100 / $totalQuestions);
+                            }
+                        }
+                    }
+
+                    // Add to total score
+                    $totalScore += $questionScore;
+
+                    // Store the score for this question
+                    $questionScores[$questionId] = round($questionScore, 2);
+                }
+
+                return [
+                    'user' => $user,
+                    'total_score' => round($totalScore, 2),
+                    'answered_questions' => $questionGroups->count(),
+                    'completion_percentage' => round(($questionGroups->count() / $totalQuestions) * 100, 2),
+                    'questions_detail' => $questionGroups->map(function ($answers) use ($questionScores) {
+                        $questionId = $answers->first()->question->id;
+                        return [
+                            'question' => $answers->first()->question,
+                            'selected_options' => $answers->pluck('option'),
+                            'score' => $questionScores[$questionId] // Use the calculated score from above
+                        ];
+                    })
+                ];
+            });
+
+        // Add school name to the filename
+        $schoolName = auth()->user()->school->name ?? 'School';
+        $fileName = 'Jawaban_Siswa_' . $schoolName . '_' . $assessment->title . '.pdf';
+
+        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions'));
+        return $pdf->download($fileName);
+    }
+
     public function apiStore(Request $request, Assessment $assessment): JsonResponse
     {
         try {

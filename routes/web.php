@@ -41,6 +41,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{assessment}/users/{user}/answers', [AnswerController::class, 'teacherDeleteUserAnswers'])->name('teacher.answers.delete');
 
             Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])->name('teacher.assessments.regenerate-token');
+
+            Route::get('/{assessment}/answers/export', [AnswerController::class, 'teacherExportPDF'])->name('teacher.answers.export');
         });
     });
 
