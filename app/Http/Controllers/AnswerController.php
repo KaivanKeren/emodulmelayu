@@ -248,8 +248,12 @@ class AnswerController extends Controller
                 $query->where('assessment_id', $assessment->id);
             })->where('user_id', $user)->delete();
 
+            $deleteUserAssessment = UserAssessment::whereHas('user', function ($query) use ($user) {
+                $query->where('id', $user);
+            })->where('assessment_id', $assessment->id)->delete();
+
             return redirect()->route('answers.show', $assessment)
-                ->with('success', "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.");
+                ->with('success', "Successfully deleted {$deletedCount}, {$deleteUserAssessment} answers. The user can now retake the assessment.");
         } catch (\Exception $e) {
             return redirect()->route('answers.show', $assessment)
                 ->with('error', 'Failed to delete answers: ' . $e->getMessage());
@@ -264,8 +268,12 @@ class AnswerController extends Controller
                 $query->where('assessment_id', $assessment->id);
             })->where('user_id', $user)->delete();
 
+            $deleteUserAssessment = UserAssessment::whereHas('user', function ($query) use ($user) {
+                $query->where('id', $user);
+            })->where('assessment_id', $assessment->id)->delete();
+
             return redirect()->route('teacher.answers.show', $assessment)
-                ->with('success', "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.");
+                ->with('success', "Successfully deleted {$deletedCount}, {$deleteUserAssessment}  answers. The user can now retake the assessment.");
         } catch (\Exception $e) {
             return redirect()->route('answers.show', $assessment)
                 ->with('error', 'Failed to delete answers: ' . $e->getMessage());
@@ -291,10 +299,16 @@ class AnswerController extends Controller
                 $query->where('assessment_id', $assessment->id);
             })->where('user_id', $user)->delete();
 
+            // Delete UserAssessment record
+            $deleteUserAssessment = UserAssessment::where('user_id', $user)
+                ->where('assessment_id', $assessment->id)
+                ->delete();
+
             return response()->json([
                 'code' => 200,
                 'message' => "Successfully deleted {$deletedCount} answers. The user can now retake the assessment.",
-                'deleted_count' => $deletedCount
+                'deleted_count' => $deletedCount,
+                'deleted_user_assessment' => $deleteUserAssessment
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
