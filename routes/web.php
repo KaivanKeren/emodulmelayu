@@ -38,7 +38,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/edit/{assessment}', [AssessmentController::class, 'teacherEdit'])->name('teacher.assessments.edit');
             Route::put('/{assessment}', [AssessmentController::class, 'teacherUpdate'])->name('teacher.assessments.update');
             Route::get('/{assessment}/answers', [AnswerController::class, 'teacherShow'])->name('teacher.answers.show');
-            Route::get('/{assessment}/answers/{user}', [AnswerController::class, 'detail'])->name('teacher.answers.detail');
             Route::delete('/{assessment}/users/{user}/answers', [AnswerController::class, 'teacherDeleteUserAnswers'])->name('teacher.answers.delete');
 
             Route::post('/{assessment}/regenerate-token', [AssessmentController::class, 'regenerateToken'])->name('teacher.assessments.regenerate-token');
