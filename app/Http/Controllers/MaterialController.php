@@ -16,8 +16,8 @@ class MaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $sort = $request->input('sort', 'created_at'); // Default sort by created_at
-        $direction = $request->input('direction', 'desc'); // Default direction desc
+        $sort = $request->input('sort', 'title'); // Default sort by created_at
+        $direction = $request->input('direction', 'asc'); // Default direction desc
 
         // Validate sort parameter to prevent SQL injection
         $allowedSorts = ['title', 'created_at'];
@@ -26,7 +26,7 @@ class MaterialController extends Controller
         }
 
         // Validate direction parameter
-        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
+        $direction = in_array($direction, ['asc', 'desc']) ? $direction : 'asc';
         $materials = Material::with(['user', 'model'])->orderBy($sort, $direction)
             ->paginate(10);
         $pendingUsers = User::where('status', 'Pending')->count();
