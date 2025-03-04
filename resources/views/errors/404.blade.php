@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 - Halaman Tidak Ditemukan | E-Learning Budaya Melayu</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gradient-to-br from-yellow-50 to-orange-100 min-h-screen">
     <div class="container mx-auto px-4 h-screen flex items-center justify-center">
         <div class="text-center">
@@ -21,9 +23,17 @@
                     </p>
                     <!-- Tombol dengan motif Melayu -->
                     <div class="space-y-4">
-                        <a href="/admin/dashboard" class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
-                            Kembali ke Dashboard
-                        </a>
+                        @if (auth()->user()->role === 'Admin')
+                            <a href="/admin/dashboard"
+                                class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
+                                Kembali ke Dashboard
+                            </a>
+                        @elseif (auth()->user()->role === 'Guru')
+                            <a href="/guru/assessments"
+                                class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
+                                Kembali ke Penilaian
+                            </a>
+                        @endif
                         <p class="text-sm text-gray-500 mt-4">
                             Atau coba telusuri koleksi pembelajaran budaya Melayu kami
                         </p>
@@ -47,4 +57,5 @@
         <div class="h-2 bg-yellow-500"></div>
     </div>
 </body>
+
 </html>
