@@ -22,10 +22,17 @@
                         Mohon tunggu sejenak atau kembali ke halaman utama.
                     </p>
                     <div class="space-y-4">
-                        <a href="/admin/dashboard"
-                            class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
-                            Kembali ke Dashboard
-                        </a>
+                        @if (auth()->user()->role === 'Admin')
+                            <a href="/admin/dashboard"
+                                class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
+                                Kembali ke Dashboard
+                            </a>
+                        @elseif (auth()->user()->role === 'Guru')
+                            <a href="/guru/assessments"
+                                class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-300 shadow-md">
+                                Kembali ke Penilaian
+                            </a>
+                        @endif
                         <p class="text-sm text-gray-500 mt-4">
                             Tim kami sedang bekerja untuk memperbaiki masalah ini
                         </p>
