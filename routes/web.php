@@ -25,6 +25,10 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'postLogin'])->name('postLogin');
 
+Route::get('/privacy-policy', function () {
+    return view('privacy-policy.index');
+})->name('privacy-policy');
+
 Route::middleware('auth')->group(function () {
     // Teacher routes
     Route::prefix('guru')->middleware(TeacherMiddleware::class)->group(function () {
