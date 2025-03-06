@@ -47,120 +47,123 @@
                             </svg>
                         </button>
                         <div id="exportDropdown"
-                            class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10">
-                            <div class="py-1">
+                            class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10">
+                            <div class="p-2 border-b">
+                                <input type="text" id="schoolSearch" placeholder="Cari sekolah..."
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                            </div>
+                            <div class="py-1 max-h-60 overflow-y-auto" id="schoolsList">
                                 <a href="{{ route('answers.export', ['assessment' => $assessment->id]) }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Semua Sekolah</a>
 
                                 <!-- List of schools -->
                                 @foreach ($schools as $school)
                                     <a href="{{ route('answers.export', ['assessment' => $assessment->id, 'school' => $school]) }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ $school }}</a>
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 school-item">{{ $school }}</a>
                                 @endforeach
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8">
-                <div class="overflow-x-auto bg-white shadow-md rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-300">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div class="flex items-center space-x-1">
-                                        <span>Nama</span>
-                                        <a href="{{ route('answers.show', ['assessment' => $assessment->id, 'sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
-                                            class="text-gray-400 hover:text-gray-600">
-                                            <i data-lucide="{{ request('sort') == 'name' ? (request('direction') == 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-down' }}"
-                                                class="w-4 h-4"></i>
-                                        </a>
-                                    </div>
-                                </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Asal Sekolah
-                                </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Skor
-                                </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Soal Dijawab
-                                </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Penyelesaian
-                                </th>
-                                <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Aksi
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach ($respondents as $respondent)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ $respondent['user']->name }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ $respondent['school'] }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900">
-                                            {{ number_format($respondent['total_score'], 2) }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">
-                                            {{ $respondent['answered_questions'] }} / {{ $totalQuestions }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-600 h-2.5 rounded-full"
-                                                style="width: {{ $respondent['completion_percentage'] }}%"></div>
-                                        </div>
-                                        <span
-                                            class="text-sm text-gray-500">{{ $respondent['completion_percentage'] }}%</span>
-                                    </td>
-                                    <td class="px-6 py-4 flex gap-3 whitespace-nowrap text-sm text-gray-500">
-                                        <a href="{{ route('answers.detail', ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
-                                            class="text-blue-500 hover:text-blue-700 text-sm font-medium">
-                                            Detail
-                                        </a>
-                                        <form
-                                            action="{{ route('answers.delete', parameters: ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('Are you sure you want to delete all answers for this user? They will be able to retake the assessment.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-500 hover:text-red-700 text-sm font-medium">
-                                                Reset
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
                 </div>
 
-                @if ($respondents->isEmpty())
-                    <div class="text-center text-gray-500 py-6">
-                        <p>Belum ada siswa yang mengerjakan penilaian ini.</p>
-                    </div>
-                @endif
             </div>
         </div>
+        <div class="mt-8">
+            <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+                <table class="min-w-full divide-y divide-gray-300">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center space-x-1">
+                                    <span>Nama</span>
+                                    <a href="{{ route('answers.show', ['assessment' => $assessment->id, 'sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                        class="text-gray-400 hover:text-gray-600">
+                                        <i data-lucide="{{ request('sort') == 'name' ? (request('direction') == 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-down' }}"
+                                            class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Asal Sekolah
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Skor
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Soal Dijawab
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Penyelesaian
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Aksi
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach ($respondents as $respondent)
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $respondent['user']->name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $respondent['school'] }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-900">
+                                        {{ number_format($respondent['total_score'], 2) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        {{ $respondent['answered_questions'] }} / {{ $totalQuestions }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full"
+                                            style="width: {{ $respondent['completion_percentage'] }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ $respondent['completion_percentage'] }}%</span>
+                                </td>
+                                <td class="px-6 py-4 flex gap-3 whitespace-nowrap text-sm text-gray-500">
+                                    <a href="{{ route('answers.detail', ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
+                                        class="text-blue-500 hover:text-blue-700 text-sm font-medium">
+                                        Detail
+                                    </a>
+                                    <form
+                                        action="{{ route('answers.delete', parameters: ['assessment' => $assessment->id, 'user' => $respondent['user']->id]) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Are you sure you want to delete all answers for this user? They will be able to retake the assessment.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                            Reset
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @if ($respondents->isEmpty())
+                <div class="text-center text-gray-500 py-6">
+                    <p>Belum ada siswa yang mengerjakan penilaian ini.</p>
+                </div>
+            @endif
+        </div>
+    </div>
     </div>
 
     @push('scripts')
@@ -191,19 +194,36 @@
             document.addEventListener('DOMContentLoaded', startCountdown);
 
             document.addEventListener('DOMContentLoaded', function() {
-                const exportButton = document.getElementById('exportDropdownButton');
-                const exportDropdown = document.getElementById('exportDropdown');
+                // Toggle dropdown
+                const dropdownButton = document.getElementById('exportDropdownButton');
+                const dropdown = document.getElementById('exportDropdown');
 
-                // Toggle dropdown when button is clicked
-                exportButton.addEventListener('click', function() {
-                    exportDropdown.classList.toggle('hidden');
+                dropdownButton.addEventListener('click', function() {
+                    dropdown.classList.toggle('hidden');
                 });
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(event) {
-                    if (!exportButton.contains(event.target) && !exportDropdown.contains(event.target)) {
-                        exportDropdown.classList.add('hidden');
+                    if (!dropdownButton.contains(event.target) && !dropdown.contains(event.target)) {
+                        dropdown.classList.add('hidden');
                     }
+                });
+
+                // Search functionality
+                const searchInput = document.getElementById('schoolSearch');
+                const schoolItems = document.querySelectorAll('.school-item');
+
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+
+                    schoolItems.forEach(item => {
+                        const schoolName = item.textContent.toLowerCase();
+                        if (schoolName.includes(searchTerm)) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
             });
         </script>
