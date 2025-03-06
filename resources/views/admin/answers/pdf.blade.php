@@ -125,6 +125,7 @@
     <table>
         <thead>
             <tr>
+                <th>No</th>
                 <th>Nama Siswa</th>
                 <th>Sekolah</th>
                 <th>Nilai</th>
@@ -133,8 +134,10 @@
             </tr>
         </thead>
         <tbody>
+            @php $loopIndex = 1; @endphp
             @foreach ($respondents as $respondent)
                 <tr>
+                    <td>{{ $loopIndex++ }}</td>
                     <td>{{ $respondent['user']->name }}</td>
                     <td>{{ $respondent['user']->school->name }}</td>
                     <td>{{ number_format($respondent['total_score'], 2) }}</td>
