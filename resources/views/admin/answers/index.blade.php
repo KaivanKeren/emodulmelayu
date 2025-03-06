@@ -29,19 +29,39 @@
                             Refresh
                         </button>
                     </div>
+
                     <!-- Export Button -->
-                    <a href="{{ route('answers.export', ['assessment' => $assessment->id]) }}"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export PDF
-                    </a>
+                    <div class="relative">
+                        <button id="exportDropdownButton" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export PDF
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                        </button>
+                        <div id="exportDropdown"
+                            class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10">
+                            <div class="py-1">
+                                <a href="{{ route('answers.export', ['assessment' => $assessment->id]) }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Semua Sekolah</a>
+
+                                <!-- List of schools -->
+                                @foreach ($schools as $school)
+                                    <a href="{{ route('answers.export', ['assessment' => $assessment->id, 'school' => $school]) }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ $school }}</a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
             <div class="mt-8">
                 <div class="overflow-x-auto bg-white shadow-md rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
@@ -169,6 +189,23 @@
 
             // Start the countdown when the page loads
             document.addEventListener('DOMContentLoaded', startCountdown);
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const exportButton = document.getElementById('exportDropdownButton');
+                const exportDropdown = document.getElementById('exportDropdown');
+
+                // Toggle dropdown when button is clicked
+                exportButton.addEventListener('click', function() {
+                    exportDropdown.classList.toggle('hidden');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!exportButton.contains(event.target) && !exportDropdown.contains(event.target)) {
+                        exportDropdown.classList.add('hidden');
+                    }
+                });
+            });
         </script>
     @endpush
 @endsection

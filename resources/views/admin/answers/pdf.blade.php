@@ -110,14 +110,23 @@
 
 <body>
     <div class="header">
-        <div class="title">{{ $assessment->title }}</div>
-        <div class="subtitle">Laporan Jawaban Siswa</div>
+        <h1>Hasil Penilaian: {{ $assessment->title }}</h1>
+        <p>Total Pertanyaan: {{ $totalQuestions }}</p>
+
+        @if (isset($selectedSchool))
+            <p><strong>Sekolah: {{ $selectedSchool }}</strong></p>
+        @elseif (auth()->user()->role === 'Guru')
+            <p><strong>Sekolah: {{ $schoolName }}</strong></p>
+        @else
+            <p><strong>Sekolah: Semua Sekolah</strong></p>
+        @endif
     </div>
 
     <table>
         <thead>
             <tr>
                 <th>Nama Siswa</th>
+                <th>Sekolah</th>
                 <th>Nilai</th>
                 <th>Soal Dijawab</th>
                 <th>Penyelesaian</th>
@@ -127,6 +136,7 @@
             @foreach ($respondents as $respondent)
                 <tr>
                     <td>{{ $respondent['user']->name }}</td>
+                    <td>{{ $respondent['user']->school->name }}</td>
                     <td>{{ number_format($respondent['total_score'], 2) }}</td>
                     <td>{{ $respondent['answered_questions'] }} / {{ $totalQuestions }}</td>
                     <td>

@@ -112,6 +112,8 @@ class AnswerController extends Controller
                 ];
             });
 
+        $schools = $respondents->pluck('school')->unique()->sort()->values();
+
         // Apply sorting to the respondents collection
         if ($sort === 'name') {
             $respondents = $respondents->sortBy(function ($respondent) {
@@ -119,7 +121,7 @@ class AnswerController extends Controller
             }, SORT_REGULAR, $direction === 'desc');
         }
 
-        return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions'));
+        return view('admin.answers.index', compact('assessment', 'respondents', 'pendingUsers', 'totalQuestions', 'schools'));
     }
 
     public function teacherShow(Request $request, Assessment $assessment)
@@ -555,7 +557,7 @@ class AnswerController extends Controller
         return view('admin.answers.detail', compact('assessment', 'user', 'questionsDetail', 'summary', 'pendingUsers'));
     }
 
-    public function exportPdf(Assessment $assessment)
+    public function exportPdf(Assessment $assessment, Request $request)
     {
         // Load assessment with questions and options
         $assessment->load(['questions.options']);
@@ -568,12 +570,18 @@ class AnswerController extends Controller
         }
 
         // Get answers with the same calculation logic as detail method
-        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+        $query = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
-        })
-            ->with(['user', 'question.options', 'option'])
-            ->get()
-            ->groupBy('user_id')
+        });
+
+        // Get the selected school from the request
+        $selectedSchool = $request->input('school');
+
+        // Fetch the answers with relevant relations
+        $answers = $query->with(['user', 'question.options', 'option'])->get();
+
+        // Group answers by user
+        $respondents = $answers->groupBy('user_id')
             ->map(function ($userAnswers) use ($totalQuestions) {
                 $user = $userAnswers->first()->user;
                 $questionGroups = $userAnswers->groupBy('question_id');
@@ -628,8 +636,12 @@ class AnswerController extends Controller
                     $questionScores[$questionId] = round($questionScore, 2);
                 }
 
+                // Get school information from the user
+                $school = $user->school ? $user->school->name : 'Unknown';
+
                 return [
                     'user' => $user,
+                    'school' => $school,
                     'total_score' => round($totalScore, 2),
                     'answered_questions' => $questionGroups->count(),
                     'completion_percentage' => round(($questionGroups->count() / $totalQuestions) * 100, 2),
@@ -644,8 +656,21 @@ class AnswerController extends Controller
                 ];
             });
 
-        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions'));
-        return $pdf->download('Jawaban_Siswa_' . $assessment->title . '.pdf');
+        // Filter by school if selected
+        if ($selectedSchool) {
+            $respondents = $respondents->filter(function ($respondent) use ($selectedSchool) {
+                return $respondent['school'] === $selectedSchool;
+            });
+        }
+
+        // Create PDF
+        $pdfTitle = 'Jawaban_Siswa_' . $assessment->title;
+        if ($selectedSchool) {
+            $pdfTitle .= '_' . $selectedSchool;
+        }
+
+        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions', 'selectedSchool'));
+        return $pdf->download($pdfTitle . '.pdf');
     }
 
     public function teacherExportPdf(Assessment $assessment)
@@ -748,7 +773,7 @@ class AnswerController extends Controller
         $schoolName = auth()->user()->school->name ?? 'School';
         $fileName = 'Jawaban_Siswa_' . $schoolName . '_' . $assessment->title . '.pdf';
 
-        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions'));
+        $pdf = Pdf::loadView('admin.answers.pdf', compact('respondents', 'assessment', 'totalQuestions', 'schoolName'));
         return $pdf->download($fileName);
     }
 
