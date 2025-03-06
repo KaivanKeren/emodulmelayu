@@ -12,7 +12,7 @@
                         <h1 class="text-2xl font-bold text-gray-900">{{ $assessment->title ?? 'Assessment Details' }}</h1>
                         <p class="mt-1 text-sm text-gray-500">Detail jawaban untuk {{ $user->name ?? 'User' }}</p>
                     </div>
-                    <a href="{{ route('teacher.answers.show', $assessment) }}"
+                    <a href="{{ route('answers.show', $assessment) }}"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                         <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
