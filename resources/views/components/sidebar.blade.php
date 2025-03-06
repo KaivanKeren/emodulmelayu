@@ -66,18 +66,18 @@
                     Sekolah
                 </a>
 
-                <a href="{{ route('assessments.index') }}"
-                    class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
-                    {{ Request::is('admin/assessments*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <i data-lucide="file-text" class="w-5 h-5 mr-3"></i>
-                    Assessment
-                </a>
-
                 <a href="{{ route('materials.index') }}"
                     class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
-                    {{ Request::is('admin/materials*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
+                {{ Request::is('admin/materials*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
                     <i data-lucide="book" class="w-5 h-5 mr-3"></i>
                     Materi
+                </a>
+
+                <a href="{{ route('assessments.index') }}"
+                    class="flex items-center px-3 py-2 text-sm font-medium rounded-lg 
+                {{ Request::is('admin/assessments*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i data-lucide="file-text" class="w-5 h-5 mr-3"></i>
+                    Assessment
                 </a>
 
                 <a href="{{ route('discussions.index') }}"

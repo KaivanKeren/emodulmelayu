@@ -162,9 +162,10 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($respondent['questions_detail'] as $index => $detail)
+                @php $loopIndex = 1; @endphp
+                @foreach ($respondent['questions_detail'] as $detail)
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $loopIndex++ }}</td>
                         <td class="ql-viewer math-content">{!! $detail['question']->content !!}</td>
                         <td>{{ $detail['question']->question_type === 'single_choice' ? 'Pilihan Tunggal' : 'Pilihan Ganda' }}
                         </td>
