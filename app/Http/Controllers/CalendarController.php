@@ -63,7 +63,7 @@ class CalendarController extends Controller
                     return [
                         'id' => $event->id,
                         'title' => $event->title,
-                        'description' => $event->description,
+                        'description' => $event->content,
                         'date' => $event->date->toDateString(),
                     ];
                 });
@@ -118,7 +118,7 @@ class CalendarController extends Controller
                     return [
                         'id' => $event->id,
                         'title' => $event->title,
-                        'description' => $event->description,
+                        'description' => $event->content,
                         'date' => $event->date->toDateString(),
                     ];
                 });
