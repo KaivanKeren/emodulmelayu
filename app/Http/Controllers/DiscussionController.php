@@ -16,14 +16,14 @@ class DiscussionController extends Controller
     public function index(Request $request)
     {
         $query = Discussion::with('user')
-        ->withCount(['messages as participant_count' => function ($query) {
-            $query->select(DB::raw('count(distinct user_id)'));
-        }]);
-    
+            ->withCount(['messages as participant_count' => function ($query) {
+                $query->select(DB::raw('count(distinct user_id)'));
+            }]);
+
         // Handle sorting
         if ($request->has('sort')) {
             $direction = $request->input('direction', 'asc');
-            
+
             if ($request->input('sort') === 'title') {
                 $query->orderBy('title', $direction);
             }
@@ -31,7 +31,7 @@ class DiscussionController extends Controller
             // Default sorting (probably by created_at desc)
             $query->orderBy('title', 'asc');
         }
-        
+
         $discussions = $query->paginate(10);
         $pendingUsers = User::where('status', 'Pending')->count();
 
@@ -113,6 +113,7 @@ class DiscussionController extends Controller
             ->withCount(['messages as participant_count' => function ($query) {
                 $query->select(DB::raw('count(distinct user_id)'));
             }])
+            ->orderBy('title', 'asc')
             ->get();
 
         return response()->json([

@@ -212,7 +212,7 @@ class MaterialController extends Controller
     // API Method
     public function apiIndex()
     {
-        $materials = Material::with(['user'])->latest()->get();
+        $materials = Material::with(['user'])->orderBy('title', 'asc')->get();
 
         $formattedMaterials = $materials->map(function ($material) {
             return [

@@ -285,7 +285,7 @@ class AssessmentController extends Controller
     public function apiIndex()
     {
         $userId = Auth::id();
-        $assessments = Assessment::latest()->get();
+        $assessments = Assessment::orderBy('title', 'asc')->get();
         $userAssessments = UserAssessment::where('user_id', $userId)->get();
 
         if ($userId) {
