@@ -29,16 +29,15 @@
 
             <div class="mt-4 flex justify-end">
                 <div class="inline-flex rounded-md shadow-sm">
-                    <a href="{{ route('discussions.index', ['sort' => 'title', 'direction' => request('direction') == 'asc' && request('sort') == 'title' ? 'desc' : 'asc']) }}"
-                        class="px-3 py-2 text-sm font-medium rounded-md {{ request('sort') == 'title' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700' }} border border-gray-300 hover:bg-gray-50">
+                    <a href="{{ route('discussions.index', [
+                        'sort' => 'title',
+                        'direction' => request('direction', 'asc') == 'asc' ? 'desc' : 'asc',
+                    ]) }}"
+                        class="px-3 py-2 text-sm font-medium rounded-md {{ request('sort', 'title') == 'title' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700' }} border border-gray-300 hover:bg-gray-50">
                         Urutkan berdasarkan Judul
-                        @if (request('sort') == 'title')
-                            @if (request('direction') == 'asc')
-                                <span class="ml-1">↑</span>
-                            @else
-                                <span class="ml-1">↓</span>
-                            @endif
-                        @endif
+                        <span class="ml-1">
+                            {{ request('direction', 'asc') == 'asc' ? '↑' : '↓' }}
+                        </span>
                     </a>
                 </div>
             </div>
