@@ -163,39 +163,6 @@ class AssessmentController extends Controller
         }
     }
 
-    public function upload(Request $request)
-    {
-        if (!$request->hasFile('image')) {
-            return response()->json(['error' => 'No image file uploaded'], 400);
-        }
-
-        try {
-            $file = $request->file('image');
-
-            // Validate the uploaded file
-            $validator = validator(['image' => $file], [
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()->first()], 400);
-            }
-
-            // Generate a unique filename
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-
-            // Store the file in the public disk
-            $path = $file->storeAs('uploads/images', $filename, 'public');
-
-            // Generate the URL for the stored image
-            $url = Storage::url($path);
-
-            return response()->json(['url' => $url]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to upload image'], 500);
-        }
-    }
-
     public function regenerateToken(Assessment $assessment)
     {
         if ($assessment->status !== 'Terbuka') {
