@@ -143,7 +143,7 @@
                 } else {
                     searchResults.innerHTML = `
                 <div class="px-4 py-3 text-sm text-gray-500">
-                    No results found
+                    Tidak ada hasil yang ditemukan
                 </div>
             `;
                     searchResults.classList.remove('hidden');
