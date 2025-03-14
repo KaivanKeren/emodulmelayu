@@ -324,7 +324,7 @@ class AnswerController extends Controller
     {
         $assessment->load(['questions.options']);
         $user = auth()->user();
-        $isTeacher = $user->role === 'guru';
+        $isTeacher = $user->role === 'Guru';
 
         // Get total number of questions for score calculation
         $totalQuestions = $assessment->questions->count();
