@@ -323,16 +323,27 @@ class AnswerController extends Controller
     public function showApi(Assessment $assessment): JsonResponse
     {
         $assessment->load(['questions.options']);
+        $user = auth()->user();
+        $isTeacher = $user->role === 'guru';
 
         // Get total number of questions for score calculation
         $totalQuestions = $assessment->questions->count();
 
-        // Get answers grouped by user with calculated scores
-        $respondents = Answer::whereHas('question', function ($query) use ($assessment) {
+        // Base query for answers
+        $answersQuery = Answer::whereHas('question', function ($query) use ($assessment) {
             $query->where('assessment_id', $assessment->id);
-        })
-            ->with(['user', 'user.school', 'question.options', 'option'])
-            ->get()
+        })->with(['user', 'user.school', 'question.options', 'option']);
+
+        // Filter by school if user is a teacher
+        if ($isTeacher) {
+            $schoolId = $user->school_id;
+            $answersQuery->whereHas('user', function ($query) use ($schoolId) {
+                $query->where('school_id', $schoolId);
+            });
+        }
+
+        // Get answers and process them
+        $respondents = $answersQuery->get()
             ->groupBy('user_id')
             ->map(function ($userAnswers) use ($totalQuestions) {
                 $user = $userAnswers->first()->user;
