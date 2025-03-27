@@ -72,12 +72,9 @@ class AuthController extends Controller
         try {
             // Validasi input
             $validated = $request->validate([
-                'nisn_nip' => ['required', 'string'],
                 'email' => ['required', 'string', 'email', 'max:255'],
                 'password' => ['required', 'string'],
             ], [
-                'nisn_nip.required' => 'NISN/NIP wajib diisi.',
-                'nisn_nip.string' => 'Format NISN/NIP tidak valid.',
                 'email.required' => 'Email wajib diisi.',
                 'email.email' => 'Email tidak valid.',
                 'email.string' => 'Format email tidak valid.',
@@ -90,7 +87,7 @@ class AuthController extends Controller
             if (!Auth::attempt($validated)) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Email, NISN/NIP, atau kata sandi tidak valid.',
+                    'message' => 'Email atau kata sandi tidak valid.',
                 ], 401);
             }
 
@@ -118,6 +115,7 @@ class AuthController extends Controller
                     'user' => [
                         'id' => $user->id,
                         'name' => $user->name,
+                        'nisn_nip' => $user->nisn_nip,
                         'email' => $user->email,
                         'school' => $user->school,
                         'role' => $user->role,
