@@ -29,6 +29,10 @@ Route::get('/privacy-policy', function () {
     return view('privacy-policy.index');
 })->name('privacy-policy');
 
+Route::get('/BMR_PENGESAHAN.pdf', function () {
+    return response()->file(public_path('BMR_PENGESAHAN.pdf'));
+})->name('bmr-pengesahan');
+
 Route::middleware('auth')->group(function () {
     // Teacher routes
     Route::prefix('guru')->middleware(TeacherMiddleware::class)->group(function () {
