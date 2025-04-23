@@ -33,6 +33,14 @@ Route::get('/BMR_PENGESAHAN.pdf', function () {
     return response()->file(public_path('BMR_PENGESAHAN.pdf'));
 })->name('bmr-pengesahan');
 
+Route::get('/PANDUAN_GURU.pdf', function () {
+    return response()->file(public_path('PANDUAN_GURU.pdf'));
+})->name('panduan-guru');
+
+Route::get('/PANDUAN_SISWA.pdf', function () {
+    return response()->file(public_path('PANDUAN_SISWA.pdf'));
+})->name('panduan-siswa');
+
 Route::middleware('auth')->group(function () {
     // Teacher routes
     Route::prefix('guru')->middleware(TeacherMiddleware::class)->group(function () {
