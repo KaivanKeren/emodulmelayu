@@ -109,7 +109,7 @@ class MessageController extends Controller
     {
         try {
             // Check if user is authorized to delete the message
-            if ($message->user_id !== auth()->id()) {
+            if ($message->user_id != auth()->id()) {
                 return response()->json([
                     'code' => 403,
                     'message' => 'You are not authorized to delete this message'
