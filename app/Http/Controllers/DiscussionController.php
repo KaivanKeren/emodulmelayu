@@ -155,12 +155,14 @@ class DiscussionController extends Controller
     {
         $discussion = Discussion::findOrFail($id);
 
-        if ($discussion->user_id !== auth()->id()) {
+        if ($discussion->user_id != auth()->id()) {
             return response()->json([
                 'code' => 403,
                 'message' => 'Unauthorized action'
             ], 403);
         }
+        
+        // return response()->json(['id' => auth()->id()]);
 
         $validated = $request->validate([
             'title' => 'string|max:255',
@@ -180,7 +182,7 @@ class DiscussionController extends Controller
     {
         $discussion = Discussion::findOrFail($id);
 
-        if ($discussion->user_id !== auth()->id()) {
+        if ($discussion->user_id != auth()->id()) {
             return response()->json([
                 'code' => 403,
                 'message' => 'Unauthorized action'
