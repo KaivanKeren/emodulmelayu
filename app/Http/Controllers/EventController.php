@@ -97,20 +97,49 @@ class EventController extends Controller
     {
         try {
             $today = Carbon::now();
-            $events = Event::whereDate('date', $today)->get();
+
+            // Event reguler hari ini
+            $regularEvents = Event::whereDate('date', $today)->get();
+
+            // Recurring events dari tahun sebelumnya yang jatuh di tanggal & bulan yang sama
+            $recurringEvents = Event::where('is_recurring', true)
+                ->whereYear('date', '<', $today->year)
+                ->whereMonth('date', $today->month)
+                ->whereDay('date', $today->day)
+                ->get()
+                ->filter(function ($event) use ($regularEvents, $today) {
+                    // Skip jika tanggal hari ini sudah ada event reguler dengan id yang sama
+                    return $regularEvents
+                        ->where('id', $event->id)
+                        ->isEmpty();
+                })
+                ->map(function ($event) use ($today) {
+                    $projected = $event->replicate();
+                    $projected->id = $event->id;
+                    $projected->date = $event->date->copy()->setYear($today->year);
+                    return $projected;
+                });
+
+            $allEvents = $regularEvents->merge($recurringEvents)->values();
 
             return response()->json([
                 'code' => 200,
                 'message' => 'Events retrieved successfully',
-                'data' => $events,
-                'date' => $today
+                'date' => $today->toDateString(),
+                'data' => $allEvents->map(fn($event) => [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'content' => $event->content,
+                    'date' => $event->date->toDateString(),
+                    'is_recurring' => (bool) $event->is_recurring,
+                ]),
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'date' => $today,
+                'code' => 500,
                 'status' => 'error',
-                'message' => 'Events not found'
-            ], 404);
+                'message' => 'Terjadi kesalahan saat mengambil event hari ini',
+            ], 500);
         }
     }
 
