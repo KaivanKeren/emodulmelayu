@@ -20,7 +20,7 @@ class CalendarController extends Controller
         }
 
         $kalender = $this->generateKalender($tanggalSaatIni);
-        $events   = $this->getEventsForMonth($tanggalSaatIni);
+        $events = $this->getEventsForMonth($tanggalSaatIni);
 
         return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events', 'pendingUsers'));
     }
@@ -34,12 +34,12 @@ class CalendarController extends Controller
         }
 
         $calendar = $this->generateKalender($currentDate);
-        $events   = $this->getEventsForMonth($currentDate);
+        $events = $this->getEventsForMonth($currentDate);
 
         return response()->json([
             'currentDate' => $currentDate->toDateString(),
-            'calendar'    => $calendar,
-            'events'      => $this->formatEventsForJson($events),
+            'calendar' => $calendar,
+            'events' => $this->formatEventsForJson($events),
         ]);
     }
 
@@ -48,52 +48,50 @@ class CalendarController extends Controller
         $year = $request->get('year', Carbon::now()->year);
 
         $months = collect(range(1, 12))->map(function ($month) use ($year) {
-            $date        = Carbon::createFromDate($year, $month, 1);
+            $date = Carbon::createFromDate($year, $month, 1);
             $daysInMonth = $date->daysInMonth;
 
             return [
-                'monthNumber'    => $month,
-                'monthName'      => $date->format('F'),
-                'year'           => $year,
-                'totalDays'      => $daysInMonth,
-                'firstDayOfMonth'=> Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
+                'monthNumber' => $month,
+                'monthName' => $date->format('F'),
+                'year' => $year,
+                'totalDays' => $daysInMonth,
+                'firstDayOfMonth' => Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
                 'lastDayOfMonth' => Carbon::createFromDate($year, $month, $daysInMonth)->format('Y-m-d'),
-                'calendar'       => $this->generateKalender($date),
+                'calendar' => $this->generateKalender($date),
             ];
         });
 
-        // Kumpulkan events untuk semua bulan dalam tahun ini
+        // Kumpulkan events semua bulan — sudah include recurring
         $allEvents = collect();
         foreach (range(1, 12) as $month) {
-            $monthDate   = Carbon::createFromDate($year, $month, 1);
-            $monthEvents = $this->getEventsForMonth($monthDate);
-            $allEvents   = $allEvents->merge($monthEvents->flatten(1));
+            $monthDate = Carbon::createFromDate($year, $month, 1);
+            $monthEvents = $this->getEventsForMonth($monthDate); // Collection grouped by date
+            $allEvents = $allEvents->merge($monthEvents->flatten(1));
         }
 
-        $groupedEvents = $allEvents->groupBy(function ($event) {
-            return $event['date'];
-        });
+        // Group by date string (bukan Carbon object)
+        $groupedEvents = $allEvents
+            ->groupBy(fn($event) => $event->date->format('Y-m-d'))
+            ->map(fn($group) => $group->map(fn($event) => [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->content,
+                'date' => $event->date->toDateString(),
+                'is_recurring' => (bool) $event->is_recurring,
+            ]));
 
         return response()->json([
             'currentDate' => Carbon::now()->toDateString(),
-            'year'        => $year,
-            'months'      => $months,
-            'events'      => $groupedEvents,
+            'year' => $year,
+            'months' => $months,
+            'events' => $groupedEvents,
         ]);
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Ambil events untuk bulan tertentu:
-     * 1. Event biasa di bulan & tahun yang dipilih.
-     * 2. Recurring events dari tahun-tahun sebelumnya yang jatuh di bulan yang sama,
-     *    lalu tanggalnya diproyeksikan ke tahun yang dipilih.
-     *    Jika tanggal proyeksi sudah ada event non-recurring, skip duplikasi.
-     */
     private function getEventsForMonth(Carbon $date): \Illuminate\Support\Collection
     {
-        $year  = $date->year;
+        $year = $date->year;
         $month = $date->month;
 
         // 1. Event di bulan & tahun yang dipilih (recurring maupun tidak)
@@ -110,8 +108,8 @@ class CalendarController extends Controller
             ->get()
             ->map(function (Event $event) use ($year) {
                 // Klon & proyeksikan ke tahun yang sedang ditampilkan
-                $projected       = $event->replicate();
-                $projected->id   = $event->id;           // pertahankan id asli
+                $projected = $event->replicate();
+                $projected->id = $event->id;           // pertahankan id asli
                 $projected->date = $event->date->copy()->setYear($year);
                 return $projected;
             })
@@ -136,10 +134,10 @@ class CalendarController extends Controller
         return $grouped->map(function ($group) {
             return $group->map(function (Event $event) {
                 return [
-                    'id'           => $event->id,
-                    'title'        => $event->title,
-                    'description'  => $event->content,
-                    'date'         => $event->date->toDateString(),
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'description' => $event->content,
+                    'date' => $event->date->toDateString(),
                     'is_recurring' => $event->is_recurring,
                 ];
             });
@@ -149,10 +147,10 @@ class CalendarController extends Controller
     private function generateKalender(Carbon $tanggal): array
     {
         $hariPertama = Carbon::createFromDate($tanggal->year, $tanggal->month, 1);
-        $jumlahHari  = $hariPertama->daysInMonth;
+        $jumlahHari = $hariPertama->daysInMonth;
 
         $mingguArray = [];
-        $minggu      = [];
+        $minggu = [];
 
         for ($i = 0; $i < $hariPertama->dayOfWeek; $i++) {
             $minggu[] = null;
@@ -162,7 +160,7 @@ class CalendarController extends Controller
             $minggu[] = $hari;
             if (count($minggu) === 7) {
                 $mingguArray[] = $minggu;
-                $minggu        = [];
+                $minggu = [];
             }
         }
 
