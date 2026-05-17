@@ -16,7 +16,8 @@ class EventController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'content' => 'nullable|string',
-                'date' => 'required|date'
+                'date' => 'required|date',
+                'is_recurring' => 'boolean',   // ← tambahan
             ]);
 
             $event = Event::create($validated);
@@ -24,56 +25,52 @@ class EventController extends Controller
             return response()->json([
                 'code' => 201,
                 'message' => 'Event added successfully',
-                'data' => $event
+                'data' => $event,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error creating event: ' . $e->getMessage());
+            \Log::error('Error creating event: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan event'
+                'message' => 'Terjadi kesalahan saat menyimpan event',
             ], 500);
         }
     }
 
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
+        $validator = \Validator::make($request->all(), [
             'date' => 'required|date',
             'title' => 'required|string|max:255',
-            'content' => 'nullable|string'
+            'content' => 'nullable|string',
+            'is_recurring' => 'boolean',   // ← tambahan
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             $event = Event::findOrFail($id);
-
-            $event->update([
-                'date' => $request->date,
-                'title' => $request->title,
-                'content' => $request->content
-            ]);
+            $event->update($validator->validated());
 
             return response()->json([
                 'code' => 200,
                 'message' => 'Event updated successfully',
-                'data' => $event
+                'data' => $event,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan saat memperbarui event'
+                'message' => 'Terjadi kesalahan saat memperbarui event',
             ], 500);
         }
     }

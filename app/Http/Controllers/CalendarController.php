@@ -20,15 +20,7 @@ class CalendarController extends Controller
         }
 
         $kalender = $this->generateKalender($tanggalSaatIni);
-
-        // Fetch events for the entire month
-        $events = Event::whereYear('date', $tanggalSaatIni->year)
-            ->whereMonth('date', $tanggalSaatIni->month)
-            ->orderBy('date')
-            ->get()
-            ->groupBy(function ($event) {
-                return $event->date->format('Y-m-d');
-            });
+        $events   = $this->getEventsForMonth($tanggalSaatIni);
 
         return view('admin.calendar.index', compact('kalender', 'tanggalSaatIni', 'events', 'pendingUsers'));
     }
@@ -37,37 +29,17 @@ class CalendarController extends Controller
     {
         $currentDate = Carbon::now();
 
-        // Jika request memiliki parameter 'tahun' dan 'bulan', gunakan tanggal tersebut
         if ($request->has(['tahun', 'bulan'])) {
             $currentDate = Carbon::createFromDate($request->tahun, $request->bulan, 1);
         }
 
-        // Generate kalender untuk bulan yang dipilih
         $calendar = $this->generateKalender($currentDate);
+        $events   = $this->getEventsForMonth($currentDate);
 
-        // Ambil event berdasarkan tahun dan bulan yang dipilih
-        $events = Event::whereYear('date', $currentDate->year)
-            ->whereMonth('date', $currentDate->month)
-            ->orderBy('date')
-            ->get()
-            ->groupBy(function ($event) {
-                return $event->date->format('Y-m-d');
-            });
-
-        // Format response JSON
         return response()->json([
             'currentDate' => $currentDate->toDateString(),
-            'calendar' => $calendar,
-            'events' => $events->map(function ($group) {
-                return $group->map(function ($event) {
-                    return [
-                        'id' => $event->id,
-                        'title' => $event->title,
-                        'description' => $event->content,
-                        'date' => $event->date->toDateString(),
-                    ];
-                });
-            }),
+            'calendar'    => $calendar,
+            'events'      => $this->formatEventsForJson($events),
         ]);
     }
 
@@ -76,83 +48,124 @@ class CalendarController extends Controller
         $year = $request->get('year', Carbon::now()->year);
 
         $months = collect(range(1, 12))->map(function ($month) use ($year) {
-            $date = Carbon::createFromDate($year, $month, 1);
+            $date        = Carbon::createFromDate($year, $month, 1);
             $daysInMonth = $date->daysInMonth;
 
-            $days = collect(range(1, $daysInMonth))->map(function ($day) use ($year, $month) {
-                $date = Carbon::createFromDate($year, $month, $day);
-                return [
-                    'date' => $date->format('Y-m-d'),
-                    'day' => $day,
-                ];
-            });
-
-
             return [
-                'monthNumber' => $month,
-                'monthName' => $date->format('F'),
-                'year' => $year,
-                'totalDays' => $daysInMonth,
-                'firstDayOfMonth' => Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
+                'monthNumber'    => $month,
+                'monthName'      => $date->format('F'),
+                'year'           => $year,
+                'totalDays'      => $daysInMonth,
+                'firstDayOfMonth'=> Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
                 'lastDayOfMonth' => Carbon::createFromDate($year, $month, $daysInMonth)->format('Y-m-d'),
-                'calendar' => $this->generateKalender($date),
+                'calendar'       => $this->generateKalender($date),
             ];
         });
 
-        // Get events for the entire year
-        $events = Event::whereYear('date', $year)
-            ->orderBy('date')
-            ->get()
-            ->groupBy(function ($event) {
-                return $event->date->format('Y-m-d');
-            });
+        // Kumpulkan events untuk semua bulan dalam tahun ini
+        $allEvents = collect();
+        foreach (range(1, 12) as $month) {
+            $monthDate   = Carbon::createFromDate($year, $month, 1);
+            $monthEvents = $this->getEventsForMonth($monthDate);
+            $allEvents   = $allEvents->merge($monthEvents->flatten(1));
+        }
 
-        $currentDate = Carbon::now();
+        $groupedEvents = $allEvents->groupBy(function ($event) {
+            return $event['date'];
+        });
 
         return response()->json([
-            'currentDate' => $currentDate->toDateString(),
-            'year' => $year,
-            'months' => $months,
-            'events' => $events->map(function ($group) {
-                return $group->map(function ($event) {
-                    return [
-                        'id' => $event->id,
-                        'title' => $event->title,
-                        'description' => $event->content,
-                        'date' => $event->date->toDateString(),
-                    ];
-                });
-            }),
+            'currentDate' => Carbon::now()->toDateString(),
+            'year'        => $year,
+            'months'      => $months,
+            'events'      => $groupedEvents,
         ]);
     }
 
-    private function generateKalender($tanggal)
-    {
-        $tahun = $tanggal->year;
-        $bulan = $tanggal->month;
+    // ─── Helpers ───────────────────────────────────────────────────────────────
 
-        $hariPertama = Carbon::createFromDate($tahun, $bulan, 1);
-        $jumlahHari = $hariPertama->daysInMonth;
+    /**
+     * Ambil events untuk bulan tertentu:
+     * 1. Event biasa di bulan & tahun yang dipilih.
+     * 2. Recurring events dari tahun-tahun sebelumnya yang jatuh di bulan yang sama,
+     *    lalu tanggalnya diproyeksikan ke tahun yang dipilih.
+     *    Jika tanggal proyeksi sudah ada event non-recurring, skip duplikasi.
+     */
+    private function getEventsForMonth(Carbon $date): \Illuminate\Support\Collection
+    {
+        $year  = $date->year;
+        $month = $date->month;
+
+        // 1. Event di bulan & tahun yang dipilih (recurring maupun tidak)
+        $regularEvents = Event::whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->orderBy('date')
+            ->get();
+
+        // 2. Recurring events dari tahun sebelumnya (hanya jika tahun yang ditampilkan > tahun event asal)
+        $recurringEvents = Event::where('is_recurring', true)
+            ->whereYear('date', '<', $year)
+            ->whereMonth('date', $month)
+            ->orderBy('date')
+            ->get()
+            ->map(function (Event $event) use ($year) {
+                // Klon & proyeksikan ke tahun yang sedang ditampilkan
+                $projected       = $event->replicate();
+                $projected->id   = $event->id;           // pertahankan id asli
+                $projected->date = $event->date->copy()->setYear($year);
+                return $projected;
+            })
+            ->filter(function (Event $projected) use ($regularEvents) {
+                // Jangan tambahkan jika tanggal proyeksi sudah diisi event reguler
+                $projectedKey = $projected->date->format('Y-m-d');
+                return $regularEvents
+                    ->filter(fn($e) => $e->date->format('Y-m-d') === $projectedKey)
+                    ->isEmpty();
+            });
+
+        // Gabung & group by tanggal
+        return $regularEvents->merge($recurringEvents)
+            ->groupBy(fn($event) => $event->date->format('Y-m-d'));
+    }
+
+    /**
+     * Format grouped events ke array JSON-friendly.
+     */
+    private function formatEventsForJson(\Illuminate\Support\Collection $grouped): \Illuminate\Support\Collection
+    {
+        return $grouped->map(function ($group) {
+            return $group->map(function (Event $event) {
+                return [
+                    'id'           => $event->id,
+                    'title'        => $event->title,
+                    'description'  => $event->content,
+                    'date'         => $event->date->toDateString(),
+                    'is_recurring' => $event->is_recurring,
+                ];
+            });
+        });
+    }
+
+    private function generateKalender(Carbon $tanggal): array
+    {
+        $hariPertama = Carbon::createFromDate($tanggal->year, $tanggal->month, 1);
+        $jumlahHari  = $hariPertama->daysInMonth;
 
         $mingguArray = [];
-        $minggu = [];
+        $minggu      = [];
 
-        // Fill in empty days before the first day of the month
         for ($i = 0; $i < $hariPertama->dayOfWeek; $i++) {
             $minggu[] = null;
         }
 
-        // Fill in the days of the month
         for ($hari = 1; $hari <= $jumlahHari; $hari++) {
             $minggu[] = $hari;
-
-            if (count($minggu) == 7) {
+            if (count($minggu) === 7) {
                 $mingguArray[] = $minggu;
-                $minggu = [];
+                $minggu        = [];
             }
         }
 
-        // Fill in empty days after the last day of the month
         while (count($minggu) < 7 && !empty($minggu)) {
             $minggu[] = null;
         }
